@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: 'furrify-storage-service'
+  jpa:
+    open-in-view: false
+  profiles:
+    active: prod
+server:
+  port: 8081

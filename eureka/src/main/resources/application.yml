@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: 'furrify-eureka-service'
+  jpa:
+    open-in-view: false
+server:
+  port: 8761
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false

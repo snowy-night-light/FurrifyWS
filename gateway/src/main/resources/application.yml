@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: 'furrify-gateway-service'
+  jpa:
+    open-in-view: false
+  profiles:
+    active: prod
+
+server:
+  port: 8080
