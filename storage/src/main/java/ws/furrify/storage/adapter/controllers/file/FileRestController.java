@@ -11,7 +11,7 @@ import ws.furrify.storage.dto.file.FileDTOMapper;
 import ws.furrify.storage.dto.file.PatchFileRequestDTO;
 
 @RestController
-@RequestMapping("/files")
+@RequestMapping("/storage/files")
 class FileRestController extends BaseEntityRestController<File, FileDTO, PatchFileRequestDTO> {
 
     @Autowired

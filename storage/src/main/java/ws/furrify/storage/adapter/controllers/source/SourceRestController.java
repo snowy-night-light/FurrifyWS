@@ -12,7 +12,7 @@ import ws.furrify.storage.dto.source.SourceDTOMapper;
 
 
 @RestController
-@RequestMapping("/sources")
+@RequestMapping("/storage/sources")
 class SourceRestController extends BaseEntityRestController<Source, SourceDTO, PatchSourceRequestDTO> {
 
     @Autowired

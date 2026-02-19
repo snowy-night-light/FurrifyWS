@@ -17,7 +17,7 @@ import ws.furrify.storage.dto.source.SourceDTOMapper;
 
 
 @RestController
-@RequestMapping("/posts")
+@RequestMapping("/storage/posts")
 class PostRestController extends BaseEntityRestController<Post, PostDTO, PatchPostRequestDTO> {
 
     @Autowired

@@ -11,7 +11,7 @@ import ws.furrify.storage.dto.media.MediaDTOMapper;
 import ws.furrify.storage.dto.media.PatchMediaRequestDTO;
 
 @RestController
-@RequestMapping("/media")
+@RequestMapping("/storage/media")
 class MediaRestController extends BaseEntityRestController<Media, MediaDTO, PatchMediaRequestDTO> {
 
     @Autowired
