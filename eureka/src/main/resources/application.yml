@@ -1,8 +1,8 @@
 spring:
   application:
     name: 'furrify-eureka-service'
-  jpa:
-    open-in-view: false
+  main:
+    web-application-type: servlet
 server:
   port: 8761
 eureka:

@@ -12,7 +12,7 @@ import ws.furrify.storage.dto.tag.category.TagCategoryDTOMapper;
 
 
 @RestController
-@RequestMapping("/tags/categories")
+@RequestMapping("/storage/tags/categories")
 class TagCategoryRestController extends BaseEntityRestController<TagCategory, TagCategoryDTO, PatchTagCategoryRequestDTO> {
 
     @Autowired

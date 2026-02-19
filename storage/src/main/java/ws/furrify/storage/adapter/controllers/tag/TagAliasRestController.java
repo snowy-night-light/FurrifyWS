@@ -12,7 +12,7 @@ import ws.furrify.storage.dto.tag.alias.TagAliasDTOMapper;
 
 
 @RestController
-@RequestMapping("/tags/aliases")
+@RequestMapping("/storage/tags/aliases")
 class TagAliasRestController extends BaseEntityRestController<TagAlias, TagAliasDTO, PatchTagAliasRequestDTO> {
 
     @Autowired

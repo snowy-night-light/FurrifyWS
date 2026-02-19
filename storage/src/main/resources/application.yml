@@ -1,6 +1,8 @@
 spring:
   application:
     name: 'furrify-storage-service'
+  main:
+      web-application-type: servlet
   jpa:
     open-in-view: false
   profiles:

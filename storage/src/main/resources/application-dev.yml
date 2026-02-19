@@ -2,3 +2,33 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            scope: openid
+            authorization-grant-type: authorization_code
+            client-id: ${KEYCLOAK_CLIENT_ID}
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+
+  datasource:
+    driverClassName: org.h2.Driver
+    username: 'sa'
+    password: 'password'
+    url: jdbc:h2:mem:testdb
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: true
