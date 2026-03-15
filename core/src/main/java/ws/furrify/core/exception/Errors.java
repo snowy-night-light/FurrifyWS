@@ -33,6 +33,7 @@ public enum Errors implements ErrorMessageFormatterIntf {
     FILE_EXTENSION_IS_NOT_MATCHING_CONTENT("File extension is not matching provided file content or filename is invalid."),
     MISSING_STRATEGY("Strategy was not found in given package [class={0}]."),
     FILENAME_IS_INVALID("Given filename [filename={0}] is invalid."),
+    USER_NOT_AUTHENTICATED("User was not properly authenticated for this action."),
     UNIDENTIFIED("Unknown error occurred.");
 
 

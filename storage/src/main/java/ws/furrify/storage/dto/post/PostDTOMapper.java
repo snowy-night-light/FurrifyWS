@@ -1,14 +1,24 @@
 package ws.furrify.storage.dto.post;
 
 import org.mapstruct.Mapper;
-import ws.furrify.core.entity.dto.BaseEntityDTOMapper;
+import org.mapstruct.MappingTarget;
+import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.storage.domain.post.Post;
-import ws.furrify.storage.domain.source.Source;
-import ws.furrify.storage.dto.source.PatchSourceRequestDTO;
-import ws.furrify.storage.dto.source.SourceDTO;
+import ws.furrify.storage.dto.artist.ArtistDTOMapper;
+import ws.furrify.storage.dto.media.MediaDTOMapper;
+import ws.furrify.storage.dto.tag.TagDTOMapper;
 
-import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+@Mapper(
+        config = BaseDTOMapper.class,
+        uses = {TagDTOMapper.class, ArtistDTOMapper.class, MediaDTOMapper.class}
+)
+public interface PostDTOMapper extends BaseDTOMapper<Post, PostDTO> {
+    @Override
+    void patchDTO(@MappingTarget PostDTO source, PostDTO patchDto);
 
-@Mapper(componentModel = SPRING)
-public interface PostDTOMapper extends BaseEntityDTOMapper<Post, PostDTO, PatchPostRequestDTO> {
+    @Override
+    Post toEntity(PostDTO dto);
+
+    @Override
+    PostDTO toDto(Post entity);
 }

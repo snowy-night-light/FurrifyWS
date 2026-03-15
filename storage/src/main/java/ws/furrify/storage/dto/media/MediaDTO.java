@@ -2,11 +2,23 @@ package ws.furrify.storage.dto.media;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import ws.furrify.core.entity.dto.BaseEntityDTO;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.media.Media;
-import ws.furrify.storage.domain.source.Source;
+import ws.furrify.storage.dto.file.FileDTO;
+import ws.furrify.storage.dto.source.SourceDTO;
+
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class MediaDTO extends BaseEntityDTO<Media> {
+@SuperBuilder(toBuilder = true)
+@NoArgsConstructor
+public class MediaDTO extends UserScopedEntityDTO<Media> {
+    private Integer priority;
+
+    private FileDTO file;
+
+    private List<SourceDTO> sources;
 }

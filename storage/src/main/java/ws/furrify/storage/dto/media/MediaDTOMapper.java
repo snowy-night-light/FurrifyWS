@@ -1,11 +1,23 @@
 package ws.furrify.storage.dto.media;
 
 import org.mapstruct.Mapper;
-import ws.furrify.core.entity.dto.BaseEntityDTOMapper;
+import org.mapstruct.MappingTarget;
+import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.storage.domain.media.Media;
+import ws.furrify.storage.dto.file.FileDTOMapper;
+import ws.furrify.storage.dto.source.SourceDTOMapper;
 
-import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+@Mapper(
+        config = BaseDTOMapper.class,
+        uses = {FileDTOMapper.class, SourceDTOMapper.class}
+)
+public interface MediaDTOMapper extends BaseDTOMapper<Media, MediaDTO> {
+    @Override
+    void patchDTO(@MappingTarget MediaDTO source, MediaDTO patchDto);
 
-@Mapper(componentModel = SPRING)
-public interface MediaDTOMapper extends BaseEntityDTOMapper<Media, MediaDTO, PatchMediaRequestDTO> {
+    @Override
+    Media toEntity(MediaDTO dto);
+
+    @Override
+    MediaDTO toDto(Media entity);
 }

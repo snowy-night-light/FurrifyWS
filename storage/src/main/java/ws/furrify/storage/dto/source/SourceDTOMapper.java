@@ -1,14 +1,21 @@
 package ws.furrify.storage.dto.source;
 
 import org.mapstruct.Mapper;
-import ws.furrify.core.entity.dto.BaseEntityDTOMapper;
+import org.mapstruct.MappingTarget;
+import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.storage.domain.source.Source;
-import ws.furrify.storage.domain.tag.Tag;
-import ws.furrify.storage.dto.tag.PatchTagRequestDTO;
-import ws.furrify.storage.dto.tag.TagDTO;
 
-import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
+@Mapper(
+        config = BaseDTOMapper.class,
+        uses = {}
+)
+public interface SourceDTOMapper extends BaseDTOMapper<Source, SourceDTO> {
+    @Override
+    void patchDTO(@MappingTarget SourceDTO source, SourceDTO patchDto);
 
-@Mapper(componentModel = SPRING)
-public interface SourceDTOMapper extends BaseEntityDTOMapper<Source, SourceDTO, PatchSourceRequestDTO> {
+    @Override
+    Source toEntity(SourceDTO dto);
+
+    @Override
+    SourceDTO toDto(Source entity);
 }

@@ -1,9 +1,8 @@
 package ws.furrify.storage.domain.file;
 
 import org.springframework.stereotype.Repository;
-import ws.furrify.core.entity.BaseRepository;
-import ws.furrify.storage.domain.media.Media;
+import ws.furrify.core.entity.UserScopedEntityRepository;
 
 @Repository
-public interface FileRepository extends BaseRepository<File> {
+public interface FileRepository extends UserScopedEntityRepository<File> {
 }

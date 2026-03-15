@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -15,31 +17,36 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @Getter
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public abstract class BaseEntity {
+    public final static String DEFAULT_SUBJECT = "SYSTEM";
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator(style = UuidGenerator.Style.TIME)
     UUID id;
 
     @Version
     long version;
 
-    @Column(nullable = false)
-    UUID ownerId;
-
-    ZonedDateTime updated;
+    String modifiedBy;
+    ZonedDateTime modifiedAt;
 
     @Column(nullable = false)
-    ZonedDateTime created;
+    String createdBy;
+    @Column(nullable = false)
+    ZonedDateTime createdAt;
 
     @PrePersist
-    private void onCreate() {
-        this.created = ZonedDateTime.now();
+    protected void onCreate() {
+        this.createdAt = ZonedDateTime.now();
+
+        this.createdBy = SecurityContextUtils.getCurrentSubject().map(UUID::toString).orElse(DEFAULT_SUBJECT);
     }
 
     @PreUpdate
-    private void onUpdate() {
-        this.updated = ZonedDateTime.now();
+    protected void onUpdate() {
+        this.modifiedAt = ZonedDateTime.now();
+        this.modifiedBy = SecurityContextUtils.getCurrentSubject().map(UUID::toString).orElse(DEFAULT_SUBJECT);
     }
 
     @Override

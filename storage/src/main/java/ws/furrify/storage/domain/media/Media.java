@@ -4,19 +4,19 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.file.File;
 import ws.furrify.storage.domain.source.Source;
 
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Media extends BaseEntity {
+public class Media extends UserScopedEntity {
 
     @Column(nullable = false)
     Integer priority;
@@ -26,5 +26,5 @@ public class Media extends BaseEntity {
     File file;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    Set<Source> sources;
+    List<Source> sources;
 }

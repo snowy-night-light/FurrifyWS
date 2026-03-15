@@ -3,33 +3,32 @@ package ws.furrify.storage.domain.post;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
-import ws.furrify.storage.domain.file.File;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.tag.Tag;
 
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Post extends BaseEntity {
+public class Post extends UserScopedEntity {
     @Column
     String title;
     @Column
     String description;
 
     @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
-    Set<Tag> tags;
+    List<Tag> tags;
     @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
-    Set<Artist> artists;
+    List<Artist> artists;
 
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-    Set<Media> displayMediaSet;
+    List<Media> displayMediaList;
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-    Set<Media> attachments;
+    List<Media> attachments;
 }

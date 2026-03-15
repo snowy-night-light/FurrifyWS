@@ -5,16 +5,16 @@ import jakarta.persistence.Entity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.converters.StrategyDBConverter;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.source.strategy.SourceStrategy;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Source extends BaseEntity {
+public class Source extends UserScopedEntity {
     @Convert(converter = StrategyDBConverter.class)
     SourceStrategy strategy;
 }

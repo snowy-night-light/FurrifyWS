@@ -25,8 +25,6 @@ public enum StorageErrors implements ErrorMessageFormatterIntf {
     HARD_LIMIT_FOR_ENTITY_TYPE("Hard limit of [limit={0}] has been reached for [entity={1}], further create requests will not be accepted."),
     FILE_HASH_DUPLICATE_IN_POST("File with [md5={0}] hash already exists in this post with [uuid={1}].");
 
-
-
     private final String errorMessage;
 
     public String getErrorMessage(Object... data) {

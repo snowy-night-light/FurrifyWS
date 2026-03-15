@@ -7,16 +7,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.tag.Tag;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TagAlias extends BaseEntity {
+public class TagAlias extends UserScopedEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     Tag targetTag;
 

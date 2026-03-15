@@ -4,19 +4,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ws.furrify.core.controller.BaseEntityRestController;
+import ws.furrify.core.entity.request.BaseRequestMapper;
+import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.artist.Artist;
-import ws.furrify.storage.domain.artist.ArtistRepository;
 import ws.furrify.storage.dto.artist.ArtistDTO;
-import ws.furrify.storage.dto.artist.ArtistDTOMapper;
-import ws.furrify.storage.dto.artist.PatchArtistRequestDTO;
+import ws.furrify.storage.dto.artist.request.CreateArtistRequest;
+import ws.furrify.storage.dto.artist.request.PatchArtistRequest;
 
 
 @RestController
 @RequestMapping("/storage/artists")
-class ArtistRestController extends BaseEntityRestController<Artist, ArtistDTO, PatchArtistRequestDTO> {
+class ArtistRestController extends BaseEntityRestController<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
 
     @Autowired
-    public ArtistRestController(final ArtistDTOMapper mapper, final ArtistRepository repository) {
-        super(mapper, repository);
+    public ArtistRestController(BaseRequestMapper<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> requestDtoMapper, BaseEntityCrudService<Artist, ArtistDTO> entityCrudService) {
+        super(requestDtoMapper, entityCrudService);
     }
 }

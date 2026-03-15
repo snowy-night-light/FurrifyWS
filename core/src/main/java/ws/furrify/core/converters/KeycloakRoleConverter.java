@@ -1,4 +1,4 @@
-package ws.furrify.core.config;
+package ws.furrify.core.converters;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,7 +18,7 @@ import java.util.Set;
  *
  * @author sky
  */
-class KeycloakRoleConverter implements GrantedAuthoritiesMapper, Converter<Jwt, Collection<GrantedAuthority>> {
+public class KeycloakRoleConverter implements GrantedAuthoritiesMapper, Converter<Jwt, Collection<GrantedAuthority>> {
 
     private final static String RESOURCES_KEY = "resource_access";
 

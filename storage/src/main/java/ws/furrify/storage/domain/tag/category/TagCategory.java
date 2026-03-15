@@ -6,15 +6,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TagCategory extends BaseEntity {
+public class TagCategory extends UserScopedEntity {
     @Column(unique = true, length = 255)
     @NotBlank
     String name;

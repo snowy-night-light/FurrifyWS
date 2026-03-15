@@ -4,19 +4,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ws.furrify.core.controller.BaseEntityRestController;
+import ws.furrify.core.entity.request.BaseRequestMapper;
+import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.source.Source;
-import ws.furrify.storage.domain.source.SourceRepository;
-import ws.furrify.storage.dto.source.PatchSourceRequestDTO;
 import ws.furrify.storage.dto.source.SourceDTO;
-import ws.furrify.storage.dto.source.SourceDTOMapper;
+import ws.furrify.storage.dto.source.request.CreateSourceRequest;
+import ws.furrify.storage.dto.source.request.PatchSourceRequest;
 
 
 @RestController
 @RequestMapping("/storage/sources")
-class SourceRestController extends BaseEntityRestController<Source, SourceDTO, PatchSourceRequestDTO> {
+class SourceRestController extends BaseEntityRestController<Source, SourceDTO, CreateSourceRequest, PatchSourceRequest> {
 
     @Autowired
-    public SourceRestController(final SourceDTOMapper mapper, final SourceRepository repository) {
-        super(mapper, repository);
+    public SourceRestController(BaseRequestMapper<Source, SourceDTO, CreateSourceRequest, PatchSourceRequest> requestDtoMapper, BaseEntityCrudService<Source, SourceDTO> entityCrudService) {
+        super(requestDtoMapper, entityCrudService);
     }
 }

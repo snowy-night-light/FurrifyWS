@@ -3,27 +3,27 @@ package ws.furrify.storage.domain.artist;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.source.Source;
 
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Artist extends BaseEntity {
+public class Artist extends UserScopedEntity {
     @ElementCollection
     @CollectionTable(name = "artist_nicknames", joinColumns = @JoinColumn(name = "artist_id"))
-    Set<ArtistNickname> nicknames;
+    List<ArtistNickname> nicknames;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @ToString.Exclude
-    Set<Source> sources;
+    List<Source> sources;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     Media avatar;

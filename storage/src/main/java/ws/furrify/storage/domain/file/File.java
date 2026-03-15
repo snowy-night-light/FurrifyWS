@@ -7,17 +7,17 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.util.MimeType;
-import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.UserScopedEntity;
 
 import java.net.URI;
 
 @Entity
 @Getter
 @ToString
-@SuperBuilder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder(toBuilder = true)
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class File extends BaseEntity {
+public class File extends UserScopedEntity {
     @Column(nullable = false, length = 255)
     @NotBlank
     private String fileName;

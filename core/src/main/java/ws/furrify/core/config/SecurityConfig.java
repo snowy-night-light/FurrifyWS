@@ -20,9 +20,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import ws.furrify.core.converters.KeycloakRoleConverter;
 
 @EnableWebSecurity
-public class SecurityConfig {
+public abstract class SecurityConfig {
 
     @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
     @Getter
