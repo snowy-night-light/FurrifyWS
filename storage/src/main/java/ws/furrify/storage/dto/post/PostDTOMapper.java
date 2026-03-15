@@ -1,7 +1,6 @@
 package ws.furrify.storage.dto.post;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.dto.artist.ArtistDTOMapper;
@@ -13,12 +12,4 @@ import ws.furrify.storage.dto.tag.TagDTOMapper;
         uses = {TagDTOMapper.class, ArtistDTOMapper.class, MediaDTOMapper.class}
 )
 public interface PostDTOMapper extends BaseDTOMapper<Post, PostDTO> {
-    @Override
-    void patchDTO(@MappingTarget PostDTO source, PostDTO patchDto);
-
-    @Override
-    Post toEntity(PostDTO dto);
-
-    @Override
-    PostDTO toDto(Post entity);
 }

@@ -6,9 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.BaseEntityRepository;
-import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
+import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.model.CycleAvoidingMappingContext;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -19,11 +20,11 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     private final BaseDTOMapper<ENTITY, DTO> dtoMapper;
 
     public Optional<DTO> findById(UUID id) {
-        return entityRepository.findById(id).map(dtoMapper::toDto);
+        return entityRepository.findById(id).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
     }
 
     public Page<DTO> getAllPaged(Pageable pageable) {
-        return entityRepository.findAll(pageable).map(dtoMapper::toDto);
+        return entityRepository.findAll(pageable).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
     }
 
     public void deleteById(UUID id) {
@@ -31,9 +32,9 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     public DTO partialUpdateById(UUID id, DTO patchDto) {
-        DTO sourceDTO = entityRepository.findById(id).map(dtoMapper::toDto).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        DTO sourceDTO = entityRepository.findById(id).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext())).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
-        dtoMapper.patchDTO(sourceDTO, patchDto);
+        dtoMapper.patchDTO(sourceDTO, patchDto, new CycleAvoidingMappingContext());
 
         return this.save(sourceDTO);
     }
@@ -43,8 +44,11 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     protected DTO save(DTO dto) {
+        CycleAvoidingMappingContext mappingContext = new CycleAvoidingMappingContext();
+
         return dtoMapper.toDto(
-                entityRepository.save(dtoMapper.toEntity(dto))
+                entityRepository.save(dtoMapper.toEntity(dto, mappingContext)),
+                mappingContext
         );
     }
 }

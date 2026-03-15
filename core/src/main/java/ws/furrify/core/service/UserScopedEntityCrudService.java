@@ -10,6 +10,7 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.UserNotAuthenticatedException;
+import ws.furrify.core.model.CycleAvoidingMappingContext;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.util.Optional;
@@ -28,11 +29,11 @@ public abstract class UserScopedEntityCrudService<ENTITY extends UserScopedEntit
 
     @Override
     public Optional<DTO> findById(UUID id) {
-        return entityRepository.findByIdAndOwnerId(id, this.getCurrentUserId()).map(dtoMapper::toDto);
+        return entityRepository.findByIdAndOwnerId(id, this.getCurrentUserId()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
     }
 
     public Page<DTO> getAllPaged(Pageable pageable) {
-        return entityRepository.findAllByOwnerId(this.getCurrentUserId(), pageable).map(dtoMapper::toDto);
+        return entityRepository.findAllByOwnerId(this.getCurrentUserId(), pageable).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
     }
 
     public void deleteById(UUID id) {
@@ -40,9 +41,9 @@ public abstract class UserScopedEntityCrudService<ENTITY extends UserScopedEntit
     }
 
     public DTO partialUpdateById(UUID id, DTO patchDto) {
-        DTO sourceDTO = entityRepository.findByIdAndOwnerId(id, this.getCurrentUserId()).map(dtoMapper::toDto).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        DTO sourceDTO = entityRepository.findByIdAndOwnerId(id, this.getCurrentUserId()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext())).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
-        dtoMapper.patchDTO(sourceDTO, patchDto);
+        dtoMapper.patchDTO(sourceDTO, patchDto, new CycleAvoidingMappingContext());
 
         return this.save(sourceDTO);
     }

@@ -1,22 +1,24 @@
 package ws.furrify.storage.dto.tag.alias;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
+import ws.furrify.core.model.CycleAvoidingMappingContext;
 import ws.furrify.storage.domain.tag.alias.TagAlias;
-import ws.furrify.storage.dto.tag.TagDTOMapper;
+import ws.furrify.storage.dto.tag.TagDTO;
 
 @Mapper(
-        config = BaseDTOMapper.class,
-        uses = {TagDTOMapper.class}
+        config = BaseDTOMapper.class
 )
 public interface TagAliasDTOMapper extends BaseDTOMapper<TagAlias, TagAliasDTO> {
-    @Override
-    void patchDTO(@MappingTarget TagAliasDTO source, TagAliasDTO patchDto);
 
     @Override
-    TagAlias toEntity(TagAliasDTO dto);
+    @Mapping(target = "targetTag", ignore = true)
+    TagAliasDTO toDto(TagAlias entity, CycleAvoidingMappingContext context);
 
-    @Override
-    TagAliasDTO toDto(TagAlias entity);
+    @AfterMapping
+    default void linkBackReference(TagAlias entity, @MappingTarget TagAliasDTO dto, @Context CycleAvoidingMappingContext context) {
+        if (entity.getTargetTag() != null) {
+            dto.setTargetTag(context.getMappedInstance(entity.getTargetTag(), TagDTO.class));
+        }
+    }
 }
