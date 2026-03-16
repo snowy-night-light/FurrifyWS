@@ -12,11 +12,11 @@ import ws.furrify.storage.dto.media.request.CreateMediaRequest;
 import ws.furrify.storage.dto.media.request.PatchMediaRequest;
 
 @RestController
-@RequestMapping("/storage/media")
-class MediaRestController extends BaseEntityRestController<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> {
+@RequestMapping("/v1/storage/media")
+class MediaV1RestController extends BaseEntityRestController<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> {
 
     @Autowired
-    public MediaRestController(BaseRequestMapper<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> requestDtoMapper, BaseEntityCrudService<Media, MediaDTO> entityCrudService) {
+    public MediaV1RestController(BaseRequestMapper<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> requestDtoMapper, BaseEntityCrudService<Media, MediaDTO> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

@@ -13,11 +13,11 @@ import ws.furrify.storage.dto.tag.category.request.PatchTagCategoryRequest;
 
 
 @RestController
-@RequestMapping("/storage/tags/categories")
-class TagCategoryRestController extends BaseEntityRestController<TagCategory, TagCategoryDTO, CreateTagCategoryRequest, PatchTagCategoryRequest> {
+@RequestMapping("/v1/storage/tags/categories")
+class TagCategoryV1RestController extends BaseEntityRestController<TagCategory, TagCategoryDTO, CreateTagCategoryRequest, PatchTagCategoryRequest> {
 
     @Autowired
-    public TagCategoryRestController(BaseRequestMapper<TagCategory, TagCategoryDTO, CreateTagCategoryRequest, PatchTagCategoryRequest> requestDtoMapper, BaseEntityCrudService<TagCategory, TagCategoryDTO> entityCrudService) {
+    public TagCategoryV1RestController(BaseRequestMapper<TagCategory, TagCategoryDTO, CreateTagCategoryRequest, PatchTagCategoryRequest> requestDtoMapper, BaseEntityCrudService<TagCategory, TagCategoryDTO> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

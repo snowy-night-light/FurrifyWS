@@ -1,18 +1,18 @@
-package ws.furrify.storage.service.file;
+package ws.furrify.storage.adapter.service.tag;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.UserScopedEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.UserScopedEntityCrudService;
-import ws.furrify.storage.domain.file.File;
-import ws.furrify.storage.dto.file.FileDTO;
+import ws.furrify.storage.domain.tag.Tag;
+import ws.furrify.storage.dto.tag.TagDTO;
 
 @Service
-public class FileEntityCrudService extends UserScopedEntityCrudService<File, FileDTO> {
+public class TagEntityCrudService extends UserScopedEntityCrudService<Tag, TagDTO> {
 
     @Autowired
-    public FileEntityCrudService(UserScopedEntityRepository<File> entityRepository, BaseDTOMapper<File, FileDTO> dtoMapper) {
+    public TagEntityCrudService(UserScopedEntityRepository<Tag> entityRepository, BaseDTOMapper<Tag, TagDTO> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }

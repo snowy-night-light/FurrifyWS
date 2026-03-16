@@ -1,4 +1,4 @@
-package ws.furrify.storage.service.tag;
+package ws.furrify.storage.adapter.service.tag;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

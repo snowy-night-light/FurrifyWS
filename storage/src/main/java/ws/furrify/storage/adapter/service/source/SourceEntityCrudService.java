@@ -1,4 +1,4 @@
-package ws.furrify.storage.service.source;
+package ws.furrify.storage.adapter.service.source;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

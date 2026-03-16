@@ -12,11 +12,11 @@ import ws.furrify.storage.dto.tag.alias.request.CreateTagAliasRequest;
 import ws.furrify.storage.dto.tag.alias.request.PatchTagAliasRequest;
 
 @RestController
-@RequestMapping("/storage/tags/aliases")
-class TagAliasRestController extends BaseEntityRestController<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> {
+@RequestMapping("/v1/storage/tags/aliases")
+class TagAliasV1RestController extends BaseEntityRestController<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> {
 
     @Autowired
-    public TagAliasRestController(BaseRequestMapper<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> requestDtoMapper, BaseEntityCrudService<TagAlias, TagAliasDTO> entityCrudService) {
+    public TagAliasV1RestController(BaseRequestMapper<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> requestDtoMapper, BaseEntityCrudService<TagAlias, TagAliasDTO> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

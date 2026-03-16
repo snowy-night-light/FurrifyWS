@@ -12,11 +12,11 @@ import ws.furrify.storage.dto.file.request.CreateFileRequest;
 import ws.furrify.storage.dto.file.request.PatchFileRequest;
 
 @RestController
-@RequestMapping("/storage/files")
-class FileRestController extends BaseEntityRestController<File, FileDTO, CreateFileRequest, PatchFileRequest> {
+@RequestMapping("/v1/storage/files")
+class FileV1RestController extends BaseEntityRestController<File, FileDTO, CreateFileRequest, PatchFileRequest> {
 
     @Autowired
-    public FileRestController(BaseRequestMapper<File, FileDTO, CreateFileRequest, PatchFileRequest> requestDtoMapper, BaseEntityCrudService<File, FileDTO> entityCrudService) {
+    public FileV1RestController(BaseRequestMapper<File, FileDTO, CreateFileRequest, PatchFileRequest> requestDtoMapper, BaseEntityCrudService<File, FileDTO> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

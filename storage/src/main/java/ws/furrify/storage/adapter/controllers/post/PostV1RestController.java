@@ -13,11 +13,11 @@ import ws.furrify.storage.dto.post.request.PatchPostRequest;
 
 
 @RestController
-@RequestMapping("/storage/posts")
-class PostRestController extends BaseEntityRestController<Post, PostDTO, CreatePostRequest, PatchPostRequest> {
+@RequestMapping("/v1/storage/posts")
+class PostV1RestController extends BaseEntityRestController<Post, PostDTO, CreatePostRequest, PatchPostRequest> {
 
     @Autowired
-    public PostRestController(BaseRequestMapper<Post, PostDTO, CreatePostRequest, PatchPostRequest> requestDtoMapper, BaseEntityCrudService<Post, PostDTO> entityCrudService) {
+    public PostV1RestController(BaseRequestMapper<Post, PostDTO, CreatePostRequest, PatchPostRequest> requestDtoMapper, BaseEntityCrudService<Post, PostDTO> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

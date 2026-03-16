@@ -1,18 +1,18 @@
-package ws.furrify.storage.service.post;
+package ws.furrify.storage.adapter.service.file;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.UserScopedEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.UserScopedEntityCrudService;
-import ws.furrify.storage.domain.post.Post;
-import ws.furrify.storage.dto.post.PostDTO;
+import ws.furrify.storage.domain.file.File;
+import ws.furrify.storage.dto.file.FileDTO;
 
 @Service
-public class PostEntityCrudService extends UserScopedEntityCrudService<Post, PostDTO> {
+public class FileEntityCrudService extends UserScopedEntityCrudService<File, FileDTO> {
 
     @Autowired
-    public PostEntityCrudService(UserScopedEntityRepository<Post> entityRepository, BaseDTOMapper<Post, PostDTO> dtoMapper) {
+    public FileEntityCrudService(UserScopedEntityRepository<File> entityRepository, BaseDTOMapper<File, FileDTO> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }

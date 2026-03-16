@@ -1,18 +1,18 @@
-package ws.furrify.storage.service.media;
+package ws.furrify.storage.adapter.service.post;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.UserScopedEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.UserScopedEntityCrudService;
-import ws.furrify.storage.domain.media.Media;
-import ws.furrify.storage.dto.media.MediaDTO;
+import ws.furrify.storage.domain.post.Post;
+import ws.furrify.storage.dto.post.PostDTO;
 
 @Service
-public class MediaEntityCrudService extends UserScopedEntityCrudService<Media, MediaDTO> {
+public class PostEntityCrudService extends UserScopedEntityCrudService<Post, PostDTO> {
 
     @Autowired
-    public MediaEntityCrudService(UserScopedEntityRepository<Media> entityRepository, BaseDTOMapper<Media, MediaDTO> dtoMapper) {
+    public PostEntityCrudService(UserScopedEntityRepository<Post> entityRepository, BaseDTOMapper<Post, PostDTO> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }

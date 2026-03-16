@@ -13,11 +13,11 @@ import ws.furrify.storage.dto.source.request.PatchSourceRequest;
 
 
 @RestController
-@RequestMapping("/storage/sources")
-class SourceRestController extends BaseEntityRestController<Source, SourceDTO, CreateSourceRequest, PatchSourceRequest> {
+@RequestMapping("/v1/storage/sources")
+class SourceV1RestController extends BaseEntityRestController<Source, SourceDTO, CreateSourceRequest, PatchSourceRequest> {
 
     @Autowired
-    public SourceRestController(BaseRequestMapper<Source, SourceDTO, CreateSourceRequest, PatchSourceRequest> requestDtoMapper, BaseEntityCrudService<Source, SourceDTO> entityCrudService) {
+    public SourceV1RestController(BaseRequestMapper<Source, SourceDTO, CreateSourceRequest, PatchSourceRequest> requestDtoMapper, BaseEntityCrudService<Source, SourceDTO> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }
