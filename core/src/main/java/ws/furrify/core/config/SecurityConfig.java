@@ -5,8 +5,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import jakarta.servlet.DispatcherType;
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
@@ -24,10 +22,6 @@ import ws.furrify.core.converters.KeycloakRoleConverter;
 
 @EnableWebSecurity
 public abstract class SecurityConfig {
-
-    @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
-    @Getter
-    private String clientId;
 
     @Bean
     BCryptPasswordEncoder passwordEncoder() {

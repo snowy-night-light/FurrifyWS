@@ -46,13 +46,13 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
     }
 
     @PatchMapping("/{id}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     protected DTO patch(@PathVariable UUID id, @RequestBody PATCH_REQ patchRequestDto) {
         return entityCrudService.partialUpdateById(id, requestDtoMapper.toDto(patchRequestDto));
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     protected void delete(@PathVariable UUID id) {
         entityCrudService.deleteById(id);
     }

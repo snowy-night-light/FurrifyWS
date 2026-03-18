@@ -1,19 +1,20 @@
 package ws.furrify.core.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.util.UUID;
 
-@Entity
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor
 @Getter
-@ToString
 @SuperBuilder(toBuilder = true)
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserScopedEntity extends BaseEntity {
     @Column(nullable = false)
     UUID ownerId;
