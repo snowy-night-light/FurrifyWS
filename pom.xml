@@ -28,7 +28,7 @@
         <swagger-models-jakarta.version>2.2.45</swagger-models-jakarta.version>
         <springdoc-openapi-starter-webmvc-ui.version>3.0.2</springdoc-openapi-starter-webmvc-ui.version>
         <rest-assured.version>6.0.0</rest-assured.version>
-        <testcontainers.version>2.0.3</testcontainers.version>
+        <testcontainers.version>2.0.4</testcontainers.version>
         <testcontainers-keycloak.version>4.1.1</testcontainers-keycloak.version>
     </properties>
 
