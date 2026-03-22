@@ -6,13 +6,13 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.exception.Errors;
-import ws.furrify.core.model.CycleAvoidingMappingContext;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.util.Optional;
@@ -23,36 +23,38 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     private final BaseEntityRepository<ENTITY> entityRepository;
     private final BaseDTOMapper<ENTITY, DTO> dtoMapper;
 
+    @Transactional
     public Optional<DTO> findById(UUID id) {
-        return entityRepository.findById(id, getCombinedSpecs()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
+        return entityRepository.findById(id, getCombinedSpecs()).map(dtoMapper::toDto);
     }
 
+    @Transactional
     public Page<DTO> getAllPaged(Pageable pageable) {
-        return entityRepository.findAll(pageable, getCombinedSpecs()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
+        return entityRepository.findAll(pageable, getCombinedSpecs()).map(dtoMapper::toDto);
     }
 
+    @Transactional
     public void deleteById(UUID id) {
         entityRepository.deleteById(id, getCombinedSpecs());
     }
 
+    @Transactional
     public DTO partialUpdateById(UUID id, DTO patchDto) {
-        DTO sourceDTO = entityRepository.findById(id, getCombinedSpecs()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext())).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
-        dtoMapper.patchDTO(sourceDTO, patchDto, new CycleAvoidingMappingContext());
-
-        return this.save(sourceDTO);
-    }
-
-    public DTO create(DTO dto) {
-        return this.save(dto);
-    }
-
-    protected DTO save(DTO dto) {
-        CycleAvoidingMappingContext mappingContext = new CycleAvoidingMappingContext();
+        dtoMapper.patchEntity(source, patchDto);
 
         return dtoMapper.toDto(
-                entityRepository.save(dtoMapper.toEntity(dto, mappingContext)),
-                mappingContext
+                this.entityRepository.save(source)
+        );
+    }
+
+    @Transactional
+    public DTO create(DTO dto) {
+        return dtoMapper.toDto(
+                entityRepository.save(
+                        dtoMapper.toEntity(dto)
+                )
         );
     }
 
