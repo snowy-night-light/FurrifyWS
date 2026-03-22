@@ -74,12 +74,13 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     @SuppressWarnings("unchecked")
     protected Class<ENTITY> getEntityClass() {
-        ResolvableType type = ResolvableType.forClass(getClass()).as(BaseEntity.class);
-
-        return (Class<ENTITY>) type.getGeneric(1).resolve();
+        return (Class<ENTITY>) ResolvableType.forClass(getClass())
+                .as(BaseEntityCrudService.class)
+                .getGeneric(0)
+                .resolve();
     }
 
     protected boolean useUserScopeSpec() {
-        return getEntityClass().isAssignableFrom(UserScopedEntity.class);
+        return UserScopedEntity.class.isAssignableFrom(getEntityClass());
     }
 }
