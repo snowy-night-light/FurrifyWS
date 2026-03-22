@@ -3,7 +3,8 @@ package ws.furrify.core.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import ws.furrify.core.utils.SecurityContextUtils;
@@ -23,6 +24,8 @@ public class UserScopedEntity extends BaseEntity {
     protected void onCreate() {
         super.onCreate();
 
-        this.ownerId = SecurityContextUtils.getCurrentSubject().orElseThrow(() -> new RuntimeException("User context was not found when attempting to create user scoped entity."));
+        if (this.ownerId == null) {
+            this.ownerId = SecurityContextUtils.getCurrentSubject().orElseThrow(() -> new RuntimeException("User context was not found when attempting to create user scoped entity."));
+        }
     }
 }

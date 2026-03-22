@@ -4,6 +4,7 @@ import org.mapstruct.*;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.model.CycleAvoidingMappingContext;
+import ws.furrify.core.utils.HibernateLazyLoaderMappingChecker;
 
 import java.util.List;
 
@@ -13,7 +14,8 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
         componentModel = SPRING,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
         builder = @Builder(disableBuilder = true),
-        injectionStrategy = InjectionStrategy.FIELD
+        injectionStrategy = InjectionStrategy.FIELD,
+        uses = HibernateLazyLoaderMappingChecker.class
 )
 @Service
 public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>> {

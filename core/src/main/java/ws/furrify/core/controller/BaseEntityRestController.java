@@ -4,21 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import ws.furrify.core.entity.BaseEntity;
-import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
+import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -28,9 +22,10 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
     private final BaseEntityCrudService<ENTITY, DTO> entityCrudService;
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    protected Optional<DTO> getById(@PathVariable UUID id) {
-        return entityCrudService.findById(id);
+    protected ResponseEntity<DTO> getById(@PathVariable UUID id) {
+        return entityCrudService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping()

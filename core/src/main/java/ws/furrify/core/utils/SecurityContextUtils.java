@@ -15,6 +15,8 @@ import static ws.furrify.core.utils.EntitySpecBuilder.*;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SecurityContextUtils {
 
+    private final static String USER_SCOPE_OWNER_VARIABLE_NAME = "ownerId";
+
     public static Optional<Jwt> getCurrentUserPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -30,6 +32,6 @@ public class SecurityContextUtils {
     }
 
     public static <ENTITY extends BaseEntity> Specification<ENTITY> getUserScopedSecuritySpec() {
-        return EntitySpecBuilder.<ENTITY>specBuilder().where("userId", specEquals(getCurrentSubject().toString())).build().specification();
+        return EntitySpecBuilder.<ENTITY>specBuilder().where(USER_SCOPE_OWNER_VARIABLE_NAME, specEquals(getCurrentSubject().orElseThrow(() -> new IllegalStateException("Current user subject was not found. Cannot construct spec.")))).build().specification();
     }
 }

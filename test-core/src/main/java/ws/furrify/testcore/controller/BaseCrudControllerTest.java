@@ -21,7 +21,7 @@ import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
-import ws.furrify.testcore.config.KeycloakTestConfig;
+import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.config.PostgresTestConfig;
 
 import java.lang.reflect.Type;
@@ -32,7 +32,7 @@ import static io.restassured.RestAssured.given;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Import(value = {PostgresTestConfig.class, KeycloakTestConfig.class})
+@Import(value = {PostgresTestConfig.class, AuthorizationTestConfig.class})
 public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, CREATE_REQ extends BaseCreateEntityRequest<ENTITY, DTO>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
 
     private final ObjectMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
@@ -77,14 +77,15 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
 
     protected abstract void testDelete();
 
-    protected DTO findById(CREATE_REQ createReq) {
+    protected DTO findById(UUID id) {
         return given()
                 .header("Content-Type", "application/json")
-                .body(createReq)
+                .pathParam("id", id)
                 .when()
-                .post(this.basePath)
+                .get(this.basePath + "/{id}")
                 .then()
-                .statusCode(HttpStatus.CREATED.value())
+                .log().all()
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .as(this.dtoClass);
     }
@@ -95,6 +96,7 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
                 .when()
                 .get(this.basePath)
                 .then()
+                .log().all()
                 .statusCode(HttpStatus.OK.value())
                 .extract()
                 .as(pageType);
@@ -107,6 +109,7 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
                 .when()
                 .post(this.basePath)
                 .then()
+                .log().all()
                 .statusCode(HttpStatus.CREATED.value())
                 .extract()
                 .as(this.dtoClass);
@@ -120,6 +123,7 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
                 .when()
                 .patch(this.basePath + "/{id}")
                 .then()
+                .log().all()
                 .statusCode(HttpStatus.OK.value())
                 .extract()
                 .as(this.dtoClass);
@@ -132,6 +136,7 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
                 .when()
                 .delete(this.basePath + "/{id}")
                 .then()
+                .log().all()
                 .statusCode(HttpStatus.OK.value());
     }
 }
