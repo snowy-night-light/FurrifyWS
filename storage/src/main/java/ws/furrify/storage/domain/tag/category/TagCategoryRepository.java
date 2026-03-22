@@ -1,8 +1,8 @@
 package ws.furrify.storage.domain.tag.category;
 
 import org.springframework.stereotype.Repository;
-import ws.furrify.core.entity.UserScopedEntityRepository;
+import ws.furrify.core.entity.BaseEntityRepository;
 
 @Repository
-public interface TagCategoryRepository extends UserScopedEntityRepository<TagCategory> {
+public interface TagCategoryRepository extends BaseEntityRepository<TagCategory> {
 }

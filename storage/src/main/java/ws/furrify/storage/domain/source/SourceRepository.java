@@ -1,8 +1,8 @@
 package ws.furrify.storage.domain.source;
 
 import org.springframework.stereotype.Repository;
-import ws.furrify.core.entity.UserScopedEntityRepository;
+import ws.furrify.core.entity.BaseEntityRepository;
 
 @Repository
-public interface SourceRepository extends UserScopedEntityRepository<Source> {
+public interface SourceRepository extends BaseEntityRepository<Source> {
 }

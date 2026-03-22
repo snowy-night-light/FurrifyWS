@@ -2,14 +2,18 @@ package ws.furrify.core.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.BaseEntityRepository;
+import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.exception.Errors;
 import ws.furrify.core.model.CycleAvoidingMappingContext;
+import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,19 +24,19 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     private final BaseDTOMapper<ENTITY, DTO> dtoMapper;
 
     public Optional<DTO> findById(UUID id) {
-        return entityRepository.findById(id).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
+        return entityRepository.findById(id, getCombinedSpecs()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
     }
 
     public Page<DTO> getAllPaged(Pageable pageable) {
-        return entityRepository.findAll(pageable).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
+        return entityRepository.findAll(pageable, getCombinedSpecs()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext()));
     }
 
     public void deleteById(UUID id) {
-        entityRepository.deleteById(id);
+        entityRepository.deleteById(id, getCombinedSpecs());
     }
 
     public DTO partialUpdateById(UUID id, DTO patchDto) {
-        DTO sourceDTO = entityRepository.findById(id).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext())).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        DTO sourceDTO = entityRepository.findById(id, getCombinedSpecs()).map(ent -> dtoMapper.toDto(ent, new CycleAvoidingMappingContext())).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.patchDTO(sourceDTO, patchDto, new CycleAvoidingMappingContext());
 
@@ -50,5 +54,32 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
                 entityRepository.save(dtoMapper.toEntity(dto, mappingContext)),
                 mappingContext
         );
+    }
+
+    private Specification<ENTITY> getCombinedSpecs() {
+        Specification<ENTITY> userScopedSpec;
+        if (useUserScopeSpec()) {
+            userScopedSpec = SecurityContextUtils.getUserScopedSecuritySpec();
+        } else {
+            userScopedSpec = Specification.unrestricted();
+        }
+
+        return customSecuritySpec()
+                .and(userScopedSpec);
+    }
+
+    protected Specification<ENTITY> customSecuritySpec() {
+        return Specification.unrestricted();
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Class<ENTITY> getEntityClass() {
+        ResolvableType type = ResolvableType.forClass(getClass()).as(BaseEntity.class);
+
+        return (Class<ENTITY>) type.getGeneric(1).resolve();
+    }
+
+    protected boolean useUserScopeSpec() {
+        return getEntityClass().isAssignableFrom(UserScopedEntity.class);
     }
 }

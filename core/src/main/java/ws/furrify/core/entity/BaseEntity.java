@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import ws.furrify.core.utils.EntitySpecBuilder;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.time.ZonedDateTime;
@@ -63,5 +64,9 @@ public abstract class BaseEntity {
     @Override
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    }
+
+    public static <ENTITY extends BaseEntity> EntitySpecBuilder.EntitySpecWhereStep<ENTITY> specBuilder() {
+        return EntitySpecBuilder.<ENTITY>specBuilder();
     }
 }
