@@ -56,12 +56,23 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     @Override
     @Test
     protected void testPatch() {
+        Artist artist = artistRepository.save(Artist.builder().ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
+        PatchArtistRequest request = new PatchArtistRequest();
+
+        ArtistDTO updatedArtist = super.patch(artist.getId(), request);
+
+        assertAll(() -> {
+            assertNotNull(updatedArtist);
+            assertEquals(artist.getId(), updatedArtist.getId());
+        });
     }
 
     @Override
     @Test
     protected void testDelete() {
+        Artist artist = artistRepository.save(Artist.builder().ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
+        assertDoesNotThrow(() -> super.delete(artist.getId()));
     }
 }
