@@ -47,8 +47,8 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     private SourceRepository sourceRepository;
 
     @Autowired
-    protected ArtistV1RestControllerTest(JsonMapper objectMapper) {
-        super(objectMapper);
+    protected ArtistV1RestControllerTest(JsonMapper jsonMapper) {
+        super(jsonMapper);
     }
 
     @Override
