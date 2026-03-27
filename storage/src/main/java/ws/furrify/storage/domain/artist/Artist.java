@@ -12,6 +12,7 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @ToString
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
@@ -21,11 +22,10 @@ public class Artist extends UserScopedEntity {
     @CollectionTable(name = "artist_nicknames", joinColumns = @JoinColumn(name = "artist_id"))
     List<ArtistNickname> nicknames;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @ToString.Exclude
     List<Source> sources;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     Media avatar;
-
 }

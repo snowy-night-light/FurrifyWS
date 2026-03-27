@@ -17,7 +17,7 @@ import ws.furrify.storage.dto.tag.request.PatchTagRequest;
 class TagV1RestController extends BaseEntityRestController<Tag, TagDTO, CreateTagRequest, PatchTagRequest> {
 
     @Autowired
-    public TagV1RestController(BaseRequestMapper<Tag, TagDTO, CreateTagRequest, PatchTagRequest> requestDtoMapper, BaseEntityCrudService<Tag, TagDTO> entityCrudService) {
+    public TagV1RestController(BaseRequestMapper<Tag, TagDTO, CreateTagRequest> requestDtoMapper, BaseEntityCrudService<Tag, TagDTO, PatchTagRequest> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

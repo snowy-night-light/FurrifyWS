@@ -7,12 +7,13 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.dto.media.MediaDTO;
+import ws.furrify.storage.dto.media.request.PatchMediaRequest;
 
 @Service
-public class MediaEntityCrudService extends BaseEntityCrudService<Media, MediaDTO> {
+public class MediaEntityCrudService extends BaseEntityCrudService<Media, MediaDTO, PatchMediaRequest> {
 
     @Autowired
-    public MediaEntityCrudService(BaseEntityRepository<Media> entityRepository, BaseDTOMapper<Media, MediaDTO> dtoMapper) {
+    public MediaEntityCrudService(BaseEntityRepository<Media> entityRepository, BaseDTOMapper<Media, MediaDTO, PatchMediaRequest> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }

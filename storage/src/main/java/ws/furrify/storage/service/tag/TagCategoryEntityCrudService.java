@@ -7,12 +7,13 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.tag.category.TagCategory;
 import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
+import ws.furrify.storage.dto.tag.category.request.PatchTagCategoryRequest;
 
 @Service
-public class TagCategoryEntityCrudService extends BaseEntityCrudService<TagCategory, TagCategoryDTO> {
+public class TagCategoryEntityCrudService extends BaseEntityCrudService<TagCategory, TagCategoryDTO, PatchTagCategoryRequest> {
 
     @Autowired
-    public TagCategoryEntityCrudService(BaseEntityRepository<TagCategory> entityRepository, BaseDTOMapper<TagCategory, TagCategoryDTO> dtoMapper) {
+    public TagCategoryEntityCrudService(BaseEntityRepository<TagCategory> entityRepository, BaseDTOMapper<TagCategory, TagCategoryDTO, PatchTagCategoryRequest> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }

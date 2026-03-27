@@ -16,7 +16,7 @@ import ws.furrify.storage.dto.tag.alias.request.PatchTagAliasRequest;
 class TagAliasV1RestController extends BaseEntityRestController<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> {
 
     @Autowired
-    public TagAliasV1RestController(BaseRequestMapper<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> requestDtoMapper, BaseEntityCrudService<TagAlias, TagAliasDTO> entityCrudService) {
+    public TagAliasV1RestController(BaseRequestMapper<TagAlias, TagAliasDTO, CreateTagAliasRequest> requestDtoMapper, BaseEntityCrudService<TagAlias, TagAliasDTO, PatchTagAliasRequest> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

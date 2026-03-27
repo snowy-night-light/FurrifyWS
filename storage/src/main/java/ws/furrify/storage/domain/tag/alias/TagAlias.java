@@ -12,6 +12,7 @@ import ws.furrify.storage.domain.tag.Tag;
 
 @Entity
 @Getter
+@Setter
 @ToString
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)

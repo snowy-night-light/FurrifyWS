@@ -17,7 +17,7 @@ import ws.furrify.storage.dto.artist.request.PatchArtistRequest;
 class ArtistV1RestController extends BaseEntityRestController<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
 
     @Autowired
-    public ArtistV1RestController(BaseRequestMapper<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> requestDtoMapper, BaseEntityCrudService<Artist, ArtistDTO> entityCrudService) {
+    public ArtistV1RestController(BaseRequestMapper<Artist, ArtistDTO, CreateArtistRequest> requestDtoMapper, BaseEntityCrudService<Artist, ArtistDTO, PatchArtistRequest> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

@@ -8,10 +8,7 @@ import ws.furrify.storage.dto.artist.ArtistDTO;
 @Mapper(
         config = BaseRequestMapper.class
 )
-public interface ArtistRequestMapper extends BaseRequestMapper<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
-    @Override
-    ArtistDTO toDto(PatchArtistRequest patchDto);
-
+public interface ArtistRequestMapper extends BaseRequestMapper<Artist, ArtistDTO, CreateArtistRequest> {
     @Override
     ArtistDTO toDto(CreateArtistRequest createArtistRequest);
 }

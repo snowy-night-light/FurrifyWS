@@ -10,17 +10,16 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
+import ws.furrify.core.model.RestPageImpl;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.config.PostgresTestConfig;
 
@@ -35,7 +34,7 @@ import static io.restassured.RestAssured.given;
 @Import(value = {PostgresTestConfig.class, AuthorizationTestConfig.class})
 public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, CREATE_REQ extends BaseCreateEntityRequest<ENTITY, DTO>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
 
-    private final ObjectMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
+    protected final JsonMapper jsonMapper;
 
     private final String basePath;
     private final Class<DTO> dtoClass;
@@ -45,12 +44,13 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
     protected Integer port;
 
     @SuppressWarnings("unchecked")
-    protected BaseCrudControllerTest() {
+    protected BaseCrudControllerTest(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
         ResolvableType type = ResolvableType.forClass(getClass()).as(BaseCrudControllerTest.class);
 
         this.dtoClass = (Class<DTO>) type.getGeneric(1).resolve();
         this.basePath = getControllerPath();
-        this.pageType = objectMapper.getTypeFactory().constructParametricType(PageImpl.class, this.dtoClass);
+        this.pageType = jsonMapper.getTypeFactory().constructParametricType(RestPageImpl.class, this.dtoClass);
     }
 
     @BeforeEach
@@ -58,7 +58,7 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
         RestAssured.baseURI = "http://localhost:" + port;
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
         RestAssured.config = RestAssuredConfig.config().objectMapperConfig(
-                new ObjectMapperConfig().jackson3ObjectMapperFactory((type, charset) -> objectMapper)
+                new ObjectMapperConfig().jackson3ObjectMapperFactory((type, charset) -> jsonMapper)
         );
         RestAssured.requestSpecification = new RequestSpecBuilder()
                 .addHeader("Authorization", "Bearer mock-token")

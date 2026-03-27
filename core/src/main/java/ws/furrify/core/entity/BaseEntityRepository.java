@@ -2,29 +2,41 @@ package ws.furrify.core.entity;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
+import ws.furrify.core.specification.EntitySpec;
+import ws.furrify.core.specification.EntitySpecResult;
 
 import java.util.Optional;
 import java.util.UUID;
 
+import static ws.furrify.core.specification.EntitySpec.specEquals;
+
 @NoRepositoryBean
 public interface BaseEntityRepository<ENTITY extends BaseEntity> extends JpaRepository<ENTITY, UUID>, JpaSpecificationExecutor<ENTITY> {
 
-    default Optional<ENTITY> findById(UUID id, Specification<ENTITY> spec) {
+    default Optional<ENTITY> findById(UUID id, EntitySpecResult<ENTITY> entitySpec) {
         return findOne(
-                Specification.where(spec)
-                        .and((root, query, cb) -> cb.equal(root.get("id"), id))
+                EntitySpec.<ENTITY>specBuilder().where("id", specEquals(id)).and(entitySpec).build().specification()
         );
     }
 
-    default Page<ENTITY> findAll(Pageable pageable, Specification<ENTITY> spec) {
-        return findAll(spec, pageable);
+    default Page<ENTITY> findAll(Pageable pageable, EntitySpecResult<ENTITY> entitySpec) {
+        return findAll(entitySpec.specification(), pageable);
     }
 
-    default void deleteById(UUID id, Specification<ENTITY> spec) {
-        findById(id, spec).ifPresent(this::delete);
+    default boolean existsById(UUID id, EntitySpecResult<ENTITY> entitySpec) {
+        return exists(
+                EntitySpec.<ENTITY>specBuilder()
+                        .where("id", EntitySpec.specEquals(id))
+                        .and(entitySpec)
+                        .build()
+                        .specification()
+        );
+    }
+
+    default void deleteById(UUID id, EntitySpecResult<ENTITY> entitySpec) {
+        findById(id, entitySpec).ifPresent(this::delete);
     }
 }

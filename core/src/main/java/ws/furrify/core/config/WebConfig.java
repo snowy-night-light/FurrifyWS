@@ -1,7 +1,6 @@
 package ws.furrify.core.config;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.web.filter.ShallowEtagHeaderFilter;
 
@@ -14,5 +13,4 @@ public abstract class WebConfig {
     public ShallowEtagHeaderFilter shallowEtagHeaderFilter() {
         return new ShallowEtagHeaderFilter();
     }
-
 }

@@ -8,10 +8,7 @@ import ws.furrify.storage.dto.media.MediaDTO;
 @Mapper(
         config = BaseRequestMapper.class
 )
-public interface MediaRequestMapper extends BaseRequestMapper<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> {
-    @Override
-    MediaDTO toDto(PatchMediaRequest patchDto);
-
+public interface MediaRequestMapper extends BaseRequestMapper<Media, MediaDTO, CreateMediaRequest> {
     @Override
     MediaDTO toDto(CreateMediaRequest createMediaRequest);
 }

@@ -5,27 +5,34 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
+import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.specification.EntitySpec;
+import ws.furrify.core.specification.EntitySpecResult;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>> {
+public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
     private final BaseEntityRepository<ENTITY> entityRepository;
-    private final BaseDTOMapper<ENTITY, DTO> dtoMapper;
+    private final BaseDTOMapper<ENTITY, DTO, PATCH_REQ> dtoMapper;
 
     @Transactional
     public Optional<DTO> findById(UUID id) {
         return entityRepository.findById(id, getCombinedSpecs()).map(dtoMapper::toDto);
+    }
+
+    @Transactional
+    public boolean existsById(UUID id) {
+        return entityRepository.existsById(id, getCombinedSpecs());
     }
 
     @Transactional
@@ -39,7 +46,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     @Transactional
-    public DTO partialUpdateById(UUID id, DTO patchDto) {
+    public DTO patchById(UUID id, PATCH_REQ patchDto) {
         ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.patchEntity(source, patchDto);
@@ -58,20 +65,19 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         );
     }
 
-    private Specification<ENTITY> getCombinedSpecs() {
-        Specification<ENTITY> userScopedSpec;
+    private EntitySpecResult<ENTITY> getCombinedSpecs() {
+        EntitySpecResult<ENTITY> userScopedSpec;
         if (useUserScopeSpec()) {
             userScopedSpec = SecurityContextUtils.getUserScopedSecuritySpec();
         } else {
-            userScopedSpec = Specification.unrestricted();
+            userScopedSpec = EntitySpec.unrestricted();
         }
 
-        return customSecuritySpec()
-                .and(userScopedSpec);
+        return EntitySpec.from(customSecuritySpec()).and(userScopedSpec).build();
     }
 
-    protected Specification<ENTITY> customSecuritySpec() {
-        return Specification.unrestricted();
+    protected EntitySpecResult<ENTITY> customSecuritySpec() {
+        return EntitySpec.unrestricted();
     }
 
     @SuppressWarnings("unchecked")

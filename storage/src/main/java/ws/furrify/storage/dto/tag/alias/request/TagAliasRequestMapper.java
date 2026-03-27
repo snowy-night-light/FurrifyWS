@@ -8,10 +8,7 @@ import ws.furrify.storage.dto.tag.alias.TagAliasDTO;
 @Mapper(
         config = BaseRequestMapper.class
 )
-public interface TagAliasRequestMapper extends BaseRequestMapper<TagAlias, TagAliasDTO, CreateTagAliasRequest, PatchTagAliasRequest> {
-    @Override
-    TagAliasDTO toDto(PatchTagAliasRequest patchDto);
-
+public interface TagAliasRequestMapper extends BaseRequestMapper<TagAlias, TagAliasDTO, CreateTagAliasRequest> {
     @Override
     TagAliasDTO toDto(CreateTagAliasRequest createTagAliasRequest);
 }

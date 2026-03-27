@@ -8,10 +8,7 @@ import ws.furrify.storage.dto.post.PostDTO;
 @Mapper(
         config = BaseRequestMapper.class
 )
-public interface PostRequestMapper extends BaseRequestMapper<Post, PostDTO, CreatePostRequest, PatchPostRequest> {
-    @Override
-    PostDTO toDto(PatchPostRequest patchDto);
-
+public interface PostRequestMapper extends BaseRequestMapper<Post, PostDTO, CreatePostRequest> {
     @Override
     PostDTO toDto(CreatePostRequest createPostRequest);
 }

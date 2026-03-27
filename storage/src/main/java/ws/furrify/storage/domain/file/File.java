@@ -13,6 +13,7 @@ import java.net.URI;
 
 @Entity
 @Getter
+@Setter
 @ToString
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)

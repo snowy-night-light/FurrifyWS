@@ -8,10 +8,7 @@ import ws.furrify.storage.dto.file.FileDTO;
 @Mapper(
         config = BaseRequestMapper.class
 )
-public interface FileRequestMapper extends BaseRequestMapper<File, FileDTO, CreateFileRequest, PatchFileRequest> {
-    @Override
-    FileDTO toDto(PatchFileRequest patchDto);
-
+public interface FileRequestMapper extends BaseRequestMapper<File, FileDTO, CreateFileRequest> {
     @Override
     FileDTO toDto(CreateFileRequest createFileRequest);
 }

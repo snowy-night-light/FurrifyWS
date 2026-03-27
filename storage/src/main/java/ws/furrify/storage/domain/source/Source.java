@@ -1,5 +1,6 @@
 package ws.furrify.storage.domain.source;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import lombok.*;
@@ -10,11 +11,13 @@ import ws.furrify.storage.domain.source.strategy.SourceStrategy;
 
 @Entity
 @Getter
+@Setter
 @ToString
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Source extends UserScopedEntity {
     @Convert(converter = StrategyDBConverter.class)
+    @Column(nullable = false)
     SourceStrategy strategy;
 }

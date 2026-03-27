@@ -1,5 +1,6 @@
 package ws.furrify.core.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +19,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, CREATE_REQ extends BaseCreateEntityRequest<ENTITY, DTO>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
 
-    private final BaseRequestMapper<ENTITY, DTO, CREATE_REQ, PATCH_REQ> requestDtoMapper;
-    private final BaseEntityCrudService<ENTITY, DTO> entityCrudService;
+    private final BaseRequestMapper<ENTITY, DTO, CREATE_REQ> requestDtoMapper;
+    private final BaseEntityCrudService<ENTITY, DTO, PATCH_REQ> entityCrudService;
 
     @GetMapping("/{id}")
     protected ResponseEntity<DTO> getById(@PathVariable UUID id) {
@@ -36,14 +37,14 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    protected DTO save(@RequestBody CREATE_REQ dto) {
+    protected DTO save(@RequestBody @Valid CREATE_REQ dto) {
         return entityCrudService.create(requestDtoMapper.toDto(dto));
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    protected DTO patch(@PathVariable UUID id, @RequestBody PATCH_REQ patchRequestDto) {
-        return entityCrudService.partialUpdateById(id, requestDtoMapper.toDto(patchRequestDto));
+    protected DTO patch(@PathVariable UUID id, @RequestBody @Valid PATCH_REQ patchRequestDto) {
+        return entityCrudService.patchById(id, patchRequestDto);
     }
 
     @DeleteMapping("/{id}")

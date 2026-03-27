@@ -1,10 +1,14 @@
 package ws.furrify.core.entity.dto;
 
 import org.mapstruct.*;
-import org.springframework.stereotype.Service;
+import org.openapitools.jackson.nullable.JsonNullable;
 import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.core.entity.request.BasePatchEntityRequest;
+import ws.furrify.core.entity.request.EntityIdRequest;
+import ws.furrify.core.mappers.EntityReferenceMapper;
+import ws.furrify.core.mappers.HibernateLazyLoaderMappingChecker;
+import ws.furrify.core.mappers.JsonNullableMapper;
 import ws.furrify.core.model.CycleAvoidingMappingContext;
-import ws.furrify.core.utils.HibernateLazyLoaderMappingChecker;
 
 import java.util.List;
 
@@ -12,15 +16,15 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @MapperConfig(
         componentModel = SPRING,
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL,
         builder = @Builder(disableBuilder = true),
         injectionStrategy = InjectionStrategy.FIELD,
-        uses = HibernateLazyLoaderMappingChecker.class
+        uses = {JsonNullableMapper.class, HibernateLazyLoaderMappingChecker.class, EntityReferenceMapper.class}
 )
-@Service
-public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>> {
+public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, PATCH_DTO extends BasePatchEntityRequest<ENTITY, DTO>> {
+
     @Named("patchEntityDefault")
-    default void patchEntity(ENTITY source, DTO patchDto) {
+    default void patchEntity(ENTITY source, PATCH_DTO patchDto) {
         patchEntity(source, patchDto, new CycleAvoidingMappingContext());
     }
 
@@ -44,7 +48,7 @@ public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntity
         return toDtoList(entityList, new CycleAvoidingMappingContext());
     }
 
-    void patchEntity(@MappingTarget ENTITY source, DTO patchDto, @Context CycleAvoidingMappingContext context);
+    void patchEntity(@MappingTarget ENTITY source, PATCH_DTO patchDto, @Context CycleAvoidingMappingContext context);
 
     ENTITY toEntity(DTO dto, @Context CycleAvoidingMappingContext context);
 
@@ -53,4 +57,20 @@ public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntity
     List<ENTITY> toEntityList(List<DTO> dtoList, @Context CycleAvoidingMappingContext context);
 
     List<DTO> toDtoList(List<ENTITY> entityList, @Context CycleAvoidingMappingContext context);
+
+    ENTITY mapIdToEntity(EntityIdRequest request);
+
+    default ENTITY updateEntityId(EntityIdRequest request, @MappingTarget ENTITY existingTarget) {
+        if (request == null) {
+            return null;
+        }
+        return mapIdToEntity(request);
+    }
+
+    default List<ENTITY> mapJsonNullableIdList(JsonNullable<List<EntityIdRequest>> value) {
+        if (value == null || !value.isPresent() || value.get() == null) {
+            return null;
+        }
+        return value.get().stream().map(this::mapIdToEntity).toList();
+    }
 }

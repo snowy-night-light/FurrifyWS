@@ -16,7 +16,7 @@ import ws.furrify.storage.dto.media.request.PatchMediaRequest;
 class MediaV1RestController extends BaseEntityRestController<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> {
 
     @Autowired
-    public MediaV1RestController(BaseRequestMapper<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> requestDtoMapper, BaseEntityCrudService<Media, MediaDTO> entityCrudService) {
+    public MediaV1RestController(BaseRequestMapper<Media, MediaDTO, CreateMediaRequest> requestDtoMapper, BaseEntityCrudService<Media, MediaDTO, PatchMediaRequest> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

@@ -8,10 +8,7 @@ import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
 @Mapper(
         config = BaseRequestMapper.class
 )
-public interface TagCategoryRequestMapper extends BaseRequestMapper<TagCategory, TagCategoryDTO, CreateTagCategoryRequest, PatchTagCategoryRequest> {
-    @Override
-    TagCategoryDTO toDto(PatchTagCategoryRequest patchDto);
-
+public interface TagCategoryRequestMapper extends BaseRequestMapper<TagCategory, TagCategoryDTO, CreateTagCategoryRequest> {
     @Override
     TagCategoryDTO toDto(CreateTagCategoryRequest createTagCategoryRequest);
 }

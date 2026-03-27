@@ -16,7 +16,7 @@ import ws.furrify.storage.dto.file.request.PatchFileRequest;
 class FileV1RestController extends BaseEntityRestController<File, FileDTO, CreateFileRequest, PatchFileRequest> {
 
     @Autowired
-    public FileV1RestController(BaseRequestMapper<File, FileDTO, CreateFileRequest, PatchFileRequest> requestDtoMapper, BaseEntityCrudService<File, FileDTO> entityCrudService) {
+    public FileV1RestController(BaseRequestMapper<File, FileDTO, CreateFileRequest> requestDtoMapper, BaseEntityCrudService<File, FileDTO, PatchFileRequest> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
 }

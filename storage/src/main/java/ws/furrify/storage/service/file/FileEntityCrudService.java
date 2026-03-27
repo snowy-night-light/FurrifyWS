@@ -7,12 +7,13 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.file.File;
 import ws.furrify.storage.dto.file.FileDTO;
+import ws.furrify.storage.dto.file.request.PatchFileRequest;
 
 @Service
-public class FileEntityCrudService extends BaseEntityCrudService<File, FileDTO> {
+public class FileEntityCrudService extends BaseEntityCrudService<File, FileDTO, PatchFileRequest> {
 
     @Autowired
-    public FileEntityCrudService(BaseEntityRepository<File> entityRepository, BaseDTOMapper<File, FileDTO> dtoMapper) {
+    public FileEntityCrudService(BaseEntityRepository<File> entityRepository, BaseDTOMapper<File, FileDTO, PatchFileRequest> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }

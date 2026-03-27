@@ -12,6 +12,7 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @ToString
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
@@ -31,4 +32,5 @@ public class Post extends UserScopedEntity {
     List<Media> displayMediaList;
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     List<Media> attachments;
+
 }

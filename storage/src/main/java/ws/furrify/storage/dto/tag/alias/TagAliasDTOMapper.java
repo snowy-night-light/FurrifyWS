@@ -5,11 +5,12 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.model.CycleAvoidingMappingContext;
 import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.dto.tag.TagDTO;
+import ws.furrify.storage.dto.tag.alias.request.PatchTagAliasRequest;
 
 @Mapper(
         config = BaseDTOMapper.class
 )
-public interface TagAliasDTOMapper extends BaseDTOMapper<TagAlias, TagAliasDTO> {
+public interface TagAliasDTOMapper extends BaseDTOMapper<TagAlias, TagAliasDTO, PatchTagAliasRequest> {
 
     @Override
     @Mapping(target = "targetTag", ignore = true)

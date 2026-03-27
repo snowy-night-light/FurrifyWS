@@ -5,6 +5,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import ws.furrify.core.utils.SecurityContextUtils;
@@ -15,8 +16,9 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @Getter
+@Setter
 @SuperBuilder(toBuilder = true)
-public class UserScopedEntity extends BaseEntity {
+public abstract class UserScopedEntity extends BaseEntity {
     @Column(nullable = false)
     UUID ownerId;
 
@@ -28,4 +30,5 @@ public class UserScopedEntity extends BaseEntity {
             this.ownerId = SecurityContextUtils.getCurrentSubject().orElseThrow(() -> new RuntimeException("User context was not found when attempting to create user scoped entity."));
         }
     }
+
 }

@@ -10,6 +10,7 @@ import ws.furrify.core.entity.UserScopedEntity;
 
 @Entity
 @Getter
+@Setter
 @ToString
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)

@@ -3,11 +3,13 @@ package ws.furrify.core.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import ws.furrify.core.utils.EntitySpecBuilder;
+import ws.furrify.core.specification.EntitySpec;
+import ws.furrify.core.specification.EntitySpecWhereStep;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.time.ZonedDateTime;
@@ -18,6 +20,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @Getter
+@Setter
 @SuperBuilder(toBuilder = true)
 public abstract class BaseEntity {
     public final static String DEFAULT_SUBJECT = "SYSTEM";
@@ -66,7 +69,7 @@ public abstract class BaseEntity {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
 
-    public static <ENTITY extends BaseEntity> EntitySpecBuilder.EntitySpecWhereStep<ENTITY> specBuilder() {
-        return EntitySpecBuilder.<ENTITY>specBuilder();
+    public static <ENTITY extends BaseEntity> EntitySpecWhereStep<ENTITY> specBuilder() {
+        return EntitySpec.specBuilder();
     }
 }

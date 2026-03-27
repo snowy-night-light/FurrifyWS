@@ -7,12 +7,13 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.dto.tag.alias.TagAliasDTO;
+import ws.furrify.storage.dto.tag.alias.request.PatchTagAliasRequest;
 
 @Service
-public class TagAliasEntityCrudService extends BaseEntityCrudService<TagAlias, TagAliasDTO> {
+public class TagAliasEntityCrudService extends BaseEntityCrudService<TagAlias, TagAliasDTO, PatchTagAliasRequest> {
 
     @Autowired
-    public TagAliasEntityCrudService(BaseEntityRepository<TagAlias> entityRepository, BaseDTOMapper<TagAlias, TagAliasDTO> dtoMapper) {
+    public TagAliasEntityCrudService(BaseEntityRepository<TagAlias> entityRepository, BaseDTOMapper<TagAlias, TagAliasDTO, PatchTagAliasRequest> dtoMapper) {
         super(entityRepository, dtoMapper);
     }
 }
