@@ -66,7 +66,6 @@ public class EntitySpec {
 
             Object parsedValue = rawValue.matches(UUID_REGEX) ? UUID.fromString(rawValue) : rawValue;
 
-            // Explicitly provide <ENTITY> to the static methods
             EntitySpecExpression<ENTITY> expr = switch (operator.trim()) {
                 case "=" -> EntitySpec.specEquals(parsedValue);
                 case "!=" -> EntitySpec.specNotEquals(parsedValue);
