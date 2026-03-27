@@ -3,11 +3,13 @@ package ws.furrify.storage.controller;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.util.MimeType;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.core.entity.request.EntityIdRequest;
+import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.ArtistRepository;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
@@ -29,6 +31,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest(
+        classes = StorageApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
 public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
 
     @Autowired
