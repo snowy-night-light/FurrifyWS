@@ -51,7 +51,7 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
     public void deleteById(UUID id) {
         super.deleteById(id);
 
-        fileMassStorageStrategy.removeFile(id);
+        fileMassStorageStrategy.removeFileDirectory(id);
     }
 
     @Transactional
@@ -115,7 +115,7 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
     @Transactional
     protected void uploadFile(AttachmentFileDTO dto, File file, boolean replaceExisting) {
         try {
-            UploadedFileReference uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getMimeType(), file, replaceExisting);
+            UploadedFileReference uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getId(), dto.getMimeType(), file, replaceExisting);
             dto.setFileUri(uploadedFileRef.getFileUri());
             dto.setThumbnailUri(uploadedFileRef.getThumbnailUri());
 
@@ -128,8 +128,7 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
         } catch (Exception e) {
             log.warn("Failed to upload attachment file.", e);
 
-            fileMassStorageStrategy.removeFileIfPresent(dto.getId());
-            fileMassStorageStrategy.removeThumbnailFileIfPresent(dto.getId());
+            fileMassStorageStrategy.removeFileDirectory(dto.getId());
             markFileAsCorrupted(dto.getId());
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(dto.getFileName()));
