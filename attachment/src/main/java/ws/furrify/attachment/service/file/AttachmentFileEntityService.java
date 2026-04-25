@@ -25,6 +25,7 @@ import ws.furrify.core.service.BaseEntityCrudService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -55,19 +56,21 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
 
     @Transactional
     public AttachmentFileDTO createWithFileUpload(AttachmentFileDTO dto, MultipartFile multipartFile) {
-        File file;
+
+        dto.setUploadStatus(FileUploadStatus.NOT_UPLOADED);
 
         try {
-            file = multipartFile.getResource().getFile();
+            File tempFile = Files.createTempFile("upload-", multipartFile.getOriginalFilename()).toFile();
+            multipartFile.transferTo(tempFile);
 
-            extractFileMetadataToDto(dto, file);
-            generateFileHashes(dto, file);
+            extractFileMetadataToDto(dto, tempFile);
+            generateFileHashes(dto, tempFile);
 
             AttachmentFileDTO createdDto = super.create(dto);
-            uploadFile(createdDto, file, false);
+            uploadFile(createdDto, tempFile, false);
 
             return createdDto;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.warn("Failed to process attachment file uploaded data.", e);
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(dto.getFileName()));
@@ -80,18 +83,17 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
     public AttachmentFileDTO patchWithFileUpload(UUID id, PatchAttachmentFileRequest patchDto, @NotNull MultipartFile multipartFile) {
         AttachmentFileDTO patchedDto = super.patchById(id, patchDto);
 
-        File file;
-
         try {
-            file = multipartFile.getResource().getFile();
+            File tempFile = Files.createTempFile("upload-", multipartFile.getOriginalFilename()).toFile();
+            multipartFile.transferTo(tempFile);
 
-            extractFileMetadataToDto(patchedDto, file);
-            generateFileHashes(patchedDto, file);
+            extractFileMetadataToDto(patchedDto, tempFile);
+            generateFileHashes(patchedDto, tempFile);
 
-            uploadFile(patchedDto, file, true);
+            uploadFile(patchedDto, tempFile, true);
 
             return patchedDto;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.warn("Failed to process attachment file uploaded data.", e);
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(patchedDto.getFileName()));
@@ -115,9 +117,12 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
         try {
             UploadedFileReference uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getMimeType(), file, replaceExisting);
             dto.setFileUri(uploadedFileRef.getFileUri());
+            dto.setThumbnailUri(uploadedFileRef.getThumbnailUri());
 
             dto.setUploadStatus(FileUploadStatus.UPLOADED);
             dto.setStorageServiceId(fileMassStorageStrategy.getStorageServiceId());
+
+            dto.setFileSize(file.length());
 
             putById(dto.getId(), dto);
         } catch (Exception e) {
