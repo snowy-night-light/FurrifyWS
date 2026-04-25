@@ -6,10 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.media.Media;
-import ws.furrify.storage.dto.file.FileDTO;
 import ws.furrify.storage.dto.source.SourceDTO;
 
 import java.util.List;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -18,7 +18,7 @@ import java.util.List;
 public class MediaDTO extends UserScopedEntityDTO<Media> {
     private Integer priority;
 
-    private FileDTO file;
+    private UUID fileId;
 
     private List<SourceDTO> sources;
 }

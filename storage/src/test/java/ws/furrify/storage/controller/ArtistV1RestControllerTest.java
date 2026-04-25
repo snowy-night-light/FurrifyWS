@@ -6,15 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.util.MimeType;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.ArtistRepository;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
-import ws.furrify.storage.domain.file.File;
-import ws.furrify.storage.domain.file.FileRepository;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.media.MediaRepository;
 import ws.furrify.storage.domain.source.Source;
@@ -26,8 +23,8 @@ import ws.furrify.storage.mocks.MockSourceStrategyImpl;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
-import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,8 +38,6 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     private MediaRepository mediaRepository;
     @Autowired
     private ArtistRepository artistRepository;
-    @Autowired
-    private FileRepository fileRepository;
     @Autowired
     private SourceRepository sourceRepository;
 
@@ -59,8 +54,7 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     @Override
     @Test
     protected void testCreate() {
-        File file = fileRepository.save(File.builder().fileHash("test").fileName("test.png").fileUri(URI.create("https://example.com")).thumbnailUri(URI.create("https://example.com")).mimeType(new MimeType("image", "png")).fileSize(321L).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Media avatar = mediaRepository.save(Media.builder().sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).priority(0).file(file).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Media avatar = mediaRepository.save(Media.builder().sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).priority(0).fileId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         List<Source> sources = List.of(
                 sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
@@ -116,8 +110,7 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     @Override
     @Test
     protected void testPatch() {
-        File file = fileRepository.save(File.builder().fileHash("test").fileName("test.png").fileUri(URI.create("https://example.com")).thumbnailUri(URI.create("https://example.com")).mimeType(new MimeType("image", "png")).fileSize(321L).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Media avatar = mediaRepository.save(Media.builder().sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).priority(0).file(file).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Media avatar = mediaRepository.save(Media.builder().sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).priority(0).fileId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().avatar(avatar).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchArtistRequest request = new PatchArtistRequest();
@@ -126,8 +119,7 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
                 ArtistNickname.of("Tester", 2)
         )));
 
-        File newFile = fileRepository.save(File.builder().fileHash("test").fileName("test.png").fileUri(URI.create("https://example.com")).thumbnailUri(URI.create("https://example.com")).mimeType(new MimeType("image", "png")).fileSize(321L).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Media newAvatar = mediaRepository.save(Media.builder().priority(1).file(newFile).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Media newAvatar = mediaRepository.save(Media.builder().priority(1).fileId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         request.setAvatar(JsonNullable.of(EntityIdRequest.builder().id(newAvatar.getId()).build()));
 
         List<Source> newSources = List.of(

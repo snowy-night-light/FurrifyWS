@@ -16,6 +16,7 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @MapperConfig(
         componentModel = SPRING,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL,
         builder = @Builder(disableBuilder = true),
         injectionStrategy = InjectionStrategy.FIELD,
@@ -24,6 +25,11 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, PATCH_DTO extends BasePatchEntityRequest<ENTITY, DTO>> {
 
     @Named("patchEntityDefault")
+    default void putEntity(ENTITY source, DTO putDto) {
+        putEntity(source, putDto, new CycleAvoidingMappingContext());
+    }
+
+    @Named("putEntityDefault")
     default void patchEntity(ENTITY source, PATCH_DTO patchDto) {
         patchEntity(source, patchDto, new CycleAvoidingMappingContext());
     }
@@ -47,6 +53,10 @@ public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntity
     default List<DTO> toDtoList(List<ENTITY> entityList) {
         return toDtoList(entityList, new CycleAvoidingMappingContext());
     }
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+    void putEntity(@MappingTarget ENTITY source, DTO putDto, @Context CycleAvoidingMappingContext context);
 
     void patchEntity(@MappingTarget ENTITY source, PATCH_DTO patchDto, @Context CycleAvoidingMappingContext context);
 
