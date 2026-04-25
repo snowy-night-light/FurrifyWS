@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.exception.Errors;
-import ws.furrify.core.exception.StrategyRegistryException;
+import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.model.StrategyIntf;
 
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class StrategyRegistryService implements ApplicationContextAware {
 
     public StrategyIntf deserializeStrategy(String name) {
         if (!strategyMap.containsKey(name)) {
-            throw new StrategyRegistryException(Errors.STRATEGY_NOT_FOUND.getErrorMessage(name));
+            throw new ServiceLogicException(Errors.STRATEGY_NOT_FOUND.getErrorMessage(name));
         }
 
         return strategyMap.get(name);

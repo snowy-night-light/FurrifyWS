@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
-import ws.furrify.storage.domain.file.File;
 import ws.furrify.storage.domain.source.Source;
 
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -22,9 +22,8 @@ public class Media extends UserScopedEntity {
     @Column(nullable = false)
     Integer priority;
 
-    @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     @NotNull
-    File file;
+    UUID fileId;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Source> sources;

@@ -2,6 +2,7 @@ package ws.furrify.core.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Slf4j
 public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
     private final BaseEntityRepository<ENTITY> entityRepository;
     private final BaseDTOMapper<ENTITY, DTO, PATCH_REQ> dtoMapper;
@@ -50,6 +52,17 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.patchEntity(source, patchDto);
+
+        return dtoMapper.toDto(
+                this.entityRepository.save(source)
+        );
+    }
+
+    @Transactional
+    protected DTO putById(UUID id, DTO dto) {
+        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+
+        dtoMapper.putEntity(source, dto);
 
         return dtoMapper.toDto(
                 this.entityRepository.save(source)
