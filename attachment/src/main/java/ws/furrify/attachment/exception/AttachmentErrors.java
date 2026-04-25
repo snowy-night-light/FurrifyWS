@@ -20,6 +20,8 @@ public enum AttachmentErrors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      */
+    VIDEO_FRAME_EXTRACTION_FAILED("Failed to extract thumbnail from video file: {0}"),
+    ATTACHMENT_FILE_DIRECTORY_REMOVE_FAILURE("Failed to remove attachment file directory for id: {0}"),
     FILE_PROCESSING_FAILURE("Failed to process uploaded file with filename: {0}");
 
     private final String errorMessage;

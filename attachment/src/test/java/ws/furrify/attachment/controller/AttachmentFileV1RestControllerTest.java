@@ -24,7 +24,7 @@ import ws.furrify.attachment.dto.file.AttachmentFileDTO;
 import ws.furrify.attachment.dto.file.request.CreateAttachmentFileRequest;
 import ws.furrify.attachment.dto.file.request.PatchAttachmentFileRequest;
 import ws.furrify.attachment.service.file.storage.FileMassStorageStrategy;
-import ws.furrify.attachment.strategy.hash.storage.MockFileMassStorageStrategy;
+import ws.furrify.attachment.strategy.storage.MockFileMassStorageStrategy;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
@@ -54,8 +54,8 @@ public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<A
     protected void beforeEach() {
         MockFileMassStorageStrategy mockFileMassStorageStrategy = new MockFileMassStorageStrategy();
 
-        Mockito.when(fileMassStorageStrategy.uploadFile(any(), any(), anyBoolean()))
-                .thenAnswer(invocation -> mockFileMassStorageStrategy.uploadFile(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2)));
+        Mockito.when(fileMassStorageStrategy.uploadFile(any(), any(), any(), anyBoolean()))
+                .thenAnswer(invocation -> mockFileMassStorageStrategy.uploadFile(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
         Mockito.when(fileMassStorageStrategy.getStorageServiceId())
                 .thenReturn(mockFileMassStorageStrategy.getStorageServiceId());
     }
