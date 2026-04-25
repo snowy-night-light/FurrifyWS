@@ -23,7 +23,9 @@ import ws.furrify.core.model.RestPageImpl;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.config.PostgresTestConfig;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -36,8 +38,8 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
 
     protected final JsonMapper jsonMapper;
 
-    private final String basePath;
-    private final Class<DTO> dtoClass;
+    protected final String basePath;
+    protected final Class<DTO> dtoClass;
     private final Type pageType;
 
     @LocalServerPort
@@ -67,7 +69,7 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
 
     protected abstract String getControllerPath();
 
-    protected abstract void testCreate();
+    protected abstract void testCreate() throws IOException, URISyntaxException;
 
     protected abstract void testFindById();
 

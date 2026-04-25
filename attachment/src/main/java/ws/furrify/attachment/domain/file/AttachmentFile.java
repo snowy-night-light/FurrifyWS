@@ -1,8 +1,8 @@
 package ws.furrify.attachment.domain.file;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.util.MimeType;
@@ -24,29 +24,29 @@ public class AttachmentFile extends UserScopedEntity {
     @NotBlank
     private String fileName;
 
-    @Column(nullable = false)
-    @NotBlank
+    @Column(nullable = true)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "attachment_file_hashes", joinColumns = @JoinColumn(name = "attachment_file_id"))
     private List<AttachmentFileHash> fileHashes;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = true, length = 255)
     private MimeType mimeType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @NotNull
     private FileUploadStatus uploadStatus;
 
-    @Min(1)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Long fileSize;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private URI fileUri;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private URI thumbnailUri;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String storageServiceId;
+
 }

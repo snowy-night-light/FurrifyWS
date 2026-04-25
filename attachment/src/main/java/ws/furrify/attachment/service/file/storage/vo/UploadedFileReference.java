@@ -2,7 +2,6 @@ package ws.furrify.attachment.service.file.storage.vo;
 
 import jakarta.persistence.Embeddable;
 import lombok.*;
-import ws.furrify.attachment.service.file.storage.FileMassStorageStrategy;
 
 import java.net.URI;
 
@@ -18,5 +17,5 @@ public class UploadedFileReference {
     private URI thumbnailUri;
 
     @NonNull
-    private FileMassStorageStrategy storageStrategy;
+    private String storageStrategyId;
 }
