@@ -186,6 +186,11 @@
             <groupId>org.bytedeco</groupId>
             <artifactId>javacv-platform</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-transcoder</artifactId>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

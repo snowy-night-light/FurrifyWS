@@ -36,6 +36,7 @@
         <thumbnailator.version>0.4.21</thumbnailator.version>
         <twelvemonkeys.bom.version>3.13.1</twelvemonkeys.bom.version>
         <javacv-platform.version>1.5.13</javacv-platform.version>
+        <batik-transcoder.version>1.19</batik-transcoder.version>
     </properties>
 
     <dependencyManagement>
@@ -119,6 +120,11 @@
                 <groupId>org.bytedeco</groupId>
                 <artifactId>javacv-platform</artifactId>
                 <version>${javacv-platform.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-transcoder</artifactId>
+                <version>${batik-transcoder.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
