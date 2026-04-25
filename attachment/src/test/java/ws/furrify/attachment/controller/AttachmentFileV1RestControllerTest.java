@@ -29,7 +29,6 @@ import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -100,7 +99,7 @@ public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<A
 
     @Override
     @Test
-    protected void testCreate() throws IOException, URISyntaxException {
+    protected void testCreate() throws URISyntaxException {
         String filename = "test.png";
 
         URL resourceUrl = getClass().getClassLoader().getResource("files/image/example.png");
