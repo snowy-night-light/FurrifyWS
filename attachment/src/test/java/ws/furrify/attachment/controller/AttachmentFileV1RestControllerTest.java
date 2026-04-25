@@ -103,7 +103,7 @@ public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<A
     protected void testCreate() throws IOException, URISyntaxException {
         String filename = "test.png";
 
-        URL resourceUrl = getClass().getClassLoader().getResource("files/example.png");
+        URL resourceUrl = getClass().getClassLoader().getResource("files/image/example.png");
         assert resourceUrl != null;
         File file = new File(resourceUrl.toURI());
 
@@ -185,7 +185,7 @@ public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<A
     protected void testPatch() {
         String filename = "test.jpg";
 
-        URL resourceUrl = getClass().getClassLoader().getResource("files/example.jpg");
+        URL resourceUrl = getClass().getClassLoader().getResource("files/image/example.jpg");
         assert resourceUrl != null;
         File file = new File(resourceUrl.toURI());
 
@@ -226,71 +226,4 @@ public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<A
 
         assertDoesNotThrow(() -> super.delete(attachmentFile.getId()));
     }
-//
-//    @Override
-//    @Test
-//    protected void testFindById() {
-//        AttachmentFile AttachmentFile = attachmentFileRepository.save(AttachmentFile.builder().ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//
-//        AttachmentFileDTO foundAttachmentFile = super.findById(AttachmentFile.getId());
-//
-//        assertAll(() -> {
-//            assertNotNull(foundAttachmentFile);
-//            assertEquals(AttachmentFile.getId(), foundAttachmentFile.getId());
-//        });
-//    }
-//
-//    @Override
-//    @Test
-//    protected void testFindAll() {
-//        AttachmentFile AttachmentFile = attachmentFileRepository.save(AttachmentFile.builder().ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//        AttachmentFile attachmentFile2 = attachmentFileRepository.save(AttachmentFile.builder().ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//
-//        Page<AttachmentFileDTO> attachmentFiles = super.findAll(PageRequest.of(0, 10));
-//
-//        assertAll(() -> {
-//            assertNotNull(attachmentFiles);
-//            assertEquals(2, attachmentFiles.getContent().size());
-//        });
-//    }
-//
-//    @Override
-//    @Test
-//    protected void testPatch() {
-//        Media avatar = mediaRepository.save(Media.builder().sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).priority(0).fileId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//        AttachmentFile AttachmentFile = attachmentFileRepository.save(AttachmentFile.builder().avatar(avatar).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//
-//        PatchAttachmentFileRequest request = new PatchAttachmentFileRequest();
-//        request.setNicknames(JsonNullable.of(List.of(
-//                AttachmentFileNickname.of("Test_nickname", 1),
-//                AttachmentFileNickname.of("Tester", 2)
-//        )));
-//
-//        Media newAvatar = mediaRepository.save(Media.builder().priority(1).fileId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//        request.setAvatar(JsonNullable.of(EntityIdRequest.builder().id(newAvatar.getId()).build()));
-//
-//        List<Source> newSources = List.of(
-//                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
-//        );
-//        request.setSources(
-//                JsonNullable.of(newSources.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList())
-//        );
-//
-//        AttachmentFileDTO updatedAttachmentFile = super.patch(AttachmentFile.getId(), request);
-//
-//        assertAll(() -> {
-//            assertNotNull(updatedAttachmentFile);
-//            assertEquals(AttachmentFile.getId(), updatedAttachmentFile.getId());
-//            assertEquals(newAvatar.getId(), updatedAttachmentFile.getAvatar().getId());
-//            assertEquals(2, updatedAttachmentFile.getNicknames().size());
-//        });
-//    }
-//
-//    @Override
-//    @Test
-//    protected void testDelete() {
-//        AttachmentFile AttachmentFile = attachmentFileRepository.save(AttachmentFile.builder().ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-//
-//        assertDoesNotThrow(() -> super.delete(AttachmentFile.getId()));
-//    }
 }

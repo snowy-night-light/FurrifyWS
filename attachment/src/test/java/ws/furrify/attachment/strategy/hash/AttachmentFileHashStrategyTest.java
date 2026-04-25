@@ -16,7 +16,7 @@ public abstract class AttachmentFileHashStrategyTest {
 
     @SneakyThrows
     private File getExampleFile() {
-        URL resourceUrl = getClass().getClassLoader().getResource("files/example.png");
+        URL resourceUrl = getClass().getClassLoader().getResource("files/image/example.png");
         assert resourceUrl != null;
         return new File(resourceUrl.toURI());
     }

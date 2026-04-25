@@ -49,7 +49,8 @@ public class ThumbnailGenerator {
             MediaType.valueOf("image/vnd.wap.wbmp"),
             MediaType.valueOf("image/vnd.ms-dds"),
             MediaType.valueOf("image/webp"),
-            MediaType.valueOf("image/x-xwindowdump"),
+            MediaType.valueOf("image/svg"),
+            MediaType.valueOf("image/svg+xml"),
             MediaType.IMAGE_GIF
     );
 
