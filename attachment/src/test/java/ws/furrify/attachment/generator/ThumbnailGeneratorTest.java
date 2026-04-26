@@ -1,5 +1,7 @@
 package ws.furrify.attachment.generator;
 
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -11,6 +13,7 @@ import java.net.URL;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ThumbnailGeneratorTest {
 
@@ -18,7 +21,7 @@ public class ThumbnailGeneratorTest {
 
     @ParameterizedTest()
     @MethodSource("getImageTestFiles")
-    void generateImageTests(String mimetype, String filePath) {
+    void generateImageThumbnailTests(String mimetype, String filePath) {
         URL resourceUrl = getClass().getClassLoader().getResource(filePath);
         assert resourceUrl != null;
 
@@ -27,11 +30,17 @@ public class ThumbnailGeneratorTest {
 
     @ParameterizedTest()
     @MethodSource("getVideoTestFiles")
-    void generateVideoTests(String mimetype, String filePath) {
+    void generateVideoThumbnailTests(String mimetype, String filePath) {
         URL resourceUrl = getClass().getClassLoader().getResource(filePath);
         assert resourceUrl != null;
 
         assertDoesNotThrow(() -> thumbnailGenerator.generateThumbnail(MimeType.valueOf(mimetype), new File(resourceUrl.toURI())));
+    }
+
+    @SneakyThrows
+    @Test()
+    void generateUnsupportedThumbnailTest() {
+        assertNull(thumbnailGenerator.generateThumbnail(MimeType.valueOf("image/not-supported"), null));
     }
 
     static Stream<Arguments> getImageTestFiles() {
