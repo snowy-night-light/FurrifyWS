@@ -37,6 +37,8 @@
         <twelvemonkeys.bom.version>3.13.1</twelvemonkeys.bom.version>
         <javacv-platform.version>1.5.13</javacv-platform.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
+        <openapi-generator.version>7.21.0</openapi-generator.version>
+        <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -170,6 +172,47 @@
                             </exclude>
                         </excludes>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>${openapi-generator.version}</version>
+                    <configuration>
+                        <output>${project.build.directory}/generated-sources/openapi</output>
+                        <generatorName>java</generatorName>
+                        <library>restclient</library>
+                        <invokerPackage>ws.furrify.openapi.gen.common</invokerPackage>
+
+                        <generateApiTests>false</generateApiTests>
+                        <generateModelTests>false</generateModelTests>
+                        <generateApiDocumentation>false</generateApiDocumentation>
+                        <generateModelDocumentation>false</generateModelDocumentation>
+
+                        <configOptions>
+                            <useTags>true</useTags>
+                            <dateLibrary>java8</dateLibrary>
+                            <interfaceOnly>false</interfaceOnly>
+                        </configOptions>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${build-helper-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>add-source</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>add-source</goal>
+                            </goals>
+                            <configuration>
+                                <sources>
+                                    <source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
+                                </sources>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
