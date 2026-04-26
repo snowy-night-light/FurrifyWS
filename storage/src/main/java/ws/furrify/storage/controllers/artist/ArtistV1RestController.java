@@ -20,4 +20,6 @@ class ArtistV1RestController extends BaseEntityRestController<Artist, ArtistDTO,
     public ArtistV1RestController(BaseRequestMapper<Artist, ArtistDTO, CreateArtistRequest> requestDtoMapper, BaseEntityCrudService<Artist, ArtistDTO, PatchArtistRequest> entityCrudService) {
         super(requestDtoMapper, entityCrudService);
     }
+
+    
 }
