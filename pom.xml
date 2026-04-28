@@ -178,9 +178,10 @@
                     <artifactId>openapi-generator-maven-plugin</artifactId>
                     <version>${openapi-generator.version}</version>
                     <configuration>
+                        <templateDirectory>${project.basedir}/../core/src/main/resources/openapi/templates</templateDirectory>
                         <output>${project.build.directory}/generated-sources/openapi</output>
-                        <generatorName>java</generatorName>
-                        <library>restclient</library>
+                        <generatorName>spring</generatorName>
+                        <library>spring-cloud</library>
                         <invokerPackage>ws.furrify.openapi.gen.common</invokerPackage>
 
                         <generateApiTests>false</generateApiTests>
@@ -191,7 +192,7 @@
                         <configOptions>
                             <useTags>true</useTags>
                             <dateLibrary>java8</dateLibrary>
-                            <interfaceOnly>false</interfaceOnly>
+                            <useSpringBoot3>true</useSpringBoot3>
                         </configOptions>
                     </configuration>
                 </plugin>

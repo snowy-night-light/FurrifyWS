@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -22,6 +23,7 @@ public class TagCategory extends UserScopedEntity {
 
     @Pattern(regexp = "^#(?:[0-9a-fA-F]{3}){1,2}$")
     @NotBlank
+    @Size(max = 7)
     @Column(length = 7)
     String hexColor;
 }

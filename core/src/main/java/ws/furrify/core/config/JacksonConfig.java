@@ -13,7 +13,7 @@ import ws.furrify.core.serializers.StrategyJacksonModule;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class JacksonConfig {
+public abstract class JacksonConfig {
 
     private final StrategyJacksonModule strategyJacksonModule;
     private final List<ValueSerializer<?>> serializers;

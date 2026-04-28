@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.validator.constraints.Range;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.source.Source;
 
@@ -20,11 +21,13 @@ import java.util.UUID;
 public class Media extends UserScopedEntity {
 
     @Column(nullable = false)
+    @Range(min = 0)
+    @NotNull
     Integer priority;
 
-    @NotNull
-    UUID fileId;
+    @Column(nullable = false)
+    UUID fileReferenceId;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     List<Source> sources;
 }

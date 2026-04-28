@@ -7,6 +7,19 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        ignoreExceptions:
+          - feign.FeignException.NotFound
+
 spring:
   security:
     oauth2:
