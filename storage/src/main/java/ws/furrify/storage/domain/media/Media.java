@@ -28,6 +28,6 @@ public class Media extends UserScopedEntity {
     @Column(nullable = false)
     UUID fileReferenceId;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     List<Source> sources;
 }
