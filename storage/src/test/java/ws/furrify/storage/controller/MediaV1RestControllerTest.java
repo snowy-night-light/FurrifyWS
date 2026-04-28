@@ -70,7 +70,7 @@ public class MediaV1RestControllerTest extends BaseCrudControllerTest<Media, Med
                 sources.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()
         );
 
-        Mockito.when(attachmentFileV1RestControllerApiClient.getById(fileReferenceId)).thenReturn(ResponseEntity.ok(
+        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(fileReferenceId)).thenReturn(ResponseEntity.ok(
                 new AttachmentFileDTO()
         ));
 
