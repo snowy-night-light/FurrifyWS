@@ -1,6 +1,7 @@
 package ws.furrify.storage.domain.artist;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -20,6 +21,7 @@ import java.util.List;
 public class Artist extends UserScopedEntity {
     @ElementCollection
     @CollectionTable(name = "artist_nicknames", joinColumns = @JoinColumn(name = "artist_id"))
+    @NotEmpty
     List<ArtistNickname> nicknames;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

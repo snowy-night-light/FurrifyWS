@@ -54,7 +54,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         if (patchDto.getSources().isPresent()) {
             for (EntityIdRequest entityIdRequest : patchDto.getSources().get()) {
                 if (!this.sourceEntityService.existsById(entityIdRequest.getId())) {
-                    throw new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(patchDto.getAvatar().get().getId()));
+                    throw new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
                 }
             }
 
