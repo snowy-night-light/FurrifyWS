@@ -1,5 +1,6 @@
 package ws.furrify.storage.dto.artist.request;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -14,7 +15,7 @@ import java.util.List;
 @Data
 public class PatchArtistRequest implements BasePatchEntityRequest<Artist, ArtistDTO> {
 
-    private JsonNullable<List<@NotNull ArtistNickname>> nicknames = JsonNullable.undefined();
+    private JsonNullable<@NotEmpty List<@NotNull ArtistNickname>> nicknames = JsonNullable.undefined();
 
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
 

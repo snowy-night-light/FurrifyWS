@@ -20,6 +20,5 @@ public class CreateMediaRequest implements BaseCreateEntityRequest<Media, MediaD
     @NotNull
     private UUID fileReferenceId;
 
-    @NotNull
     private List<@NotNull EntityIdRequest> sources;
 }

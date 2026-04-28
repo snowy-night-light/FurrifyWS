@@ -17,7 +17,6 @@ public class CreateArtistRequest implements BaseCreateEntityRequest<Artist, Arti
     @NotEmpty
     private List<@NotNull ArtistNickname> nicknames;
 
-    @NotNull
     private List<@NotNull EntityIdRequest> sources;
 
     private EntityIdRequest avatar;

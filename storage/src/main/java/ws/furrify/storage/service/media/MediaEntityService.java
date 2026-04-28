@@ -1,12 +1,12 @@
 package ws.furrify.storage.service.media;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
@@ -33,13 +33,13 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
 
     @Override
     public MediaDTO create(MediaDTO dto) {
-        if (attachmentFileV1RestControllerApiClient.getById(dto.getFileReferenceId()) == null) {
-            throw new ServiceLogicException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
+        if (attachmentFileV1RestControllerApiClient.getById(dto.getFileReferenceId()).getBody() == null) {
+            throw new ReferenceNotFoundException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
         dto.setSources(
                 dto.getSources().stream()
-                        .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
+                        .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
                         .toList()
         );
 
@@ -55,7 +55,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
         if (patchDto.getSources().isPresent()) {
             for (EntityIdRequest entityIdRequest : patchDto.getSources().get()) {
                 if (!this.sourceEntityService.existsById(entityIdRequest.getId())) {
-                    throw new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
+                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
                 }
             }
 

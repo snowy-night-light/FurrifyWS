@@ -24,16 +24,10 @@ public enum Errors implements ErrorMessageFormatterIntf {
     STRATEGY_NOT_FOUND("Strategy [strategy={0}] was not found."),
     DUPLICATE_STRATEGY_IN_APPLICATION("Strategy with name [strategy={0}] is duplicated within application."),
     BAD_REQUEST("Given request data is invalid."),
-    CHAIN_OF_REQUESTS_BROKEN("There was an exception when contacting [name={0}] microservice."),
-    CHAIN_OF_REQUESTS_UNAUTHORIZED("Chain of requests was broken with unauthorized call to [name={0}] microservice. " +
-            "Make sure you have all roles required for this request."),
-    FILE_UPLOAD_FAILED("File upload to remote storage has failed."),
-    FILE_UPLOAD_CANNOT_CREATE_PATH("File upload can't create path to file."),
-    FILE_CONTENT_IS_CORRUPTED("File content is corrupted."),
-    FILE_EXTENSION_IS_NOT_MATCHING_CONTENT("File extension is not matching provided file content or filename is invalid."),
+    SERVICE_TEMPORARILY_UNAVAILABLE("There was an issue contacting an external service. Please try again later."),
     MISSING_STRATEGY("Strategy was not found in given package [class={0}]."),
-    FILENAME_IS_INVALID("Given filename [filename={0}] is invalid."),
     USER_NOT_AUTHENTICATED("User was not properly authenticated for this action."),
+    INTERNAL_SERVER_ERROR("Something went wrong. Please try again later."),
     UNIDENTIFIED("Unknown error occurred.");
 
 
