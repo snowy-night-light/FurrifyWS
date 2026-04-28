@@ -18,7 +18,7 @@ import java.util.UUID;
 public class MediaDTO extends UserScopedEntityDTO<Media> {
     private Integer priority;
 
-    private UUID fileId;
+    private UUID fileReferenceId;
 
     private List<SourceDTO> sources;
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -22,6 +23,7 @@ public class TagAlias extends UserScopedEntity {
     Tag targetTag;
 
     @Column(unique = true, length = 64)
+    @Size(max = 64)
     @NotBlank
     String alias;
 }

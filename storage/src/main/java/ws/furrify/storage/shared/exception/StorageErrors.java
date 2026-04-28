@@ -20,6 +20,7 @@ public enum StorageErrors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      */
+    REFERENCE_NOT_FOUND("Reference with [id={0}] has not been found in external service."),
     NO_TAG_FOUND("Tag [value={0}] was not found."),
     VIDEO_FRAME_EXTRACTION_FAILED("Video frame extraction for thumbnail has failed."),
     HARD_LIMIT_FOR_ENTITY_TYPE("Hard limit of [limit={0}] has been reached for [entity={1}], further create requests will not be accepted."),

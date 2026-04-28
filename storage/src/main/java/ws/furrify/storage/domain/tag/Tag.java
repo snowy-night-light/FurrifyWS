@@ -2,6 +2,8 @@ package ws.furrify.storage.domain.tag;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -19,6 +21,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Tag extends UserScopedEntity {
     @Column(unique = true, length = 64)
+    @Size(max = 64)
     @NotBlank
     String name;
 
@@ -27,5 +30,6 @@ public class Tag extends UserScopedEntity {
     List<TagAlias> aliases;
 
     @ManyToOne
+    @NotNull
     TagCategory category;
 }
