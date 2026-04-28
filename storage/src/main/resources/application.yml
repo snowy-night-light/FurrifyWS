@@ -1,4 +1,8 @@
 spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
   application:
     name: 'furrify-storage-service'
   main:
@@ -9,3 +13,4 @@ spring:
     active: prod
 server:
   port: 8081
+

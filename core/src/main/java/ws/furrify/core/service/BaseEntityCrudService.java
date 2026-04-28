@@ -1,6 +1,5 @@
 package ws.furrify.core.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ResolvableType;
@@ -14,6 +13,7 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
 import ws.furrify.core.utils.SecurityContextUtils;
@@ -49,7 +49,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     @Transactional
     public DTO patchById(UUID id, PATCH_REQ patchDto) {
-        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.patchEntity(source, patchDto);
 
@@ -60,7 +60,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     @Transactional
     protected DTO putById(UUID id, DTO dto) {
-        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new EntityNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.putEntity(source, dto);
 
