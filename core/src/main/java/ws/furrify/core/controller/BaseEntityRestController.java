@@ -16,21 +16,23 @@ import ws.furrify.core.service.BaseEntityCrudService;
 
 import java.util.UUID;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+
 @RequiredArgsConstructor
 public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, CREATE_REQ extends BaseCreateEntityRequest<ENTITY, DTO>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
 
     private final BaseRequestMapper<ENTITY, DTO, CREATE_REQ> requestDtoMapper;
     private final BaseEntityCrudService<ENTITY, DTO, PATCH_REQ> entityCrudService;
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = {APPLICATION_JSON})
     protected ResponseEntity<DTO> getById(@PathVariable UUID id) {
         return entityCrudService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping()
-    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(produces = {APPLICATION_JSON})
+    @ResponseStatus(value = HttpStatus.OK)
     protected Page<DTO> getAllPaged(Pageable pageable) {
         return entityCrudService.getAllPaged(pageable);
     }
