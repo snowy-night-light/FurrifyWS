@@ -37,7 +37,7 @@
         <twelvemonkeys.bom.version>3.13.1</twelvemonkeys.bom.version>
         <javacv-platform.version>1.5.13</javacv-platform.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
-        <openapi-generator.version>7.21.0</openapi-generator.version>
+        <openapi-generator.version>7.22.0</openapi-generator.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     </properties>
 
