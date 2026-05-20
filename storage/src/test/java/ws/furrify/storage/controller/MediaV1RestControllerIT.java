@@ -127,9 +127,8 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         request.setSources(JsonNullable.of(sources.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()));
         request.setFileReferenceId(JsonNullable.of(fileReferenceId));
 
-        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(fileReferenceId)).thenReturn(ResponseEntity.ok(
-                new AttachmentFileDTO()
-        ));
+        Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId);
 
         MediaDTO updatedMedia = super.patch(media.getId(), request);
 
