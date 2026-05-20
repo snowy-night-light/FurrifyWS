@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import ws.furrify.core.ApplicationCore;
 
-@SpringBootApplication(scanBasePackages = "ws.furrify")
+@SpringBootApplication(scanBasePackages = {"ws.furrify.storage", "ws.furrify.core"})
 @EnableJpaRepositories(basePackages = "ws.furrify.storage.domain")
 public class StorageApplication extends ApplicationCore {
 

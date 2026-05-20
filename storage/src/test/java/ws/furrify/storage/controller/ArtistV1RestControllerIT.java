@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
         classes = StorageApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
+public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
 
     @Autowired
     private MediaRepository mediaRepository;
@@ -42,7 +42,7 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     private SourceRepository sourceRepository;
 
     @Autowired
-    protected ArtistV1RestControllerTest(JsonMapper jsonMapper) {
+    protected ArtistV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
     }
 
@@ -54,10 +54,10 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     @Override
     @Test
     protected void testCreate() {
-        Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         List<Source> sources = List.of(
                 sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
+        Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(sources).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateArtistRequest request = new CreateArtistRequest();
         request.setNicknames(List.of(
@@ -109,7 +109,10 @@ public class ArtistV1RestControllerTest extends BaseCrudControllerTest<Artist, A
     @Override
     @Test
     protected void testPatch() {
-        Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(List.of(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        List<Source> sources = List.of(
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+        );
+        Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(sources).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).avatar(avatar).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchArtistRequest request = new PatchArtistRequest();

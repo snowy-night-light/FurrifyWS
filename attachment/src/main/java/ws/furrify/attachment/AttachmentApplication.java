@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import ws.furrify.core.ApplicationCore;
 
-@SpringBootApplication(scanBasePackages = "ws.furrify")
+@SpringBootApplication(scanBasePackages = {"ws.furrify.attachment", "ws.furrify.core"})
 @EnableJpaRepositories(basePackages = "ws.furrify.attachment.domain")
 public class AttachmentApplication extends ApplicationCore {
 
