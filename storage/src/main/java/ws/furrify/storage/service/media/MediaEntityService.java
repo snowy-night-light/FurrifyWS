@@ -48,7 +48,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
 
     @Override
     public MediaDTO patchById(UUID id, PatchMediaRequest patchDto) {
-        if (patchDto.getFileReferenceId().isPresent() && attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(patchDto.getFileReferenceId().get()) == null) {
+        if (patchDto.getFileReferenceId().isPresent() && attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(patchDto.getFileReferenceId().get()).getBody() == null) {
             throw new ServiceLogicException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(patchDto.getFileReferenceId()));
         }
 

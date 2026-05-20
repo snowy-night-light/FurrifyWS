@@ -41,7 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
 @SpringBootTest(classes = AttachmentApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<AttachmentFile, AttachmentFileDTO, CreateAttachmentFileRequest, PatchAttachmentFileRequest> {
+public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<AttachmentFile, AttachmentFileDTO, CreateAttachmentFileRequest, PatchAttachmentFileRequest> {
 
     @Autowired
     private AttachmentFileRepository attachmentFileRepository;
@@ -60,7 +60,7 @@ public class AttachmentFileV1RestControllerTest extends BaseCrudControllerTest<A
     }
 
     @Autowired
-    protected AttachmentFileV1RestControllerTest(JsonMapper jsonMapper) {
+    protected AttachmentFileV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
     }
 

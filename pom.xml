@@ -39,6 +39,7 @@
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <openapi-generator.version>7.21.0</openapi-generator.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+        <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -212,6 +213,22 @@
                                     <source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
                                 </sources>
                             </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven-failsafe-plugin.version}</version>
+                    <configuration>
+                        <reuseForks>false</reuseForks>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
                         </execution>
                     </executions>
                 </plugin>

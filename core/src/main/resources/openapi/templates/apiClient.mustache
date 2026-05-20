@@ -5,7 +5,7 @@ import org.openapitools.configuration.ClientConfiguration;
 
 @FeignClient(
 name = "{{serviceName}}",
-contextId = "{{classname}}",
+contextId = "{{classname}}Client",
 url = "${" + "{{serviceName}}.url:}",
 dismiss404 = true,
 configuration = ClientConfiguration.class

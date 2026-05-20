@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
         classes = StorageApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class MediaV1RestControllerTest extends BaseCrudControllerTest<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> {
+public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, MediaDTO, CreateMediaRequest, PatchMediaRequest> {
 
     @Autowired
     private MediaRepository mediaRepository;
@@ -45,7 +45,7 @@ public class MediaV1RestControllerTest extends BaseCrudControllerTest<Media, Med
     private AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
 
     @Autowired
-    protected MediaV1RestControllerTest(JsonMapper jsonMapper) {
+    protected MediaV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
     }
 
