@@ -23,9 +23,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-v2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-m2-
+            ${{ runner.os }}-maven-v2-
 
       - name: Build and Install with Maven
         run: mvn -B clean install -DskipTests -Dspring.profiles.active=dev
