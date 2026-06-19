@@ -3,6 +3,7 @@ package ws.furrify.storage.domain.tag;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -22,6 +23,7 @@ import java.util.List;
 public class Tag extends UserScopedEntity {
     @Column(unique = true, length = 64)
     @Size(max = 64)
+    @Pattern(regexp = "^[a-z0-9 ]+$")
     @NotBlank
     String name;
 

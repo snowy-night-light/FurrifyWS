@@ -38,7 +38,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         }
         dto.setSources(
                 dto.getSources().stream()
-                        .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(dto.getAvatar().getId()))))
+                        .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
                         .toList()
         );
 
