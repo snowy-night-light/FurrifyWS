@@ -1,3 +1,6 @@
+scalar:
+  enabled: true
+
 eureka:
   instance:
     hostname: localhost

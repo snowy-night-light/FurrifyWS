@@ -56,7 +56,7 @@ public abstract class SecurityConfig {
     @Order(1)
     public SecurityFilterChain swaggerFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/swagger-ui/**", "/v3/api-docs/**")
+                .securityMatcher("/scalar", "/scalar/**", "/v3/api-docs", "/v3/api-docs/**")
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
