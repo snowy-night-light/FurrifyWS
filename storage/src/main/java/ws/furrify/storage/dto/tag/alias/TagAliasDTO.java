@@ -1,5 +1,6 @@
 package ws.furrify.storage.dto.tag.alias;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import ws.furrify.storage.dto.tag.TagDTO;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 public class TagAliasDTO extends UserScopedEntityDTO<TagAlias> {
+    @JsonBackReference
     private TagDTO targetTag;
 
     private String alias;

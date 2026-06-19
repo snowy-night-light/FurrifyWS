@@ -17,7 +17,7 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 @MapperConfig(
         componentModel = SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
         builder = @Builder(disableBuilder = true),
         injectionStrategy = InjectionStrategy.FIELD,
         uses = {JsonNullableMapper.class, HibernateLazyLoaderMappingChecker.class, EntityReferenceMapper.class}

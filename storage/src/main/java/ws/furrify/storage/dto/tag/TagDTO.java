@@ -1,5 +1,6 @@
 package ws.furrify.storage.dto.tag;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 public class TagDTO extends UserScopedEntityDTO<Tag> {
     private String name;
 
+    @JsonManagedReference
     private List<TagAliasDTO> aliases;
 
     private TagCategoryDTO category;

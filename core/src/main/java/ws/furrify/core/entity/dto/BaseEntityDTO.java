@@ -10,10 +10,6 @@ import ws.furrify.core.entity.BaseEntity;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
-)
 @Data
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
