@@ -1,6 +1,6 @@
 package ws.furrify.storage.dto.tag;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -17,9 +17,9 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 public class TagDTO extends UserScopedEntityDTO<Tag> {
+    @Pattern(regexp = "^[a-z0-9 ]+$")
     private String name;
 
-    @JsonManagedReference
     private List<TagAliasDTO> aliases;
 
     private TagCategoryDTO category;

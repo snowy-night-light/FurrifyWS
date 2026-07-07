@@ -1,25 +1,28 @@
 package ws.furrify.storage.dto.tag.alias;
 
-import org.mapstruct.*;
+import org.mapstruct.Context;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.model.CycleAvoidingMappingContext;
+import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.dto.tag.TagDTO;
 import ws.furrify.storage.dto.tag.alias.request.PatchTagAliasRequest;
+import ws.furrify.storage.dto.tag.category.TagCategoryDTOMapper;
 
 @Mapper(
-        config = BaseDTOMapper.class
+        config = BaseDTOMapper.class,
+        uses = {TagCategoryDTOMapper.class}
 )
 public interface TagAliasDTOMapper extends BaseDTOMapper<TagAlias, TagAliasDTO, PatchTagAliasRequest> {
 
     @Override
-    @Mapping(target = "targetTag", ignore = true)
-    TagAliasDTO toDto(TagAlias entity, CycleAvoidingMappingContext context);
+    @Mapping(target = "targetTag", qualifiedByName = "tagToTagDtoWithoutAliases")
+    TagAliasDTO toDto(TagAlias entity, @Context CycleAvoidingMappingContext context);
 
-    @AfterMapping
-    default void linkBackReference(TagAlias entity, @MappingTarget TagAliasDTO dto, @Context CycleAvoidingMappingContext context) {
-        if (entity.getTargetTag() != null) {
-            dto.setTargetTag(context.getMappedInstance(entity.getTargetTag(), TagDTO.class));
-        }
-    }
+    @Named("tagToTagDtoWithoutAliases")
+    @Mapping(target = "aliases", ignore = true)
+    TagDTO tagToTagDtoWithoutAliases(Tag tag, @Context CycleAvoidingMappingContext context);
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -25,5 +26,6 @@ public class TagAlias extends UserScopedEntity {
     @Column(unique = true, length = 64)
     @Size(max = 64)
     @NotBlank
+    @Pattern(regexp = "^[a-z0-9 ]+$")
     String alias;
 }
