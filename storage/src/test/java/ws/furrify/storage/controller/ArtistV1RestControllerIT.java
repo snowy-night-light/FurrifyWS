@@ -23,6 +23,7 @@ import ws.furrify.storage.mocks.MockSourceStrategyImpl;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,7 +56,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
     @Test
     protected void testCreate() {
         List<Source> sources = List.of(
-                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
         Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(sources).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
@@ -110,7 +111,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
     @Test
     protected void testPatch() {
         List<Source> sources = List.of(
-                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
         Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(sources).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).avatar(avatar).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
@@ -125,7 +126,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
         request.setAvatar(JsonNullable.of(EntityIdRequest.builder().id(newAvatar.getId()).build()));
 
         List<Source> newSources = List.of(
-                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
         request.setSources(
                 JsonNullable.of(newSources.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList())
