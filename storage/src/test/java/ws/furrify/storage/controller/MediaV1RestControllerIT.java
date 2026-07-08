@@ -25,6 +25,7 @@ import ws.furrify.storage.mocks.MockSourceStrategyImpl;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,7 +59,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
     @Test
     protected void testCreate() {
         List<Source> sources = List.of(
-                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
         var fileReferenceId = UUID.randomUUID();
         var priority = 3;
@@ -114,7 +115,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
     @Test
     protected void testPatch() {
         List<Source> sources = List.of(
-                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
 
         var fileReferenceId = UUID.randomUUID();
