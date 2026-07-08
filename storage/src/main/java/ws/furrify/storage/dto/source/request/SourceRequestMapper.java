@@ -9,6 +9,4 @@ import ws.furrify.storage.dto.source.SourceDTO;
         config = BaseRequestMapper.class
 )
 public interface SourceRequestMapper extends BaseRequestMapper<Source, SourceDTO, CreateSourceRequest> {
-    @Override
-    SourceDTO toDto(CreateSourceRequest createSourceRequest);
 }

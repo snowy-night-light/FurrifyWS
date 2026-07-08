@@ -24,6 +24,7 @@ public enum StorageErrors implements ErrorMessageFormatterIntf {
     NO_TAG_FOUND("Tag [value={0}] was not found."),
     VIDEO_FRAME_EXTRACTION_FAILED("Video frame extraction for thumbnail has failed."),
     HARD_LIMIT_FOR_ENTITY_TYPE("Hard limit of [limit={0}] has been reached for [entity={1}], further create requests will not be accepted."),
+    SOURCE_STRATEGY_DATA_VALIDATION_FAILURE("Source [id={0}] strategy [strategy={1}] validation has failed for the passed data [data={2}]"),
     FILE_HASH_DUPLICATE_IN_POST("File with [md5={0}] hash already exists in this post with [uuid={1}].");
 
     private final String errorMessage;

@@ -7,8 +7,13 @@ import ws.furrify.storage.domain.source.Source;
 import ws.furrify.storage.domain.source.strategy.SourceStrategy;
 import ws.furrify.storage.dto.source.SourceDTO;
 
+import java.util.Map;
+
 @Data
 public class CreateSourceRequest implements BaseCreateEntityRequest<Source, SourceDTO> {
+
+    private Map<String, Object> data;
+
     @NotNull
-    private SourceStrategy sourceStrategy;
+    private SourceStrategy strategy;
 }
