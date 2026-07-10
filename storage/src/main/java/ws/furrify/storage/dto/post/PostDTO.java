@@ -8,6 +8,7 @@ import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 import ws.furrify.storage.dto.media.MediaDTO;
+import ws.furrify.storage.dto.source.SourceDTO;
 import ws.furrify.storage.dto.tag.TagDTO;
 
 import java.util.List;
@@ -25,4 +26,6 @@ public class PostDTO extends UserScopedEntityDTO<Post> {
 
     private List<MediaDTO> displayMediaList;
     private List<MediaDTO> attachments;
+
+    private List<SourceDTO> sources;
 }

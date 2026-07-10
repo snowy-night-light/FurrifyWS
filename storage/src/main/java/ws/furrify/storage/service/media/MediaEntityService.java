@@ -37,11 +37,13 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
             throw new ReferenceNotFoundException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
-        dto.setSources(
-                dto.getSources().stream()
-                        .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
-                        .toList()
-        );
+        if (dto.getSources() != null) {
+            dto.setSources(
+                    dto.getSources().stream()
+                            .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
+                            .toList()
+            );
+        }
 
         return super.create(dto);
     }
