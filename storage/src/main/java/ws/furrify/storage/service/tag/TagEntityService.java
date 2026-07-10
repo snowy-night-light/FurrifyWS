@@ -34,11 +34,13 @@ public class TagEntityService extends BaseEntityCrudService<Tag, TagDTO, PatchTa
                     this.tagCategoryEntityService.findById(dto.getCategory().getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(dto.getCategory().getId())))
             );
         }
-        dto.setAliases(
-                dto.getAliases().stream()
-                        .map(alias -> this.tagAliasEntityService.findById(alias.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(alias.getId()))))
-                        .toList()
-        );
+        if (dto.getAliases() != null) {
+            dto.setAliases(
+                    dto.getAliases().stream()
+                            .map(alias -> this.tagAliasEntityService.findById(alias.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(alias.getId()))))
+                            .toList()
+            );
+        }
 
         return super.create(dto);
     }

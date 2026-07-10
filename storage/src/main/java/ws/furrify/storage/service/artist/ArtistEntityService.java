@@ -36,11 +36,13 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
                     this.mediaEntityService.findById(dto.getAvatar().getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(dto.getAvatar().getId())))
             );
         }
-        dto.setSources(
-                dto.getSources().stream()
-                        .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
-                        .toList()
-        );
+        if (dto.getSources() != null) {
+            dto.setSources(
+                    dto.getSources().stream()
+                            .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
+                            .toList()
+            );
+        }
 
         return super.create(dto);
     }

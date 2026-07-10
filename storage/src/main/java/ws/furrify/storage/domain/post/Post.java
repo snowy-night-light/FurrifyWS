@@ -3,13 +3,13 @@ package ws.furrify.storage.domain.post;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.media.Media;
+import ws.furrify.storage.domain.source.Source;
 import ws.furrify.storage.domain.tag.Tag;
 
 import java.util.List;
@@ -30,15 +30,17 @@ public class Post extends UserScopedEntity {
     @Size(max = 10240)
     String description;
 
-    @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
     @NotEmpty
     List<Tag> tags;
-    @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
     List<Artist> artists;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     List<Media> displayMediaList;
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Media> attachments;
+    @ManyToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    List<Source> sources;
 
 }

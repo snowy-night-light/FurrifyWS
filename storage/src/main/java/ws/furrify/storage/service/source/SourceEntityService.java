@@ -57,13 +57,4 @@ public class SourceEntityService extends BaseEntityCrudService<Source, SourceDTO
 
         return super.create(dto);
     }
-
-    @Override
-    protected SourceDTO putById(UUID id, SourceDTO dto) {
-        if (!dto.getStrategy().validateData(dto.getData())) {
-            throw new StrategyDataValidationException(SOURCE_STRATEGY_DATA_VALIDATION_FAILURE.getErrorMessage(id, dto.getStrategy().getClass().getSimpleName(), dto.getData().toString()));
-        }
-
-        return super.putById(id, dto);
-    }
 }
