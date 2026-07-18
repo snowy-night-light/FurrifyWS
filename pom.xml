@@ -33,7 +33,7 @@
         <jackson-databind-nullable.version>0.2.10</jackson-databind-nullable.version>
         <apache-tika.version>3.3.1</apache-tika.version>
         <thumbnailator.version>0.4.21</thumbnailator.version>
-        <twelvemonkeys.bom.version>3.13.1</twelvemonkeys.bom.version>
+        <twelvemonkeys.bom.version>3.14.0</twelvemonkeys.bom.version>
         <javacv-platform.version>1.5.13</javacv-platform.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <openapi-generator.version>7.23.0</openapi-generator.version>
