@@ -36,11 +36,11 @@ public class Post extends UserScopedEntity {
     @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
     List<Artist> artists;
 
-    @ManyToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     List<Media> displayMediaList;
-    @ManyToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     List<Media> attachments;
-    @ManyToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Source> sources;
 
 }
