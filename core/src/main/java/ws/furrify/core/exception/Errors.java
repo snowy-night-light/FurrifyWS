@@ -28,6 +28,9 @@ public enum Errors implements ErrorMessageFormatterIntf {
     MISSING_STRATEGY("Strategy was not found in given package [class={0}]."),
     USER_NOT_AUTHENTICATED("User was not properly authenticated for this action."),
     INTERNAL_SERVER_ERROR("Something went wrong. Please try again later."),
+    INVALID_SPECIFICATION_FORMAT("Invalid specification string format [string={0}]."),
+    UNKNOWN_SPECIFICATION_OPERATOR("Unknown operator [operator={0}]."),
+    SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE("Field [field={0}] is not comparable with value [value={0}]."),
     UNIDENTIFIED("Unknown error occurred.");
 
 
