@@ -33,8 +33,8 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
 
     @GetMapping(produces = {APPLICATION_JSON})
     @ResponseStatus(value = HttpStatus.OK)
-    protected Page<DTO> getAllPaged(Pageable pageable) {
-        return entityCrudService.getAllPaged(pageable);
+    protected Page<DTO> getAllPaged(@RequestParam(required = false) String spec, Pageable pageable) {
+        return entityCrudService.getAllPaged(spec, pageable);
     }
 
     @PostMapping()

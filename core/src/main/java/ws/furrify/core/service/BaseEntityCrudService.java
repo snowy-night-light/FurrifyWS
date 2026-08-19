@@ -38,8 +38,10 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     @Transactional
-    public Page<DTO> getAllPaged(Pageable pageable) {
-        return entityRepository.findAll(pageable, getCombinedSpecs()).map(dtoMapper::toDto);
+    public Page<DTO> getAllPaged(String spec, Pageable pageable) {
+        return entityRepository.findAll(pageable, getCombinedSpecs(
+                EntitySpec.fromSpecString(spec)
+        )).map(dtoMapper::toDto);
     }
 
     @Transactional
@@ -79,6 +81,10 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     private EntitySpecResult<ENTITY> getCombinedSpecs() {
+        return getCombinedSpecs(null);
+    }
+
+    private EntitySpecResult<ENTITY> getCombinedSpecs(EntitySpecResult<ENTITY> additionalSpec) {
         EntitySpecResult<ENTITY> userScopedSpec;
         if (useUserScopeSpec()) {
             userScopedSpec = SecurityContextUtils.getUserScopedSecuritySpec();
@@ -86,7 +92,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
             userScopedSpec = EntitySpec.unrestricted();
         }
 
-        return EntitySpec.from(customSecuritySpec()).and(userScopedSpec).build();
+        return EntitySpec.from(customSecuritySpec()).and(userScopedSpec).and(additionalSpec).build();
     }
 
     protected EntitySpecResult<ENTITY> customSecuritySpec() {
