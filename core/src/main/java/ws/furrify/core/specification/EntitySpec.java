@@ -20,8 +20,13 @@ public class EntitySpec {
     public static final String EQUAL_OPERATOR = " = ";
     public static final String NOT_EQUAL_OPERATOR = " != ";
     public static final String GREATER_THAN_OPERATOR = " > ";
+    public static final String GREATER_THAN_OR_EQUAL_OPERATOR = " >= ";
+    public static final String LESS_THAN_OPERATOR = " < ";
+    public static final String LESS_THAN_OR_EQUAL_OPERATOR = " <= ";
+    public static final String EQUAL_IGNORE_CASE_OPERATOR = " =^ ";
+    public static final String NOT_EQUAL_IGNORE_CASE_OPERATOR = " !=^ ";
     private static final String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
-    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><]+)\\s+([^)&|]+)\\)?");
+    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^]+)\\s+([^)&|]+)\\)?");
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> unrestricted() {
         return new EntitySpecResult<>("", (root, query, cb) -> cb.conjunction());
@@ -42,6 +47,56 @@ public class EntitySpec {
                 return cb.greaterThan((Path<Comparable>) getPath(root, f), comparable);
             }
             throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, v));
+        }, value, null);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specGreaterThanOrEqual(Object value) {
+        return new InternalExpression<>(GREATER_THAN_OR_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof Comparable comparable) {
+                return cb.greaterThanOrEqualTo((Path<Comparable>) getPath(root, f), comparable);
+            }
+            throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, v));
+        }, value, null);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLessThan(Object value) {
+        return new InternalExpression<>(LESS_THAN_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof Comparable comparable) {
+                return cb.lessThan((Path<Comparable>) getPath(root, f), comparable);
+            }
+            throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, v));
+        }, value, null);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLessThanOrEqual(Object value) {
+        return new InternalExpression<>(LESS_THAN_OR_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof Comparable comparable) {
+                return cb.lessThanOrEqualTo((Path<Comparable>) getPath(root, f), comparable);
+            }
+            throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, v));
+        }, value, null);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specEqualsIgnoreCase(Object value) {
+        return new InternalExpression<>(EQUAL_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof String strValue) {
+                return cb.equal(cb.lower((Path<String>) getPath(root, f)), strValue.toLowerCase());
+            }
+            return cb.equal(getPath(root, f), v);
+        }, value, null);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotEqualsIgnoreCase(Object value) {
+        return new InternalExpression<>(NOT_EQUAL_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof String strValue) {
+                return cb.notEqual(cb.lower((Path<String>) getPath(root, f)), strValue.toLowerCase());
+            }
+            return cb.notEqual(getPath(root, f), v);
         }, value, null);
     }
 
@@ -89,6 +144,11 @@ public class EntitySpec {
                 case "=" -> EntitySpec.specEquals(parsedValue);
                 case "!=" -> EntitySpec.specNotEquals(parsedValue);
                 case ">" -> EntitySpec.specGreaterThan(parsedValue);
+                case ">=" -> EntitySpec.specGreaterThanOrEqual(parsedValue);
+                case "<" -> EntitySpec.specLessThan(parsedValue);
+                case "<=" -> EntitySpec.specLessThanOrEqual(parsedValue);
+                case "=^" -> EntitySpec.specEqualsIgnoreCase(parsedValue);
+                case "!=^" -> EntitySpec.specNotEqualsIgnoreCase(parsedValue);
                 default -> throw new BadRequestException(Errors.UNKNOWN_SPECIFICATION_OPERATOR.getErrorMessage(operator));
             };
 
