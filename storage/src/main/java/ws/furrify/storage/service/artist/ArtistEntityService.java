@@ -4,9 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
-import ws.furrify.core.entity.request.EntityIdRequest;
-import ws.furrify.core.exception.Errors;
-import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.dto.artist.ArtistDTO;
@@ -31,36 +28,16 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
 
     @Override
     public ArtistDTO create(ArtistDTO dto) {
-        if (dto.getAvatar() != null) {
-            dto.setAvatar(
-                    this.mediaEntityService.findById(dto.getAvatar().getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(dto.getAvatar().getId())))
-            );
-        }
-        if (dto.getSources() != null) {
-            dto.setSources(
-                    dto.getSources().stream()
-                            .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
-                            .toList()
-            );
-        }
+        super.handleCreateInternalReference(dto, ArtistDTO::getAvatar, ArtistDTO::setAvatar, mediaEntityService);
+        super.handleCreateInternalCollectionReference(dto, ArtistDTO::getSources, ArtistDTO::setSources, sourceEntityService);
 
         return super.create(dto);
     }
 
     @Override
     public ArtistDTO patchById(UUID id, PatchArtistRequest patchDto) {
-        if (patchDto.getAvatar().isPresent() && !this.mediaEntityService.existsById(patchDto.getAvatar().get().getId())) {
-            throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(patchDto.getAvatar().get().getId()));
-        }
-
-        if (patchDto.getSources().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getSources().get()) {
-                if (!this.sourceEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
+        super.handlePatchInternalReference(patchDto.getAvatar(), mediaEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getSources(), mediaEntityService);
 
         return super.patchById(id, patchDto);
     }

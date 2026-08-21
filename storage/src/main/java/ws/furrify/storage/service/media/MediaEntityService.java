@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
-import ws.furrify.core.entity.request.EntityIdRequest;
-import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.BaseEntityCrudService;
@@ -37,13 +35,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
             throw new ReferenceNotFoundException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
-        if (dto.getSources() != null) {
-            dto.setSources(
-                    dto.getSources().stream()
-                            .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
-                            .toList()
-            );
-        }
+        super.handleCreateInternalCollectionReference(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
 
         return super.create(dto);
     }
@@ -54,14 +46,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
             throw new ServiceLogicException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(patchDto.getFileReferenceId()));
         }
 
-        if (patchDto.getSources().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getSources().get()) {
-                if (!this.sourceEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
+        super.handlePatchCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
         return super.patchById(id, patchDto);
     }
