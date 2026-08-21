@@ -4,9 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
-import ws.furrify.core.entity.request.EntityIdRequest;
-import ws.furrify.core.exception.Errors;
-import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.dto.post.PostDTO;
@@ -37,91 +34,22 @@ public class PostEntityService extends BaseEntityCrudService<Post, PostDTO, Patc
 
     @Override
     public PostDTO patchById(UUID id, PatchPostRequest patchDto) {
-        if (patchDto.getTags().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getTags().get()) {
-                if (!this.tagEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
-        if (patchDto.getArtists().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getArtists().get()) {
-                if (!this.artistEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
-
-        if (patchDto.getDisplayMediaList().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getDisplayMediaList().get()) {
-                if (!this.mediaEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
-        if (patchDto.getAttachments().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getAttachments().get()) {
-                if (!this.mediaEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
-
-        if (patchDto.getSources().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getSources().get()) {
-                if (!this.sourceEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
+        super.handlePatchCollectionInternalReferences(patchDto.getTags(), tagEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getDisplayMediaList(), mediaEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getAttachments(), mediaEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
         return super.patchById(id, patchDto);
     }
 
     @Override
     public PostDTO create(PostDTO dto) {
-        if (dto.getTags() != null) {
-            dto.setTags(
-                    dto.getTags().stream()
-                            .map(tag -> this.tagEntityService.findById(tag.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(tag.getId()))))
-                            .toList()
-            );
-        }
-        if (dto.getArtists() != null) {
-            dto.setArtists(
-                    dto.getArtists().stream()
-                            .map(artist -> this.artistEntityService.findById(artist.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(artist.getId()))))
-                            .toList()
-            );
-        }
-
-        if (dto.getDisplayMediaList() != null) {
-            dto.setDisplayMediaList(
-                    dto.getDisplayMediaList().stream()
-                            .map(media -> this.mediaEntityService.findById(media.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(media.getId()))))
-                            .toList()
-            );
-        }
-        if (dto.getAttachments() != null) {
-            dto.setAttachments(
-                    dto.getAttachments().stream()
-                            .map(attachment -> this.mediaEntityService.findById(attachment.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(attachment.getId()))))
-                            .toList()
-            );
-        }
-
-        if (dto.getSources() != null) {
-            dto.setSources(
-                    dto.getSources().stream()
-                            .map(source -> this.sourceEntityService.findById(source.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(source.getId()))))
-                            .toList()
-            );
-        }
+        super.handleCreateInternalCollectionReference(dto, PostDTO::getTags, PostDTO::setTags, tagEntityService);
+        super.handleCreateInternalCollectionReference(dto, PostDTO::getArtists, PostDTO::setArtists, artistEntityService);
+        super.handleCreateInternalCollectionReference(dto, PostDTO::getDisplayMediaList, PostDTO::setDisplayMediaList, mediaEntityService);
+        super.handleCreateInternalCollectionReference(dto, PostDTO::getAttachments, PostDTO::setAttachments, mediaEntityService);
+        super.handleCreateInternalCollectionReference(dto, PostDTO::getSources, PostDTO::setSources, sourceEntityService);
 
         return super.create(dto);
     }

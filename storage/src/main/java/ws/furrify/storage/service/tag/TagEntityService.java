@@ -4,9 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
-import ws.furrify.core.entity.request.EntityIdRequest;
-import ws.furrify.core.exception.Errors;
-import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.dto.tag.TagDTO;
@@ -29,36 +26,16 @@ public class TagEntityService extends BaseEntityCrudService<Tag, TagDTO, PatchTa
 
     @Override
     public TagDTO create(TagDTO dto) {
-        if (dto.getCategory() != null) {
-            dto.setCategory(
-                    this.tagCategoryEntityService.findById(dto.getCategory().getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(dto.getCategory().getId())))
-            );
-        }
-        if (dto.getAliases() != null) {
-            dto.setAliases(
-                    dto.getAliases().stream()
-                            .map(alias -> this.tagAliasEntityService.findById(alias.getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(alias.getId()))))
-                            .toList()
-            );
-        }
+        super.handleCreateInternalReference(dto, TagDTO::getCategory, TagDTO::setCategory, tagCategoryEntityService);
+        super.handleCreateInternalCollectionReference(dto, TagDTO::getAliases, TagDTO::setAliases, tagAliasEntityService);
 
         return super.create(dto);
     }
 
     @Override
     public TagDTO patchById(UUID id, PatchTagRequest patchDto) {
-        if (patchDto.getCategory().isPresent() && !this.tagCategoryEntityService.existsById(patchDto.getCategory().get().getId())) {
-            throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(patchDto.getCategory().get().getId()));
-        }
-
-        if (patchDto.getAliases().isPresent()) {
-            for (EntityIdRequest entityIdRequest : patchDto.getAliases().get()) {
-                if (!this.tagAliasEntityService.existsById(entityIdRequest.getId())) {
-                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
-                }
-            }
-
-        }
+        super.handlePatchInternalReference(patchDto.getCategory(), tagCategoryEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getAliases(), tagAliasEntityService);
 
         return super.patchById(id, patchDto);
     }

@@ -42,5 +42,4 @@ public class Post extends UserScopedEntity {
     List<Media> attachments;
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Source> sources;
-
 }

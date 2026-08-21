@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
-import ws.furrify.core.exception.Errors;
-import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.dto.tag.alias.TagAliasDTO;
@@ -27,20 +25,14 @@ public class TagAliasEntityService extends BaseEntityCrudService<TagAlias, TagAl
 
     @Override
     public TagAliasDTO create(TagAliasDTO dto) {
-        if (dto.getTargetTag() != null) {
-            dto.setTargetTag(
-                    this.tagEntityService.findById(dto.getTargetTag().getId()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(dto.getTargetTag().getId())))
-            );
-        }
+        super.handleCreateInternalReference(dto, TagAliasDTO::getTargetTag, TagAliasDTO::setTargetTag, tagEntityService);
 
         return super.create(dto);
     }
 
     @Override
     public TagAliasDTO patchById(UUID id, PatchTagAliasRequest patchDto) {
-        if (patchDto.getTargetTag().isPresent() && !this.tagEntityService.existsById(patchDto.getTargetTag().get().getId())) {
-            throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(patchDto.getTargetTag().get().getId()));
-        }
+        super.handlePatchInternalReference(patchDto.getTargetTag(), tagEntityService);
 
         return super.patchById(id, patchDto);
     }
