@@ -142,9 +142,6 @@
 							</additionalProperties>
 							<inputSpec>${project.baseUri}src/main/resources/api/attachment.json</inputSpec>
 							<apiPackage>ws.furrify.openapi.gen.attachment.api</apiPackage>
-							<configOptions>
-								<generateAliasAsModel>false</generateAliasAsModel>
-							</configOptions>
 						</configuration>
 					</execution>
 				</executions>
