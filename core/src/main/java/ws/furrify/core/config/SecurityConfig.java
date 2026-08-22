@@ -57,7 +57,6 @@ public abstract class SecurityConfig {
     public SecurityFilterChain swaggerFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/scalar", "/scalar/**", "/v3/api-docs", "/v3/api-docs/**")
-                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
@@ -70,9 +69,8 @@ public abstract class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain apiFilterChain(HttpSecurity http) {
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -81,5 +79,4 @@ public abstract class SecurityConfig {
 
         return http.build();
     }
-
 }

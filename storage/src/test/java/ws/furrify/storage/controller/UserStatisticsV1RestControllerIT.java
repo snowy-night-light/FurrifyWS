@@ -58,7 +58,7 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/user/{userId}/statistics";
+        return "/v1/user/{userId}/statistics";
     }
 
     private String randomName() {

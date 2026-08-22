@@ -17,7 +17,7 @@ import ws.furrify.core.service.BaseEntityCrudService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/v1/storage/files")
+@RequestMapping("/v1/files")
 class AttachmentFileV1RestController extends BaseEntityRestController<AttachmentFile, AttachmentFileDTO, CreateAttachmentFileRequest, PatchAttachmentFileRequest> {
 
     private final AttachmentFileEntityService attachmentFileEntityService;

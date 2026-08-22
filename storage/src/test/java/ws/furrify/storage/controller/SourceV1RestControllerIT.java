@@ -38,7 +38,7 @@ public class SourceV1RestControllerIT extends BaseCrudControllerTest<Source, Sou
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/sources";
+        return "/v1/sources";
     }
 
     @Override

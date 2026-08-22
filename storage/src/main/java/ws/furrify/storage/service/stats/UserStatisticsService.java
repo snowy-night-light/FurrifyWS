@@ -36,6 +36,23 @@ public class UserStatisticsService {
     private final LibraryRepository libraryRepository;
     private final TagRepository tagRepository;
     private final ArtistRepository artistRepository;
+    private final ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient attachmentClient;
+
+    
+    private long getAttachmentCountByLike(String mimeTypePattern) {
+        String spec = EntitySpec.from(SecurityContextUtils.getUserScopedSecuritySpec())
+                .and().where("mimeType", EntitySpec.specLike(mimeTypePattern))
+                .build().specString();
+
+        org.openapitools.model.Pageable pageable = new org.openapitools.model.Pageable();
+        pageable.setSize(1);
+
+        var response = attachmentClient.getAllPaged(pageable, spec);
+        if (response.getBody() != null && response.getBody().getPage() != null && response.getBody().getPage().getTotalElements() != null) {
+            return response.getBody().getPage().getTotalElements();
+        }
+        return 0L;
+    }
 
     public UserStatisticsDto getUserStatistics(String userId) {
         String currentUserId = SecurityContextUtils.getCurrentSubject()
@@ -103,13 +120,25 @@ public class UserStatisticsService {
                     .build());
         }
 
+        
+        long gifAnimationCount = getAttachmentCountByLike("image/gif");
+        long flashAnimationCount = getAttachmentCountByLike("application/x-shockwave-flash");
+        long animationCount = gifAnimationCount + flashAnimationCount;
+        long imagesCount = getAttachmentCountByLike("image/%") - gifAnimationCount;
+        long videoCount = getAttachmentCountByLike("video/%");
+        long musicCount = getAttachmentCountByLike("audio/%");
+
         return UserStatisticsDto.builder()
                 .ownerId(userId)
                 .postsCount(postsCount)
                 .collectionsCount(collectionsCount)
                 .librariesCount(librariesCount)
                 .tagsCount(tagsCount)
-                .artistsCount(artistsCount)
+                                .artistsCount(artistsCount)
+                .imagesCount(imagesCount)
+                .videoCount(videoCount)
+                .animationCount(animationCount)
+                .musicCount(musicCount)
                 .last7DaysChart(last7DaysChart)
                 .build();
     }

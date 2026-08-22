@@ -50,7 +50,7 @@ public class PostV1RestControllerIT extends BaseCrudControllerTest<Post, PostDTO
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/posts";
+        return "/v1/posts";
     }
 
     private String randomName() {

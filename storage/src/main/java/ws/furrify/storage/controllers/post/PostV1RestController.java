@@ -13,7 +13,7 @@ import ws.furrify.storage.dto.post.request.PatchPostRequest;
 
 
 @RestController
-@RequestMapping("/v1/storage/posts")
+@RequestMapping("/v1/posts")
 class PostV1RestController extends BaseEntityRestController<Post, PostDTO, CreatePostRequest, PatchPostRequest> {
 
     @Autowired
