@@ -16,7 +16,7 @@
     }
   ],
   "paths": {
-    "/v1/storage/files": {
+    "/v1/files": {
       "get": {
         "tags": [
           "attachment-file-v-1-rest-controller"
@@ -82,7 +82,7 @@
         }
       }
     },
-    "/v1/storage/files/{id}": {
+    "/v1/files/{id}": {
       "get": {
         "tags": [
           "attachment-file-v-1-rest-controller"
