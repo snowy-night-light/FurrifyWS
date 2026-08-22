@@ -3,6 +3,7 @@ package ws.furrify.core.config;
 import com.fasterxml.jackson.databind.JavaType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.oas.models.media.Schema;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.web.filter.ShallowEtagHeaderFilter;
@@ -39,6 +40,17 @@ public abstract class WebConfig  {
                 return resolvedSchema;
             }
             return null;
+        };
+    }
+
+    @Bean
+    public OperationCustomizer customOperationId() {
+        return (operation, handlerMethod) -> {
+            String controllerName = handlerMethod.getBeanType().getSimpleName();
+            String methodName = handlerMethod.getMethod().getName();
+
+            operation.setOperationId(controllerName + "_" + methodName);
+            return operation;
         };
     }
 
