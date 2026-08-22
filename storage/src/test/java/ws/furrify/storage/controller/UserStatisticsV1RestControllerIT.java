@@ -5,7 +5,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.openapitools.model.PageMetadata;
 import org.openapitools.model.PagedModelAttachmentFileDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -100,10 +99,7 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
         long tagsInDb = tagRepository.count();
         long artistsInDb = artistRepository.count();
 
-        PagedModelAttachmentFileDTO pagedModel = new PagedModelAttachmentFileDTO();
-        PageMetadata pageMetadata = new PageMetadata();
-        pageMetadata.setTotalElements(0L);
-        pagedModel.setPage(pageMetadata);
+        PagedModelAttachmentFileDTO pagedModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 0}}", PagedModelAttachmentFileDTO.class);
         Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(pagedModel));
 
         RestAssured.given()
@@ -131,10 +127,7 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
 
     @Test
     public void testGetUserStatisticsChartData() {
-        PagedModelAttachmentFileDTO pagedModel = new PagedModelAttachmentFileDTO();
-        PageMetadata pageMetadata = new PageMetadata();
-        pageMetadata.setTotalElements(0L);
-        pagedModel.setPage(pageMetadata);
+        PagedModelAttachmentFileDTO pagedModel= jsonMapper.readValue("{\"page\": {\"totalElements\": 0}}", PagedModelAttachmentFileDTO.class);
         Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(pagedModel));
 
         RestAssured.given()
