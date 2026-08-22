@@ -8,6 +8,7 @@ import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.dto.tag.TagDTO;
 import ws.furrify.storage.dto.tag.request.PatchTagRequest;
+import ws.furrify.storage.service.library.LibraryEntityService;
 
 import java.util.UUID;
 
@@ -16,18 +17,21 @@ public class TagEntityService extends BaseEntityCrudService<Tag, TagDTO, PatchTa
 
     private final TagCategoryEntityService tagCategoryEntityService;
     private final TagAliasEntityService tagAliasEntityService;
+    private final LibraryEntityService libraryEntityService;
 
     @Autowired
-    public TagEntityService(BaseEntityRepository<Tag> entityRepository, BaseDTOMapper<Tag, TagDTO, PatchTagRequest> dtoMapper, TagCategoryEntityService tagCategoryEntityService, TagAliasEntityService tagAliasEntityService) {
+    public TagEntityService(BaseEntityRepository<Tag> entityRepository, BaseDTOMapper<Tag, TagDTO, PatchTagRequest> dtoMapper, TagCategoryEntityService tagCategoryEntityService, TagAliasEntityService tagAliasEntityService, LibraryEntityService libraryEntityService) {
         super(entityRepository, dtoMapper);
         this.tagCategoryEntityService = tagCategoryEntityService;
         this.tagAliasEntityService = tagAliasEntityService;
+        this.libraryEntityService = libraryEntityService;
     }
 
     @Override
     public TagDTO create(TagDTO dto) {
         super.handleCreateInternalReference(dto, TagDTO::getCategory, TagDTO::setCategory, tagCategoryEntityService);
-        super.handleCreateInternalCollectionReference(dto, TagDTO::getAliases, TagDTO::setAliases, tagAliasEntityService);
+        super.handleCreateInternalReference(dto, TagDTO::getLibrary, TagDTO::setLibrary, libraryEntityService);
+        super.handleCreateInternalCollectionReferences(dto, TagDTO::getAliases, TagDTO::setAliases, tagAliasEntityService);
 
         return super.create(dto);
     }
@@ -35,6 +39,7 @@ public class TagEntityService extends BaseEntityCrudService<Tag, TagDTO, PatchTa
     @Override
     public TagDTO patchById(UUID id, PatchTagRequest patchDto) {
         super.handlePatchInternalReference(patchDto.getCategory(), tagCategoryEntityService);
+        super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
         super.handlePatchCollectionInternalReferences(patchDto.getAliases(), tagAliasEntityService);
 
         return super.patchById(id, patchDto);

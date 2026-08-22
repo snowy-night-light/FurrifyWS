@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.domain.tag.category.TagCategory;
+import ws.furrify.storage.domain.library.Library;
 
 import java.util.List;
 
@@ -34,4 +35,8 @@ public class Tag extends UserScopedEntity {
     @ManyToOne
     @NotNull
     TagCategory category;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "library_id")
+    Library library;
 }

@@ -8,6 +8,7 @@ import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.source.Source;
+import ws.furrify.storage.domain.library.Library;
 
 import java.util.List;
 
@@ -30,4 +31,8 @@ public class Artist extends UserScopedEntity {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     Media avatar;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "library_id")
+    Library library;
 }

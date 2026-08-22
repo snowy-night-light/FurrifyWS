@@ -35,7 +35,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
             throw new ReferenceNotFoundException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
-        super.handleCreateInternalCollectionReference(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
+        super.handleCreateInternalCollectionReferences(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
 
         return super.create(dto);
     }

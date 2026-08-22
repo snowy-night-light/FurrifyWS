@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
+import ws.furrify.storage.dto.library.LibraryDTO;
 import ws.furrify.storage.dto.media.MediaDTO;
 import ws.furrify.storage.dto.source.SourceDTO;
 
@@ -23,4 +24,6 @@ public class ArtistDTO extends UserScopedEntityDTO<Artist> {
     private List<SourceDTO> sources;
 
     private MediaDTO avatar;
+
+    private LibraryDTO library;
 }

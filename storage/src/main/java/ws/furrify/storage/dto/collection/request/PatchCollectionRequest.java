@@ -17,5 +17,6 @@ public class PatchCollectionRequest implements BasePatchEntityRequest<Collection
     private JsonNullable<@NotBlank String> title = JsonNullable.undefined();
 
     private JsonNullable<List<@NotNull EntityIdRequest>> posts = JsonNullable.undefined();
+    private JsonNullable<EntityIdRequest> library = JsonNullable.undefined();
 
 }
