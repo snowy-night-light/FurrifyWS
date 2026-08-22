@@ -4,9 +4,14 @@ import io.restassured.RestAssured;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.openapitools.model.PageMetadata;
+import org.openapitools.model.PagedModelAttachmentFileDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.ArtistRepository;
@@ -27,11 +32,16 @@ import ws.furrify.testcore.controller.BaseControllerTest;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+
 @SpringBootTest(
         classes = StorageApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
+
+    @MockitoBean
+    private AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
 
     @Autowired
     private PostRepository postRepository;
@@ -90,6 +100,12 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
         long tagsInDb = tagRepository.count();
         long artistsInDb = artistRepository.count();
 
+        PagedModelAttachmentFileDTO pagedModel = new org.openapitools.model.PagedModelAttachmentFileDTO();
+        PageMetadata pageMetadata = new org.openapitools.model.PageMetadata();
+        pageMetadata.setTotalElements(0L);
+        pagedModel.setPage(pageMetadata);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(pagedModel));
+
         RestAssured.given()
                 .when()
                 .get(basePath.replace("{userId}", AuthorizationTestConfig.MOCK_SUBJECT_ID.toString()))
@@ -115,6 +131,12 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
 
     @Test
     public void testGetUserStatisticsChartData() {
+        PagedModelAttachmentFileDTO pagedModel = new org.openapitools.model.PagedModelAttachmentFileDTO();
+        PageMetadata pageMetadata = new org.openapitools.model.PageMetadata();
+        pageMetadata.setTotalElements(0L);
+        pagedModel.setPage(pageMetadata);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(pagedModel));
+
         RestAssured.given()
                 .when()
                 .get(basePath.replace("{userId}", AuthorizationTestConfig.MOCK_SUBJECT_ID.toString()))
