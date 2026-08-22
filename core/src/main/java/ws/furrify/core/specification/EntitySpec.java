@@ -25,8 +25,12 @@ public class EntitySpec {
     public static final String LESS_THAN_OR_EQUAL_OPERATOR = " <= ";
     public static final String EQUAL_IGNORE_CASE_OPERATOR = " =^ ";
     public static final String NOT_EQUAL_IGNORE_CASE_OPERATOR = " !=^ ";
+    public static final String LIKE_OPERATOR = " like ";
+    public static final String NOT_LIKE_OPERATOR = " !like ";
+    public static final String LIKE_IGNORE_CASE_OPERATOR = " like^ ";
+    public static final String NOT_LIKE_IGNORE_CASE_OPERATOR = " !like^ ";
     private static final String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
-    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^]+)\\s+([^)&|]+)\\)?");
+    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^~]+)\\s+([^)&|]+)\\)?");
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> unrestricted() {
         return new EntitySpecResult<>("", (root, query, cb) -> cb.conjunction());
@@ -108,6 +112,37 @@ public class EntitySpec {
             propertyPath = propertyPath.next();
         }
         return path;
+    }
+
+    
+    @SuppressWarnings({"unchecked"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLike(Object value) {
+        return new InternalExpression<>(LIKE_OPERATOR + value, (f, v) -> (root, query, cb) -> cb.like((Path<String>) getPath(root, f), (String) v), value, null);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotLike(Object value) {
+        return new InternalExpression<>(NOT_LIKE_OPERATOR + value, (f, v) -> (root, query, cb) -> cb.notLike((Path<String>) getPath(root, f), (String) v), value, null);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLikeIgnoreCase(Object value) {
+        return new InternalExpression<>(LIKE_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof String strValue) {
+                return cb.like(cb.lower((Path<String>) getPath(root, f)), strValue.toLowerCase());
+            }
+            return cb.like((Path<String>) getPath(root, f), (String) v);
+        }, value, null);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotLikeIgnoreCase(Object value) {
+        return new InternalExpression<>(NOT_LIKE_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v instanceof String strValue) {
+                return cb.notLike(cb.lower((Path<String>) getPath(root, f)), strValue.toLowerCase());
+            }
+            return cb.notLike((Path<String>) getPath(root, f), (String) v);
+        }, value, null);
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specWhere(String field, EntitySpecExpression<ENTITY> expr) {

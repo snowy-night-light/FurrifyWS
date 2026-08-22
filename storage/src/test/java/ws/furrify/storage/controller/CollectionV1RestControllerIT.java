@@ -54,7 +54,7 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/collections";
+        return "/v1/collections";
     }
 
     private String randomName() {

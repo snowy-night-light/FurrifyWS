@@ -13,7 +13,7 @@ import ws.furrify.storage.dto.artist.request.PatchArtistRequest;
 
 
 @RestController
-@RequestMapping("/v1/storage/artists")
+@RequestMapping("/v1/artists")
 class ArtistV1RestController extends BaseEntityRestController<Artist, ArtistDTO, CreateArtistRequest, PatchArtistRequest> {
 
     @Autowired

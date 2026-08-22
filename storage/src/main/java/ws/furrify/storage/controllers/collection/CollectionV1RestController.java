@@ -13,7 +13,7 @@ import ws.furrify.storage.dto.collection.request.PatchCollectionRequest;
 
 
 @RestController
-@RequestMapping("/v1/storage/collections")
+@RequestMapping("/v1/collections")
 class CollectionV1RestController extends BaseEntityRestController<Collection, CollectionDTO, CreateCollectionRequest, PatchCollectionRequest> {
 
     @Autowired

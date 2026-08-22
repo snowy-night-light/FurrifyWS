@@ -51,7 +51,7 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/tags";
+        return "/v1/tags";
     }
 
     @Override

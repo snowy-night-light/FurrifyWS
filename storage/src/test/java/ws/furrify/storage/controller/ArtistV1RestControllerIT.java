@@ -53,7 +53,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/artists";
+        return "/v1/artists";
     }
 
     @Override

@@ -34,7 +34,7 @@ public class LibraryV1RestControllerIT extends BaseCrudControllerTest<Library, L
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/libraries";
+        return "/v1/libraries";
     }
 
     @Override

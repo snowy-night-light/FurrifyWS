@@ -34,7 +34,7 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/tags/categories";
+        return "/v1/tags/categories";
     }
 
     @Override

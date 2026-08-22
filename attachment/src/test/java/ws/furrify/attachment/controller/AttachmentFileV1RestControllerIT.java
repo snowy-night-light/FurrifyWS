@@ -66,7 +66,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/files";
+        return "/v1/files";
     }
 
     protected AttachmentFileDTO create(CreateAttachmentFileRequest createAttachmentFileRequest, File file) {

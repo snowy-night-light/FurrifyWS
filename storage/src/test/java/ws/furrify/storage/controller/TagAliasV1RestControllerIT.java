@@ -45,7 +45,7 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/tags/aliases";
+        return "/v1/tags/aliases";
     }
 
     @Override

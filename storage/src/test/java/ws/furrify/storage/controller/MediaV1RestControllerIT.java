@@ -52,7 +52,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
 
     @Override
     protected String getControllerPath() {
-        return "/v1/storage/media";
+        return "/v1/media";
     }
 
     @Override

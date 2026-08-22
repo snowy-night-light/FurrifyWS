@@ -11,7 +11,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1/storage/user/{userId}/statistics")
+@RequestMapping("/v1/user/{userId}/statistics")
 public class UserStatisticsV1RestController {
 
     private final UserStatisticsService userStatisticsService;

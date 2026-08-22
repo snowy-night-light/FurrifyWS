@@ -10,7 +10,7 @@ import org.springframework.web.filter.ShallowEtagHeaderFilter;
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
-public abstract class WebConfig {
+public abstract class WebConfig  {
 
     /**
      * Make sure docs for enums are generated as separate enum classes not inline enums.

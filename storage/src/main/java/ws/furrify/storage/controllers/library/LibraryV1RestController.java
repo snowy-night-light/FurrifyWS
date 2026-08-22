@@ -13,7 +13,7 @@ import ws.furrify.storage.dto.library.request.PatchLibraryRequest;
 
 
 @RestController
-@RequestMapping("/v1/storage/libraries")
+@RequestMapping("/v1/libraries")
 class LibraryV1RestController extends BaseEntityRestController<Library, LibraryDTO, CreateLibraryRequest, PatchLibraryRequest> {
 
     @Autowired
