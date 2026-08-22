@@ -100,8 +100,8 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
         long tagsInDb = tagRepository.count();
         long artistsInDb = artistRepository.count();
 
-        PagedModelAttachmentFileDTO pagedModel = new org.openapitools.model.PagedModelAttachmentFileDTO();
-        PageMetadata pageMetadata = new org.openapitools.model.PageMetadata();
+        PagedModelAttachmentFileDTO pagedModel = new PagedModelAttachmentFileDTO();
+        PageMetadata pageMetadata = new PageMetadata();
         pageMetadata.setTotalElements(0L);
         pagedModel.setPage(pageMetadata);
         Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(pagedModel));
@@ -131,8 +131,8 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
 
     @Test
     public void testGetUserStatisticsChartData() {
-        PagedModelAttachmentFileDTO pagedModel = new org.openapitools.model.PagedModelAttachmentFileDTO();
-        PageMetadata pageMetadata = new org.openapitools.model.PageMetadata();
+        PagedModelAttachmentFileDTO pagedModel = new PagedModelAttachmentFileDTO();
+        PageMetadata pageMetadata = new PageMetadata();
         pageMetadata.setTotalElements(0L);
         pagedModel.setPage(pageMetadata);
         Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(pagedModel));
