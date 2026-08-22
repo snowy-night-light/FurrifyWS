@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 
 @SpringBootTest(
         classes = StorageApplication.class,
@@ -141,5 +142,36 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
                 .body("last7DaysChart[6].newCollectionsCount", Matchers.equalTo(1))
                 .body("last7DaysChart[6].newTagsCount", Matchers.equalTo(1))
                 .body("last7DaysChart[6].newArtistsCount", Matchers.equalTo(1));
+    }
+
+    @Test
+    public void testGetUserStatisticsAttachmentCounts() throws Exception {
+        PagedModelAttachmentFileDTO defaultModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 0}}", PagedModelAttachmentFileDTO.class);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), any())).thenReturn(org.springframework.http.ResponseEntity.ok(defaultModel));
+
+        PagedModelAttachmentFileDTO gifModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 5}}", PagedModelAttachmentFileDTO.class);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), contains("image/gif"))).thenReturn(org.springframework.http.ResponseEntity.ok(gifModel));
+
+        PagedModelAttachmentFileDTO flashModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 3}}", PagedModelAttachmentFileDTO.class);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), contains("application/x-shockwave-flash"))).thenReturn(org.springframework.http.ResponseEntity.ok(flashModel));
+
+        PagedModelAttachmentFileDTO imagesModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 15}}", PagedModelAttachmentFileDTO.class);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), contains("image/%"))).thenReturn(org.springframework.http.ResponseEntity.ok(imagesModel));
+
+        PagedModelAttachmentFileDTO videoModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 4}}", PagedModelAttachmentFileDTO.class);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), contains("video/%"))).thenReturn(org.springframework.http.ResponseEntity.ok(videoModel));
+
+        PagedModelAttachmentFileDTO musicModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 7}}", PagedModelAttachmentFileDTO.class);
+        Mockito.when(attachmentFileV1RestControllerApiClient.getAllPaged(any(), contains("audio/%"))).thenReturn(org.springframework.http.ResponseEntity.ok(musicModel));
+
+        RestAssured.given()
+                .when()
+                .get(basePath.replace("{userId}", AuthorizationTestConfig.MOCK_SUBJECT_ID.toString()))
+                .then()
+                .statusCode(200)
+                .body("animationCount", Matchers.equalTo(8))
+                .body("imagesCount", Matchers.equalTo(10))
+                .body("videoCount", Matchers.equalTo(4))
+                .body("musicCount", Matchers.equalTo(7));
     }
 }
