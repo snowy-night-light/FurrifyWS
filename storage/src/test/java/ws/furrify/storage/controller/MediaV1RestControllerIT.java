@@ -72,7 +72,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         );
 
         Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
-                .when(attachmentFileV1RestControllerApiClient).getById(fileReferenceId);
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId);
 
         MediaDTO createdMedia = super.create(request);
 
@@ -129,7 +129,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         request.setFileReferenceId(JsonNullable.of(fileReferenceId));
 
         Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
-                .when(attachmentFileV1RestControllerApiClient).getById(fileReferenceId);
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId);
 
         MediaDTO updatedMedia = super.patch(media.getId(), request);
 

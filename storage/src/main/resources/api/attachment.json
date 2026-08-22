@@ -21,7 +21,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "getAllPaged",
+        "operationId": "AttachmentFileV1RestController_getAllPaged",
         "parameters": [
           {
             "name": "spec",
@@ -57,7 +57,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "save",
+        "operationId": "AttachmentFileV1RestController_save",
         "requestBody": {
           "content": {
             "application/json": {
@@ -87,7 +87,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "getById",
+        "operationId": "AttachmentFileV1RestController_getById",
         "parameters": [
           {
             "name": "id",
@@ -116,7 +116,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "delete",
+        "operationId": "AttachmentFileV1RestController_delete",
         "parameters": [
           {
             "name": "id",
@@ -138,7 +138,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "patch",
+        "operationId": "AttachmentFileV1RestController_patch",
         "parameters": [
           {
             "name": "id",

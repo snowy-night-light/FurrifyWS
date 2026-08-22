@@ -47,7 +47,7 @@ public class UserStatisticsService {
         org.openapitools.model.Pageable pageable = new org.openapitools.model.Pageable();
         pageable.setSize(1);
 
-        var response = attachmentClient.getAllPaged(pageable, spec);
+        var response = attachmentClient.attachmentFileV1RestControllerGetAllPaged(pageable, spec);
         if (response.getBody() != null && response.getBody().getPage() != null && response.getBody().getPage().getTotalElements() != null) {
             return response.getBody().getPage().getTotalElements();
         }
