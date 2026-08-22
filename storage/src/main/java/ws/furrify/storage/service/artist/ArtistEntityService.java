@@ -42,7 +42,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
     public ArtistDTO patchById(UUID id, PatchArtistRequest patchDto) {
         super.handlePatchInternalReference(patchDto.getAvatar(), mediaEntityService);
         super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getSources(), mediaEntityService);
+        super.handlePatchCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
         return super.patchById(id, patchDto);
     }
