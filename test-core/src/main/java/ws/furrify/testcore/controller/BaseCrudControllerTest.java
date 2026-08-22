@@ -1,12 +1,6 @@
 package ws.furrify.testcore.controller;
 
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.ObjectMapperConfig;
-import io.restassured.config.RestAssuredConfig;
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Page;
@@ -34,40 +28,19 @@ import static io.restassured.RestAssured.given;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import(value = {PostgresTestConfig.class, AuthorizationTestConfig.class})
-public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, CREATE_REQ extends BaseCreateEntityRequest<ENTITY, DTO>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
+public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, CREATE_REQ extends BaseCreateEntityRequest<ENTITY, DTO>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> extends BaseControllerTest {
 
-    protected final JsonMapper jsonMapper;
-
-    protected final String basePath;
     protected final Class<DTO> dtoClass;
     private final Type pageType;
 
-    @LocalServerPort
-    protected Integer port;
-
     @SuppressWarnings("unchecked")
     protected BaseCrudControllerTest(JsonMapper jsonMapper) {
-        this.jsonMapper = jsonMapper;
+        super(jsonMapper);
         ResolvableType type = ResolvableType.forClass(getClass()).as(BaseCrudControllerTest.class);
 
         this.dtoClass = (Class<DTO>) type.getGeneric(1).resolve();
-        this.basePath = getControllerPath();
         this.pageType = jsonMapper.getTypeFactory().constructParametricType(RestPageImpl.class, this.dtoClass);
     }
-
-    @BeforeEach
-    protected void setUpRestAssured() {
-        RestAssured.baseURI = "http://localhost:" + port;
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        RestAssured.config = RestAssuredConfig.config().objectMapperConfig(
-                new ObjectMapperConfig().jackson3ObjectMapperFactory((type, charset) -> jsonMapper)
-        );
-        RestAssured.requestSpecification = new RequestSpecBuilder()
-                .addHeader("Authorization", "Bearer mock-token")
-                .build();
-    }
-
-    protected abstract String getControllerPath();
 
     protected abstract void testCreate() throws IOException, URISyntaxException;
 

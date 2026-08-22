@@ -1,0 +1,130 @@
+package ws.furrify.storage.controller;
+
+import io.restassured.RestAssured;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.storage.StorageApplication;
+import ws.furrify.storage.domain.artist.Artist;
+import ws.furrify.storage.domain.artist.ArtistRepository;
+import ws.furrify.storage.domain.artist.vo.ArtistNickname;
+import ws.furrify.storage.domain.collection.Collection;
+import ws.furrify.storage.domain.collection.CollectionRepository;
+import ws.furrify.storage.domain.library.Library;
+import ws.furrify.storage.domain.library.LibraryRepository;
+import ws.furrify.storage.domain.post.Post;
+import ws.furrify.storage.domain.post.PostRepository;
+import ws.furrify.storage.domain.tag.Tag;
+import ws.furrify.storage.domain.tag.TagRepository;
+import ws.furrify.storage.domain.tag.category.TagCategory;
+import ws.furrify.storage.domain.tag.category.TagCategoryRepository;
+import ws.furrify.testcore.config.AuthorizationTestConfig;
+import ws.furrify.testcore.controller.BaseControllerTest;
+
+import java.util.List;
+import java.util.UUID;
+
+@SpringBootTest(
+        classes = StorageApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
+public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private CollectionRepository collectionRepository;
+
+    @Autowired
+    private LibraryRepository libraryRepository;
+
+    @Autowired
+    private TagRepository tagRepository;
+
+    @Autowired
+    private ArtistRepository artistRepository;
+
+    @Autowired
+    private TagCategoryRepository tagCategoryRepository;
+
+    @Autowired
+    protected UserStatisticsV1RestControllerIT(JsonMapper jsonMapper) {
+        super(jsonMapper);
+    }
+
+    @Override
+    protected String getControllerPath() {
+        return "/v1/storage/user/{userId}/statistics";
+    }
+
+    private String randomName() {
+        return UUID.randomUUID().toString().replace("-", "").toLowerCase();
+    }
+
+    @BeforeEach
+    public void setupData() {
+        artistRepository.deleteAll();
+        collectionRepository.deleteAll();
+        postRepository.deleteAll();
+        tagRepository.deleteAll();
+        tagCategoryRepository.deleteAll();
+        libraryRepository.deleteAll();
+
+        Library library = libraryRepository.save(Library.builder().title("Test library " + randomName()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+    }
+
+    @Test
+    public void testGetUserStatistics() {
+        long postsInDb = postRepository.count();
+        long collectionsInDb = collectionRepository.count();
+        long librariesInDb = libraryRepository.count();
+        long tagsInDb = tagRepository.count();
+        long artistsInDb = artistRepository.count();
+
+        RestAssured.given()
+                .when()
+                .get(basePath.replace("{userId}", AuthorizationTestConfig.MOCK_SUBJECT_ID.toString()))
+                .then()
+                .statusCode(200)
+                .body("ownerId", Matchers.equalTo(AuthorizationTestConfig.MOCK_SUBJECT_ID.toString()))
+                .body("postsCount", Matchers.equalTo((int)postsInDb))
+                .body("collectionsCount", Matchers.equalTo((int) collectionsInDb))
+                .body("librariesCount", Matchers.equalTo((int)librariesInDb))
+                .body("tagsCount", Matchers.equalTo((int)tagsInDb))
+                .body("artistsCount", Matchers.equalTo((int) artistsInDb))
+                .body("last7DaysChart", Matchers.notNullValue());
+    }
+
+    @Test
+    public void testGetUserStatisticsUnauthorized() {
+        RestAssured.given()
+                .when()
+                .get(basePath.replace("{userId}", UUID.randomUUID().toString()))
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void testGetUserStatisticsChartData() {
+        RestAssured.given()
+                .when()
+                .get(basePath.replace("{userId}", AuthorizationTestConfig.MOCK_SUBJECT_ID.toString()))
+                .then()
+                .statusCode(200)
+                .body("last7DaysChart", Matchers.hasSize(7))
+                .body("last7DaysChart[0].newPostsCount", Matchers.equalTo(0))
+                .body("last7DaysChart[6].newPostsCount", Matchers.equalTo(1))
+                .body("last7DaysChart[6].newCollectionsCount", Matchers.equalTo(1))
+                .body("last7DaysChart[6].newTagsCount", Matchers.equalTo(1))
+                .body("last7DaysChart[6].newArtistsCount", Matchers.equalTo(1));
+    }
+}
