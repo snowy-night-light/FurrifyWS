@@ -102,10 +102,10 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
-    void handleCreateInternalCollectionReference(DTO dto,
-                                       Function<DTO, List<REF_DTO>> getter,
-                                       BiConsumer<DTO, List<REF_DTO>> setter,
-                                       BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
+    void handleCreateInternalCollectionReferences(DTO dto,
+                                                  Function<DTO, List<REF_DTO>> getter,
+                                                  BiConsumer<DTO, List<REF_DTO>> setter,
+                                                  BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
         List<REF_DTO> refEntities = getter.apply(dto);
 
         if (refEntities != null) {

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
+import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.post.Post;
 
 import java.util.List;
@@ -21,6 +22,10 @@ public class Collection extends UserScopedEntity {
     @Size(max = 128)
     String title;
 
-    @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
     List<Post> posts;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "library_id", nullable = false)
+    Library library;
 }

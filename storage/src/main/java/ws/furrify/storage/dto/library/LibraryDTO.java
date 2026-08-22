@@ -1,16 +1,14 @@
-package ws.furrify.storage.dto.post;
+package ws.furrify.storage.dto.library;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.dto.UserScopedEntityDTO;
-import ws.furrify.storage.domain.post.Post;
+import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 import ws.furrify.storage.dto.collection.CollectionDTO;
-import ws.furrify.storage.dto.library.LibraryDTO;
-import ws.furrify.storage.dto.media.MediaDTO;
-import ws.furrify.storage.dto.source.SourceDTO;
+import ws.furrify.storage.dto.post.PostDTO;
 import ws.furrify.storage.dto.tag.TagDTO;
 
 import java.util.List;
@@ -19,17 +17,10 @@ import java.util.List;
 @Data
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
-public class PostDTO extends UserScopedEntityDTO<Post> {
+public class LibraryDTO extends UserScopedEntityDTO<Library> {
     private String title;
-    private String description;
-
+    private List<PostDTO> posts;
     private List<TagDTO> tags;
     private List<ArtistDTO> artists;
-
-    private List<MediaDTO> displayMediaList;
-    private List<MediaDTO> attachments;
-
-    private List<SourceDTO> sources;
     private List<CollectionDTO> collections;
-    private LibraryDTO library;
 }

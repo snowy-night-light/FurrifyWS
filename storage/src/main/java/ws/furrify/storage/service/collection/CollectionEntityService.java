@@ -8,6 +8,7 @@ import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.dto.collection.CollectionDTO;
 import ws.furrify.storage.dto.collection.request.PatchCollectionRequest;
+import ws.furrify.storage.service.library.LibraryEntityService;
 import ws.furrify.storage.service.post.PostEntityService;
 
 import java.util.UUID;
@@ -16,23 +17,27 @@ import java.util.UUID;
 public class CollectionEntityService extends BaseEntityCrudService<Collection, CollectionDTO, PatchCollectionRequest> {
 
     private final PostEntityService postEntityService;
+    private final LibraryEntityService libraryEntityService;
 
     @Autowired
-    public CollectionEntityService(BaseEntityRepository<Collection> entityRepository, BaseDTOMapper<Collection, CollectionDTO, PatchCollectionRequest> dtoMapper, PostEntityService postEntityService) {
+    public CollectionEntityService(BaseEntityRepository<Collection> entityRepository, BaseDTOMapper<Collection, CollectionDTO, PatchCollectionRequest> dtoMapper, PostEntityService postEntityService, LibraryEntityService libraryEntityService) {
         super(entityRepository, dtoMapper);
         this.postEntityService = postEntityService;
+        this.libraryEntityService = libraryEntityService;
     }
 
     @Override
     public CollectionDTO patchById(UUID id, PatchCollectionRequest patchDto) {
         super.handlePatchCollectionInternalReferences(patchDto.getPosts(), postEntityService);
+        super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
 
         return super.patchById(id, patchDto);
     }
 
     @Override
     public CollectionDTO create(CollectionDTO dto) {
-        super.handleCreateInternalCollectionReference(dto, CollectionDTO::getPosts, CollectionDTO::setPosts, postEntityService);
+        super.handleCreateInternalCollectionReferences(dto, CollectionDTO::getPosts, CollectionDTO::setPosts, postEntityService);
+        super.handleCreateInternalReference(dto, CollectionDTO::getLibrary, CollectionDTO::setLibrary, libraryEntityService);
 
         return super.create(dto);
     }

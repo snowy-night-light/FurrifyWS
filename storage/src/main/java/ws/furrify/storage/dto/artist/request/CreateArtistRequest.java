@@ -20,4 +20,6 @@ public class CreateArtistRequest implements BaseCreateEntityRequest<Artist, Arti
     private List<@NotNull EntityIdRequest> sources;
 
     private EntityIdRequest avatar;
+
+    private EntityIdRequest library;
 }

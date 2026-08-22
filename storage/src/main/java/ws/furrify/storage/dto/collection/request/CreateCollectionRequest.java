@@ -17,4 +17,5 @@ public class CreateCollectionRequest implements BaseCreateEntityRequest<Collecti
     private String title;
 
     private List<@NotNull EntityIdRequest> posts;
+    private EntityIdRequest library;
 }

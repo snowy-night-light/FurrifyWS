@@ -8,6 +8,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
+import ws.furrify.storage.domain.collection.Collection;
+import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.source.Source;
 import ws.furrify.storage.domain.tag.Tag;
@@ -42,4 +44,11 @@ public class Post extends UserScopedEntity {
     List<Media> attachments;
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Source> sources;
+
+    @ManyToMany(mappedBy = "posts", fetch = FetchType.LAZY)
+    List<Collection> collections;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "library_id", nullable = false)
+    Library library;
 }

@@ -29,4 +29,7 @@ public class CreatePostRequest implements BaseCreateEntityRequest<Post, PostDTO>
     private List<@NotNull EntityIdRequest> attachments;
 
     private List<@NotNull EntityIdRequest> sources;
+
+    @NotNull
+    private EntityIdRequest library;
 }

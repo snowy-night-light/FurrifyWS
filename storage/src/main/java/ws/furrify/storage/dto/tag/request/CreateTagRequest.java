@@ -21,4 +21,6 @@ public class CreateTagRequest implements BaseCreateEntityRequest<Tag, TagDTO> {
     @Pattern(regexp = "^[a-z0-9 ]+$")
     private String name;
 
+    private EntityIdRequest library;
+
 }

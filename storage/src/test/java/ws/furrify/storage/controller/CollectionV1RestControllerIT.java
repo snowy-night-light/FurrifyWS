@@ -11,6 +11,8 @@ import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.domain.collection.CollectionRepository;
+import ws.furrify.storage.domain.library.Library;
+import ws.furrify.storage.domain.library.LibraryRepository;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.domain.post.PostRepository;
 import ws.furrify.storage.domain.tag.Tag;
@@ -42,6 +44,8 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
     private TagRepository tagRepository;
     @Autowired
     private TagCategoryRepository tagCategoryRepository;
+    @Autowired
+    private LibraryRepository libraryRepository;
 
     @Autowired
     protected CollectionV1RestControllerIT(JsonMapper jsonMapper) {
@@ -60,13 +64,15 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
     @Override
     @Test
     protected void testCreate() {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateCollectionRequest request = new CreateCollectionRequest();
         request.setTitle("Test collection");
         request.setPosts(List.of(EntityIdRequest.builder().id(post.getId()).build()));
+        request.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
 
         CollectionDTO createdCollection = super.create(request);
 
@@ -81,10 +87,11 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
     @Override
     @Test
     protected void testFindById() {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Collection collection = collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Collection collection = collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CollectionDTO foundCollection = super.findById(collection.getId());
 
@@ -98,13 +105,14 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
     @Override
     @Test
     protected void testFindAll() {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Post post2 = postRepository.save(Post.builder().title("Test title 2").tags(List.of(tag2)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        collectionRepository.save(Collection.builder().title("Test collection 2").posts(List.of(post2)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post2 = postRepository.save(Post.builder().title("Test title 2").tags(List.of(tag2)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        collectionRepository.save(Collection.builder().title("Test collection 2").posts(List.of(post2)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<CollectionDTO> collections = super.findAll(PageRequest.of(0, 10));
 
@@ -117,10 +125,11 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
     @Override
     @Test
     protected void testPatch() {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Collection collection = collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Collection collection = collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchCollectionRequest request = new PatchCollectionRequest();
         request.setTitle(JsonNullable.of("Patched title"));
@@ -137,10 +146,11 @@ public class CollectionV1RestControllerIT extends BaseCrudControllerTest<Collect
     @Override
     @Test
     protected void testDelete() {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Collection collection = collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Post post = postRepository.save(Post.builder().title("Test title").tags(List.of(tag)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Collection collection = collectionRepository.save(Collection.builder().title("Test collection").posts(List.of(post)).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(collection.getId()));
     }

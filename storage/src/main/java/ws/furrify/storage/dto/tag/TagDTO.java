@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.tag.Tag;
+import ws.furrify.storage.dto.library.LibraryDTO;
 import ws.furrify.storage.dto.tag.alias.TagAliasDTO;
 import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
 
@@ -23,4 +24,6 @@ public class TagDTO extends UserScopedEntityDTO<Tag> {
     private List<TagAliasDTO> aliases;
 
     private TagCategoryDTO category;
+
+    private LibraryDTO library;
 }

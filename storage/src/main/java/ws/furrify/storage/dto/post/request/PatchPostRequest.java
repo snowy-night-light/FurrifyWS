@@ -26,4 +26,5 @@ public class PatchPostRequest implements BasePatchEntityRequest<Post, PostDTO> {
 
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
 
+    private JsonNullable<@NotNull EntityIdRequest> library = JsonNullable.undefined();
 }
