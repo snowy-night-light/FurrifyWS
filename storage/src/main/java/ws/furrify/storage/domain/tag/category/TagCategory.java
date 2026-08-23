@@ -2,12 +2,15 @@ package ws.furrify.storage.domain.tag.category;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
+import ws.furrify.storage.domain.library.Library;
 
 @Entity
 @Getter
@@ -26,5 +29,9 @@ public class TagCategory extends UserScopedEntity {
     @Size(max = 7)
     @Column(length = 7)
     String hexColor;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "library_id")
+    Library library;
 }
 

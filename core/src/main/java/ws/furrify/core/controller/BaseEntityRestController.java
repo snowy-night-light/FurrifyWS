@@ -14,6 +14,7 @@ import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 
+import java.util.Base64;
 import java.util.UUID;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -33,8 +34,13 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
 
     @GetMapping(produces = {APPLICATION_JSON})
     @ResponseStatus(value = HttpStatus.OK)
-    protected Page<DTO> getAllPaged(@RequestParam(required = false) String spec, Pageable pageable) {
-        return entityCrudService.getAllPaged(spec, pageable);
+    protected Page<DTO> getAllPaged(@RequestParam(required = false, name = "spec") String specBase64, Pageable pageable) {
+        String decodedSpec = null;
+        if (specBase64 != null) {
+            decodedSpec = new String(Base64.getUrlDecoder().decode(specBase64));
+        }
+
+        return entityCrudService.getAllPaged(decodedSpec, pageable);
     }
 
     @PostMapping()

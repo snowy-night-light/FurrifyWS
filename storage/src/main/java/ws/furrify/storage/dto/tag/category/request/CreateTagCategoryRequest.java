@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
+import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.domain.tag.category.TagCategory;
 import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
 
@@ -17,4 +18,6 @@ public class CreateTagCategoryRequest implements BaseCreateEntityRequest<TagCate
     @NotBlank
     @Size(max = 7)
     String hexColor;
+
+    EntityIdRequest library;
 }

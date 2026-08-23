@@ -7,7 +7,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.StorageApplication;
+import ws.furrify.storage.domain.library.Library;
+import ws.furrify.storage.domain.library.LibraryRepository;
 import ws.furrify.storage.domain.tag.category.TagCategory;
 import ws.furrify.storage.domain.tag.category.TagCategoryRepository;
 import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
@@ -28,6 +31,9 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     private TagCategoryRepository tagCategoryRepository;
 
     @Autowired
+    private LibraryRepository libraryRepository;
+
+    @Autowired
     protected TagCategoryV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
     }
@@ -40,9 +46,12 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     @Override
     @Test
     protected void testCreate() {
+        Library library = libraryRepository.save(Library.builder().title("Test lib22rary").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
         CreateTagCategoryRequest request = new CreateTagCategoryRequest();
         request.setName("test591_create");
         request.setHexColor("#123456");
+        request.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
 
         TagCategoryDTO createdTagCategory = super.create(request);
 
@@ -85,11 +94,13 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     @Override
     @Test
     protected void testPatch() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222_patch").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222_patch").library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchTagCategoryRequest request = new PatchTagCategoryRequest();
         request.setName(JsonNullable.of("newcategoryname"));
         request.setHexColor(JsonNullable.of("#000000"));
+        request.setLibrary(JsonNullable.of(EntityIdRequest.builder().id(library.getId()).build()));
 
         TagCategoryDTO updatedTagCategory = super.patch(tagCategory.getId(), request);
 

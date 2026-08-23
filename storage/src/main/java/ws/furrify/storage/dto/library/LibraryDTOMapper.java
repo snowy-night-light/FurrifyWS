@@ -12,6 +12,7 @@ import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.domain.tag.Tag;
+import ws.furrify.storage.domain.tag.category.TagCategory;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 import ws.furrify.storage.dto.artist.ArtistDTOMapper;
 import ws.furrify.storage.dto.book.BookDTO;
@@ -23,6 +24,8 @@ import ws.furrify.storage.dto.post.PostDTO;
 import ws.furrify.storage.dto.post.PostDTOMapper;
 import ws.furrify.storage.dto.tag.TagDTO;
 import ws.furrify.storage.dto.tag.TagDTOMapper;
+import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
+import ws.furrify.storage.dto.tag.category.TagCategoryDTOMapper;
 
 import java.util.List;
 
@@ -31,6 +34,7 @@ public abstract class LibraryDTOMapper implements BaseDTOMapper<Library, Library
 
     protected PostDTOMapper postDTOMapper;
     protected TagDTOMapper tagDTOMapper;
+    protected TagCategoryDTOMapper tagCategoryDTOMapper;
     protected ArtistDTOMapper artistDTOMapper;
     protected CollectionDTOMapper collectionDTOMapper;
     protected BookDTOMapper bookDTOMapper;
@@ -48,6 +52,11 @@ public abstract class LibraryDTOMapper implements BaseDTOMapper<Library, Library
     @Autowired
     public void setTagDTOMapper(@Lazy TagDTOMapper tagDTOMapper) {
         this.tagDTOMapper = tagDTOMapper;
+    }
+
+    @Autowired
+    public void setTagCategoryDTOMapper(@Lazy TagCategoryDTOMapper tagCategoryDTOMapper) {
+        this.tagCategoryDTOMapper = tagCategoryDTOMapper;
     }
 
     @Autowired
@@ -74,6 +83,14 @@ public abstract class LibraryDTOMapper implements BaseDTOMapper<Library, Library
 
     protected List<Tag> mapTagDtoList(List<TagDTO> tags, @Context CycleAvoidingMappingContext context) {
         return tagDTOMapper.toEntityList(tags, context);
+    }
+
+    protected List<TagCategoryDTO> mapTagCategoryList(List<TagCategory> categories, @Context CycleAvoidingMappingContext context) {
+        return tagCategoryDTOMapper.toDtoList(categories, context);
+    }
+
+    protected List<TagCategory> mapTagCategoryDtoList(List<TagCategoryDTO> categories, @Context CycleAvoidingMappingContext context) {
+        return tagCategoryDTOMapper.toEntityList(categories, context);
     }
 
     protected List<ArtistDTO> mapArtistList(List<Artist> artists, @Context CycleAvoidingMappingContext context) {

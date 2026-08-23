@@ -30,18 +30,24 @@ public class EntitySpec {
     public static final String LIKE_IGNORE_CASE_OPERATOR = " like^ ";
     public static final String NOT_LIKE_IGNORE_CASE_OPERATOR = " !like^ ";
     private static final String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
-    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^~]+)\\s+([^)&|]+)\\)?");
+    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^~a-zA-Z]+)\\s+([^)&|]+)\\)?");
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> unrestricted() {
         return new EntitySpecResult<>("", (root, query, cb) -> cb.conjunction());
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specEquals(Object value) {
-        return new InternalExpression<>(EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> cb.equal(getPath(root, f), v), value, null);
+        return new InternalExpression<>(EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v == null) return cb.isNull(getPath(root, f));
+            return cb.equal(getPath(root, f), v);
+        }, value, null);
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotEquals(Object value) {
-        return new InternalExpression<>(NOT_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> cb.notEqual(getPath(root, f), v), value, null);
+        return new InternalExpression<>(NOT_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+            if (v == null) return cb.isNotNull(getPath(root, f));
+            return cb.notEqual(getPath(root, f), v);
+        }, value, null);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -168,12 +174,20 @@ public class EntitySpec {
         EntitySpecJoinStep<ENTITY> joinStep = null;
         Matcher matcher = SPEC_PATTERN.matcher(specString);
 
+        int lastEnd = 0;
         while (matcher.find()) {
             String field = matcher.group(1);
             String operator = matcher.group(2);
             String rawValue = matcher.group(3).trim();
 
-            Object parsedValue = rawValue.matches(UUID_REGEX) ? UUID.fromString(rawValue) : rawValue;
+            Object parsedValue;
+            if (rawValue.equalsIgnoreCase("null")) {
+                parsedValue = null;
+            } else if (rawValue.matches(UUID_REGEX)) {
+                parsedValue = UUID.fromString(rawValue);
+            } else {
+                parsedValue = rawValue;
+            }
 
             EntitySpecExpression<ENTITY> expr = switch (operator.trim()) {
                 case "=" -> EntitySpec.specEquals(parsedValue);
@@ -184,10 +198,24 @@ public class EntitySpec {
                 case "<=" -> EntitySpec.specLessThanOrEqual(parsedValue);
                 case "=^" -> EntitySpec.specEqualsIgnoreCase(parsedValue);
                 case "!=^" -> EntitySpec.specNotEqualsIgnoreCase(parsedValue);
+                case "like" -> EntitySpec.specLike(parsedValue);
+                case "!like" -> EntitySpec.specNotLike(parsedValue);
+                case "like^" -> EntitySpec.specLikeIgnoreCase(parsedValue);
+                case "!like^" -> EntitySpec.specNotLikeIgnoreCase(parsedValue);
                 default -> throw new BadRequestException(Errors.UNKNOWN_SPECIFICATION_OPERATOR.getErrorMessage(operator));
             };
 
-            joinStep = (joinStep == null) ? EntitySpec.<ENTITY>specBuilder().where(field, expr) : joinStep.and().where(field, expr);
+            if (joinStep == null) {
+                joinStep = EntitySpec.<ENTITY>specBuilder().where(field, expr);
+            } else {
+                String separator = specString.substring(lastEnd, matcher.start());
+                if (separator.contains("||")) {
+                    joinStep = joinStep.or().where(field, expr);
+                } else {
+                    joinStep = joinStep.and().where(field, expr);
+                }
+            }
+            lastEnd = matcher.end();
         }
 
         if (joinStep == null && !specString.trim().isEmpty()) {
