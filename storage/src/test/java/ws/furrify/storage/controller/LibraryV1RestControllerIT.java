@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.storage.StorageApplication;
+import ws.furrify.storage.domain.book.BookRepository;
 import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.library.LibraryRepository;
 import ws.furrify.storage.dto.library.LibraryDTO;
@@ -26,6 +27,9 @@ public class LibraryV1RestControllerIT extends BaseCrudControllerTest<Library, L
 
     @Autowired
     private LibraryRepository libraryRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
 
     @Autowired
     protected LibraryV1RestControllerIT(JsonMapper jsonMapper) {

@@ -50,4 +50,5 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
 
         return super.patchById(id, patchDto);
     }
+
 }

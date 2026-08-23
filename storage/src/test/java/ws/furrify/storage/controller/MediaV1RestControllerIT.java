@@ -148,5 +148,8 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         Media media = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(media.getId()));
+
+        Mockito.verify(attachmentFileV1RestControllerApiClient, Mockito.times(1))
+                .attachmentFileV1RestControllerDelete(media.getId());
     }
 }

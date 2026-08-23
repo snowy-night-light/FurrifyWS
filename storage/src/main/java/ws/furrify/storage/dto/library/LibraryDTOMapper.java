@@ -7,12 +7,15 @@ import org.springframework.context.annotation.Lazy;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.model.CycleAvoidingMappingContext;
 import ws.furrify.storage.domain.artist.Artist;
+import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 import ws.furrify.storage.dto.artist.ArtistDTOMapper;
+import ws.furrify.storage.dto.book.BookDTO;
+import ws.furrify.storage.dto.book.BookDTOMapper;
 import ws.furrify.storage.dto.collection.CollectionDTO;
 import ws.furrify.storage.dto.collection.CollectionDTOMapper;
 import ws.furrify.storage.dto.library.request.PatchLibraryRequest;
@@ -30,6 +33,12 @@ public abstract class LibraryDTOMapper implements BaseDTOMapper<Library, Library
     protected TagDTOMapper tagDTOMapper;
     protected ArtistDTOMapper artistDTOMapper;
     protected CollectionDTOMapper collectionDTOMapper;
+    protected BookDTOMapper bookDTOMapper;
+
+    @Autowired
+    public void setBookDTOMapper(@Lazy BookDTOMapper bookDTOMapper) {
+        this.bookDTOMapper = bookDTOMapper;
+    }
 
     @Autowired
     public void setPostDTOMapper(@Lazy PostDTOMapper postDTOMapper) {
@@ -81,5 +90,13 @@ public abstract class LibraryDTOMapper implements BaseDTOMapper<Library, Library
 
     protected List<Collection> mapCollectionDtoList(List<CollectionDTO> collections, @Context CycleAvoidingMappingContext context) {
         return collectionDTOMapper.toEntityList(collections, context);
+    }
+
+    protected List<BookDTO> mapBookList(List<Book> books, @Context CycleAvoidingMappingContext context) {
+        return bookDTOMapper.toDtoList(books, context);
+    }
+
+    protected List<Book> mapBookDtoList(List<BookDTO> books, @Context CycleAvoidingMappingContext context) {
+        return bookDTOMapper.toEntityList(books, context);
     }
 }
