@@ -14,6 +14,7 @@ import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.domain.tag.Tag;
+import ws.furrify.storage.domain.tag.category.TagCategory;
 
 import java.util.List;
 
@@ -35,6 +36,10 @@ public class Library extends UserScopedEntity {
 
     @OneToMany(mappedBy = "library", cascade = CascadeType.REMOVE)
     List<Tag> tags;
+
+    @OneToMany(mappedBy = "library", cascade = CascadeType.REMOVE)
+    List<TagCategory> tagCategories;
+
 
     @OneToMany(mappedBy = "library", cascade = CascadeType.REMOVE)
     List<Artist> artists;
