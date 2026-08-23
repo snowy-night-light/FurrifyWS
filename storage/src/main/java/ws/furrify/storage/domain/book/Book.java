@@ -2,14 +2,15 @@ package ws.furrify.storage.domain.book;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
+import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.domain.library.Library;
-
-import jakarta.validation.constraints.NotNull;
 import ws.furrify.storage.domain.media.Media;
+import ws.furrify.storage.domain.tag.Tag;
 
 import java.util.List;
 
@@ -31,6 +32,12 @@ public class Book extends UserScopedEntity {
 
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     Media cover;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    List<Tag> tags;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    List<Artist> artists;
 
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "book")
     List<BookChapter> chapters;
