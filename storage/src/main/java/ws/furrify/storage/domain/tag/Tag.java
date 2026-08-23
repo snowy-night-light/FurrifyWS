@@ -28,7 +28,7 @@ public class Tag extends UserScopedEntity {
     @NotBlank
     String name;
 
-    @OneToMany(cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "targetTag", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     @ToString.Exclude
     List<TagAlias> aliases;
 
