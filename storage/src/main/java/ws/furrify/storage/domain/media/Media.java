@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
+@EntityListeners(MediaEntityListener.class)
 @Getter
 @Setter
 @ToString

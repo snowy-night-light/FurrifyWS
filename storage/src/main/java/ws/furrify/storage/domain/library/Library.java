@@ -10,6 +10,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
+import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.domain.tag.Tag;
@@ -40,4 +41,7 @@ public class Library extends UserScopedEntity {
 
     @OneToMany(mappedBy = "library", cascade = CascadeType.REMOVE)
     List<Collection> collections;
+
+    @OneToMany(mappedBy = "library", cascade = CascadeType.REMOVE)
+    List<Book> books;
 }

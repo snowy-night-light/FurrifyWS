@@ -10,6 +10,7 @@ import ws.furrify.storage.dto.artist.ArtistDTO;
 import ws.furrify.storage.dto.collection.CollectionDTO;
 import ws.furrify.storage.dto.post.PostDTO;
 import ws.furrify.storage.dto.tag.TagDTO;
+import ws.furrify.storage.dto.book.BookDTO;
 
 import java.util.List;
 
@@ -23,4 +24,5 @@ public class LibraryDTO extends UserScopedEntityDTO<Library> {
     private List<TagDTO> tags;
     private List<ArtistDTO> artists;
     private List<CollectionDTO> collections;
+    private List<BookDTO> books;
 }
