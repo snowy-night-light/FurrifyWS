@@ -25,4 +25,8 @@ public interface TagAliasDTOMapper extends BaseDTOMapper<TagAlias, TagAliasDTO, 
     @Named("tagToTagDtoWithoutAliases")
     @Mapping(target = "aliases", ignore = true)
     TagDTO tagToTagDtoWithoutAliases(Tag tag, @Context CycleAvoidingMappingContext context);
+
+    @Named("tagAliasToTagAliasDtoWithoutTargetTag")
+    @Mapping(target = "targetTag", ignore = true)
+    TagAliasDTO tagAliasToTagAliasDtoWithoutTargetTag(TagAlias entity, @Context CycleAvoidingMappingContext context);
 }
