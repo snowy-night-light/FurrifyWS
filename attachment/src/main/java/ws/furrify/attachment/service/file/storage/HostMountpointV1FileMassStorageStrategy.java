@@ -2,7 +2,6 @@ package ws.furrify.attachment.service.file.storage;
 
 import com.google.common.io.Files;
 import org.springframework.util.FileSystemUtils;
-import org.springframework.util.MimeType;
 import ws.furrify.attachment.exception.AttachmentErrors;
 import ws.furrify.attachment.service.file.storage.thumbnail.ThumbnailGenerator;
 import ws.furrify.attachment.service.file.storage.vo.UploadedFileReference;
@@ -20,7 +19,7 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
     private final ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator();
 
     @Override
-    public UploadedFileReference uploadFile(UUID id, MimeType mimeType, File file, boolean replaceExisting) {
+    public UploadedFileReference uploadFile(UUID id, String mimeType, File file, boolean replaceExisting) {
         try {
             Path destinationFilePath = getDestinationFilePath(id, file);
             Path destinationThumbnailFilePath = getDestinationThumbnailFilePath(id, file);

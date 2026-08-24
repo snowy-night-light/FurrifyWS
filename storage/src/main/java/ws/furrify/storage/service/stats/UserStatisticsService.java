@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.specification.EntitySpec;
+import ws.furrify.core.utils.EntitySpecUtils;
 import ws.furrify.core.utils.SecurityContextUtils;
+import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.ArtistRepository;
 import ws.furrify.storage.domain.collection.Collection;
@@ -36,7 +38,7 @@ public class UserStatisticsService {
     private final LibraryRepository libraryRepository;
     private final TagRepository tagRepository;
     private final ArtistRepository artistRepository;
-    private final ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient attachmentClient;
+    private final AttachmentFileV1RestControllerApiClient attachmentClient;
 
     
     private long getAttachmentCountByLike(String mimeTypePattern) {
@@ -47,7 +49,7 @@ public class UserStatisticsService {
         org.openapitools.model.Pageable pageable = new org.openapitools.model.Pageable();
         pageable.setSize(1);
 
-        var response = attachmentClient.attachmentFileV1RestControllerGetAllPaged(pageable, spec);
+        var response = attachmentClient.attachmentFileV1RestControllerGetAllPaged(pageable, EntitySpecUtils.encodeSpecToBase64(spec));
         if (response.getBody() != null && response.getBody().getPage() != null && response.getBody().getPage().getTotalElements() != null) {
             return response.getBody().getPage().getTotalElements();
         }

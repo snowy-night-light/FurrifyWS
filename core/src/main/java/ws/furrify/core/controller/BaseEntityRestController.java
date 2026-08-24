@@ -13,8 +13,8 @@ import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
+import ws.furrify.core.utils.EntitySpecUtils;
 
-import java.util.Base64;
 import java.util.UUID;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -37,7 +37,7 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
     protected Page<DTO> getAllPaged(@RequestParam(required = false, name = "spec") String specBase64, Pageable pageable) {
         String decodedSpec = null;
         if (specBase64 != null) {
-            decodedSpec = new String(Base64.getUrlDecoder().decode(specBase64));
+            decodedSpec = EntitySpecUtils.decodeSpecFromBase64(specBase64);
         }
 
         return entityCrudService.getAllPaged(decodedSpec, pageable);
