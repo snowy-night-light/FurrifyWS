@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.MimeType;
 import org.springframework.web.multipart.MultipartFile;
 import ws.furrify.attachment.domain.file.AttachmentFile;
 import ws.furrify.attachment.domain.file.FileUploadStatus;
@@ -150,7 +149,7 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
     private void extractFileMetadataToDto(AttachmentFileDTO dto, File file) throws IOException {
         String mimeType = tika.detect(file);
 
-        dto.setMimeType(MimeType.valueOf(mimeType));
+        dto.setMimeType(mimeType);
         dto.setFileSize(dto.getFileSize());
     }
 

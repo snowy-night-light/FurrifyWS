@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.springframework.util.MimeType;
 import ws.furrify.attachment.domain.file.AttachmentFile;
 import ws.furrify.attachment.domain.file.FileUploadStatus;
 import ws.furrify.attachment.dto.file.vo.AttachmentFileHashDTO;
@@ -22,7 +21,7 @@ public class AttachmentFileDTO extends UserScopedEntityDTO<AttachmentFile> {
 
     private List<AttachmentFileHashDTO> fileHashes;
 
-    private MimeType mimeType;
+    private String mimeType;
 
     private FileUploadStatus uploadStatus;
 

@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.core.utils.EntitySpecUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.artist.Artist;
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @SpringBootTest(
         classes = StorageApplication.class,
@@ -151,19 +152,19 @@ public class UserStatisticsV1RestControllerIT extends BaseControllerTest {
         Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), any())).thenReturn(ResponseEntity.ok(defaultModel));
 
         PagedModelAttachmentFileDTO gifModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 5}}", PagedModelAttachmentFileDTO.class);
-        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), contains("image/gif"))).thenReturn(ResponseEntity.ok(gifModel));
+        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), argThat(spec -> spec != null && EntitySpecUtils.decodeSpecFromBase64(spec).contains("image/gif")))).thenReturn(ResponseEntity.ok(gifModel));
 
         PagedModelAttachmentFileDTO flashModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 3}}", PagedModelAttachmentFileDTO.class);
-        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), contains("application/x-shockwave-flash"))).thenReturn(ResponseEntity.ok(flashModel));
+        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), argThat(spec -> spec != null && EntitySpecUtils.decodeSpecFromBase64(spec).contains("application/x-shockwave-flash")))).thenReturn(ResponseEntity.ok(flashModel));
 
         PagedModelAttachmentFileDTO imagesModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 15}}", PagedModelAttachmentFileDTO.class);
-        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), contains("image/%"))).thenReturn(ResponseEntity.ok(imagesModel));
+        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), argThat(spec -> spec != null && EntitySpecUtils.decodeSpecFromBase64(spec).contains("image/%")))).thenReturn(ResponseEntity.ok(imagesModel));
 
         PagedModelAttachmentFileDTO videoModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 4}}", PagedModelAttachmentFileDTO.class);
-        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), contains("video/%"))).thenReturn(ResponseEntity.ok(videoModel));
+        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), argThat(spec -> spec != null && EntitySpecUtils.decodeSpecFromBase64(spec).contains("video/%")))).thenReturn(ResponseEntity.ok(videoModel));
 
         PagedModelAttachmentFileDTO musicModel = jsonMapper.readValue("{\"page\": {\"totalElements\": 7}}", PagedModelAttachmentFileDTO.class);
-        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), contains("audio/%"))).thenReturn(ResponseEntity.ok(musicModel));
+        Mockito.when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetAllPaged(any(), argThat(spec -> spec != null && EntitySpecUtils.decodeSpecFromBase64(spec).contains("audio/%")))).thenReturn(ResponseEntity.ok(musicModel));
 
         RestAssured.given()
                 .when()

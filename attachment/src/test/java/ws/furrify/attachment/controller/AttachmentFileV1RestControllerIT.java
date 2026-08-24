@@ -10,9 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.util.MimeType;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.attachment.AttachmentApplication;
 import ws.furrify.attachment.domain.file.AttachmentFile;
@@ -121,7 +119,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
             assertNotNull(createdAttachmentFile.getFileUri());
             assertNotNull(createdAttachmentFile.getThumbnailUri());
             assertEquals(FileUploadStatus.UPLOADED, createdAttachmentFile.getUploadStatus());
-            assertEquals(MimeType.valueOf(MediaType.IMAGE_PNG_VALUE), createdAttachmentFile.getMimeType());
+            assertEquals("image/png", createdAttachmentFile.getMimeType());
             assertEquals("MockFileMassStorageStrategy", createdAttachmentFile.getStorageServiceId());
         });
     }

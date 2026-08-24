@@ -4,8 +4,6 @@ import net.coobird.thumbnailator.Thumbnails;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
-import org.springframework.http.MediaType;
-import org.springframework.util.MimeType;
 import ws.furrify.attachment.exception.AttachmentErrors;
 import ws.furrify.core.exception.ServiceLogicException;
 
@@ -19,39 +17,40 @@ import java.util.Set;
 
 public class ThumbnailGenerator {
 
-    private final Set<MimeType> SUPPORTED_VIDEO_TYPES = Set.of(
-            MediaType.valueOf("video/mp4"),
-            MediaType.valueOf("video/webm"),
-            MediaType.valueOf("video/x-matroska"), // .mkv
-            MediaType.valueOf("video/quicktime"),  // .mov
-            MediaType.valueOf("video/x-msvideo"),  // .avi
-            MediaType.valueOf("video/x-flv"),
-            MediaType.valueOf("video/mpeg"),
-            MediaType.valueOf("video/ogg")
+    private final Set<String> SUPPORTED_VIDEO_TYPES = Set.of(
+            "video/mp4",
+            "video/webm",
+            "video/x-matroska", // .mkv
+            "video/quicktime",  // .mov
+            "video/x-msvideo",  // .avi
+            "video/x-flv",
+            "video/mpeg",
+            "video/ogg"
     );
 
-    private final Set<MimeType> SUPPORTED_IMAGE_TYPES = Set.of(
-            MediaType.IMAGE_PNG,
-            MediaType.IMAGE_JPEG,
-            MediaType.valueOf("image/bmp"),
-            MediaType.valueOf("image/sgi"),
-            MediaType.valueOf("image/x-sgi"),
-            MediaType.valueOf("image/iff"),
-            MediaType.valueOf("image/x-iff"),
-            MediaType.valueOf("image/x-pcx"),
-            MediaType.valueOf("image/pcx"),
-            MediaType.valueOf("image/x-pict"),
-            MediaType.valueOf("image/pict"),
-            MediaType.valueOf("image/vnd.adobe.photoshop"),
-            MediaType.valueOf("image/icns"),
-            MediaType.valueOf("image/x-tga"),
-            MediaType.valueOf("image/tiff"),
-            MediaType.valueOf("image/vnd.wap.wbmp"),
-            MediaType.valueOf("image/vnd.ms-dds"),
-            MediaType.valueOf("image/webp"),
-            MediaType.valueOf("image/svg"),
-            MediaType.valueOf("image/svg+xml"),
-            MediaType.IMAGE_GIF
+    private final Set<String> SUPPORTED_IMAGE_TYPES = Set.of(
+            "image/png",
+            "image/jpeg",
+            "image/jpg",
+            "image/bmp",
+            "image/sgi",
+            "image/x-sgi",
+            "image/iff",
+            "image/x-iff",
+            "image/x-pcx",
+            "image/pcx",
+            "image/x-pict",
+            "image/pict",
+            "image/vnd.adobe.photoshop",
+            "image/icns",
+            "image/x-tga",
+            "image/tiff",
+            "image/vnd.wap.wbmp",
+            "image/vnd.ms-dds",
+            "image/webp",
+            "image/svg",
+            "image/svg+xml",
+            "image/gif"
     );
 
     private final static short THUMBNAIL_WIDTH = 640;
@@ -61,7 +60,7 @@ public class ThumbnailGenerator {
     private final static String THUMBNAIL_FILE_PREFIX = "thumbnail";
     private final static int PART_OF_VIDEO_TO_THUMBNAIL = 3;
 
-    public File generateThumbnail(MimeType mimeType, File file) throws IOException {
+    public File generateThumbnail(String mimeType, File file) throws IOException {
         if (SUPPORTED_IMAGE_TYPES.contains(mimeType)) {
             return generateImageThumbnail(file);
         }

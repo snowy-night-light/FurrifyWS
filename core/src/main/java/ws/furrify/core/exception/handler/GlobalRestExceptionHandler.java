@@ -16,12 +16,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalRestExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleException(Exception ex) {
-        if (ex.getClass().equals(PropertyReferenceException.class)) {
-            return createBadRequestResponse(ex.getMessage());
-        }
-        throw new RuntimeException(ex);
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<Object> handlePropertyReferenceException(PropertyReferenceException ex) {
+        return createBadRequestResponse(ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

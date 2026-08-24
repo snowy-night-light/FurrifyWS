@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.springframework.util.MimeType;
 import ws.furrify.attachment.domain.file.vo.AttachmentFileHash;
 import ws.furrify.core.entity.UserScopedEntity;
 
@@ -30,7 +29,7 @@ public class AttachmentFile extends UserScopedEntity {
     private List<AttachmentFileHash> fileHashes;
 
     @Column(nullable = true, length = 255)
-    private MimeType mimeType;
+    private String mimeType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
