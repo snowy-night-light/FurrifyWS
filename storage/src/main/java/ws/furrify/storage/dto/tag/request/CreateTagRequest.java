@@ -8,12 +8,8 @@ import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.dto.tag.TagDTO;
 
-import java.util.List;
-
 @Data
 public class CreateTagRequest implements BaseCreateEntityRequest<Tag, TagDTO> {
-
-    private List<@NotNull EntityIdRequest> aliases;
 
     @NotNull
     private EntityIdRequest category;

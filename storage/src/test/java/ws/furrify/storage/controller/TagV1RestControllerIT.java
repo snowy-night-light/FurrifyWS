@@ -58,24 +58,17 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testCreate() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        List<TagAlias> aliases = List.of(
-                tagAliasRepository.save(TagAlias.builder().alias("test123").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
-        );
         TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test543").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateTagRequest request = new CreateTagRequest();
         request.setName("test591");
         request.setCategory(EntityIdRequest.builder().id(tagCategory.getId()).build());
-        request.setAliases(
-                aliases.stream().map(alias -> EntityIdRequest.builder().id(alias.getId()).build()).toList()
-        );
         request.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
 
         TagDTO createdTag = super.create(request);
 
         assertAll(() -> {
             assertNotNull(createdTag);
-            assertEquals(request.getAliases().size(), createdTag.getAliases().size());
             assertEquals(tagCategory.getId(), createdTag.getCategory().getId());
         });
     }
@@ -127,9 +120,6 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
 
         PatchTagRequest request = new PatchTagRequest();
         request.setCategory(JsonNullable.of(EntityIdRequest.builder().id(tagCategory2.getId()).build()));
-        request.setAliases(
-                JsonNullable.of(aliases2.stream().map(alias -> EntityIdRequest.builder().id(alias.getId()).build()).toList())
-        );
 
         TagDTO updatedTag = super.patch(tag.getId(), request);
 
