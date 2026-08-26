@@ -13,6 +13,6 @@ public class CreateTagAliasRequest implements BaseCreateEntityRequest<TagAlias, 
     @NotNull
     private EntityIdRequest targetTag;
 
-    @Pattern(regexp = "^[a-z0-9 ]+$")
+    @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$")
     private String alias;
 }
