@@ -19,7 +19,7 @@ public class PatchTagRequest implements BasePatchEntityRequest<Tag, TagDTO> {
 
     private JsonNullable<EntityIdRequest> category = JsonNullable.undefined();
 
-    private JsonNullable<@NotBlank @Pattern(regexp = "^[a-z0-9 ]+$") String> name = JsonNullable.undefined();
+    private JsonNullable<@NotBlank @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$") String> name = JsonNullable.undefined();
 
     private JsonNullable<EntityIdRequest> library = JsonNullable.undefined();
 }

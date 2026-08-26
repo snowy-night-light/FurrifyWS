@@ -30,6 +30,6 @@ public class ArtistNickname {
     /**
      * Artist nickname regex pattern
      */
-    public final static String PATTERN = "^[A-Za-z0-9._\\-]+$";
+    public final static String PATTERN = "^[A-Za-z0-9._\\-]+(?: [A-Za-z0-9._\\-]+)*$";
 
 }
