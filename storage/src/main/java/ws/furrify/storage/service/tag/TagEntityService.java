@@ -31,7 +31,6 @@ public class TagEntityService extends BaseEntityCrudService<Tag, TagDTO, PatchTa
     public TagDTO create(TagDTO dto) {
         super.handleCreateInternalReference(dto, TagDTO::getCategory, TagDTO::setCategory, tagCategoryEntityService);
         super.handleCreateInternalReference(dto, TagDTO::getLibrary, TagDTO::setLibrary, libraryEntityService);
-        super.handleCreateInternalCollectionReferences(dto, TagDTO::getAliases, TagDTO::setAliases, tagAliasEntityService);
 
         return super.create(dto);
     }
@@ -40,7 +39,6 @@ public class TagEntityService extends BaseEntityCrudService<Tag, TagDTO, PatchTa
     public TagDTO patchById(UUID id, PatchTagRequest patchDto) {
         super.handlePatchInternalReference(patchDto.getCategory(), tagCategoryEntityService);
         super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getAliases(), tagAliasEntityService);
 
         return super.patchById(id, patchDto);
     }
