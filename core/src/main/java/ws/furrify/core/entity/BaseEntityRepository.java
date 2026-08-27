@@ -22,6 +22,10 @@ public interface BaseEntityRepository<ENTITY extends BaseEntity> extends JpaRepo
         );
     }
 
+    default long count(EntitySpecResult<ENTITY> entitySpec) {
+        return count(entitySpec.specification());
+    }
+
     default Page<ENTITY> findAll(Pageable pageable, EntitySpecResult<ENTITY> entitySpec) {
         return findAll(entitySpec.specification(), pageable);
     }

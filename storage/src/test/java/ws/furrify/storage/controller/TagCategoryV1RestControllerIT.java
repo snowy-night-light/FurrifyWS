@@ -1,5 +1,7 @@
 package ws.furrify.storage.controller;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +51,8 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
         Library library = libraryRepository.save(Library.builder().title("Test lib22rary").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateTagCategoryRequest request = new CreateTagCategoryRequest();
-        request.setName("test591_create");
+        String randomName = UUID.randomUUID().toString().replace("-", "");
+        request.setName(randomName);
         request.setHexColor("#123456");
         request.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
 
@@ -57,7 +60,7 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
 
         assertAll(() -> {
             assertNotNull(createdTagCategory);
-            assertEquals("test591_create", createdTagCategory.getName());
+            assertEquals(randomName, createdTagCategory.getName());
             assertEquals("#123456", createdTagCategory.getHexColor());
         });
     }
@@ -65,7 +68,7 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     @Override
     @Test
     protected void testFindById() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test295_find").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         TagCategoryDTO foundTagCategory = super.findById(tagCategory.getId());
 
@@ -80,8 +83,8 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     @Override
     @Test
     protected void testFindAll() {
-        tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test111_findAll").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222_findAll").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<TagCategoryDTO> categories = super.findAll(PageRequest.of(0, 10));
 
@@ -95,7 +98,7 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     @Test
     protected void testPatch() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222_patch").library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchTagCategoryRequest request = new PatchTagCategoryRequest();
         request.setName(JsonNullable.of("newcategoryname"));
@@ -115,7 +118,7 @@ public class TagCategoryV1RestControllerIT extends BaseCrudControllerTest<TagCat
     @Override
     @Test
     protected void testDelete() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test444_delete").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(tagCategory.getId()));
     }

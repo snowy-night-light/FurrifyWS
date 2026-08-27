@@ -76,7 +76,7 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         setupData();
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateBookRequest request = new CreateBookRequest();
         request.setTitle("Test book");
@@ -93,10 +93,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertEquals("Test description", createdBook.getDescription());
             assertNotNull(createdBook.getTags());
             assertEquals(1, createdBook.getTags().size());
-            assertEquals(tag.getId(), createdBook.getTags().get(0).getId());
+            assertEquals(tag.getId(), createdBook.getTags().getFirst().getId());
             assertNotNull(createdBook.getArtists());
             assertEquals(1, createdBook.getArtists().size());
-            assertEquals(artist.getId(), createdBook.getArtists().get(0).getId());
+            assertEquals(artist.getId(), createdBook.getArtists().getFirst().getId());
         });
     }
 
@@ -106,7 +106,7 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         setupData();
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Book book = bookRepository.save(Book.builder().title("Test book").description("Desc").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         BookDTO foundBook = super.findById(book.getId());
@@ -117,10 +117,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertEquals("Test book", foundBook.getTitle());
             assertNotNull(foundBook.getTags());
             assertEquals(1, foundBook.getTags().size());
-            assertEquals(tag.getId(), foundBook.getTags().get(0).getId());
+            assertEquals(tag.getId(), foundBook.getTags().getFirst().getId());
             assertNotNull(foundBook.getArtists());
             assertEquals(1, foundBook.getArtists().size());
-            assertEquals(artist.getId(), foundBook.getArtists().get(0).getId());
+            assertEquals(artist.getId(), foundBook.getArtists().getFirst().getId());
         });
     }
 
@@ -131,8 +131,8 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test 2", 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         bookRepository.save(Book.builder().title("Test book").description("Desc").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         bookRepository.save(Book.builder().title("Test book 2").description("Desc").library(defaultLibrary).tags(List.of(tag2)).artists(List.of(artist2)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
@@ -151,8 +151,8 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test 2", 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Book book = bookRepository.save(Book.builder().title("Test book").description("Desc").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchBookRequest request = new PatchBookRequest();
@@ -168,10 +168,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertEquals("Patched title", updatedBook.getTitle());
             assertNotNull(updatedBook.getTags());
             assertEquals(1, updatedBook.getTags().size());
-            assertEquals(tag2.getId(), updatedBook.getTags().get(0).getId());
+            assertEquals(tag2.getId(), updatedBook.getTags().getFirst().getId());
             assertNotNull(updatedBook.getArtists());
             assertEquals(1, updatedBook.getArtists().size());
-            assertEquals(artist2.getId(), updatedBook.getArtists().get(0).getId());
+            assertEquals(artist2.getId(), updatedBook.getArtists().getFirst().getId());
         });
     }
 

@@ -19,6 +19,7 @@ public enum Errors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      */
+    UNIQUE_CONSTRAINT_VIOLATION("Unique constraint violation for [columns={0}]."),
     NO_RECORD_FOUND("Record [uuid={0}] was not found."),
     RECORD_ALREADY_EXISTS("Record [uuid={0}] already exists."),
     STRATEGY_NOT_FOUND("Strategy [strategy={0}] was not found."),

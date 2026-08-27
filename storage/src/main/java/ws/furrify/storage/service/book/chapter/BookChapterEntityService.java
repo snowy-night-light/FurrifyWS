@@ -25,14 +25,14 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
     @Override
     public BookChapterDTO create(BookChapterDTO dto) {
-        this.handleCreateInternalReference(dto, BookChapterDTO::getBook, BookChapterDTO::setBook, this.bookEntityService);
+        this.handleInternalReference(dto, BookChapterDTO::getBook, BookChapterDTO::setBook, this.bookEntityService);
 
         return super.create(dto);
     }
 
     @Override
     public BookChapterDTO patchById(UUID id, PatchBookChapterRequest patchDto) {
-        this.handlePatchInternalReference(patchDto.getBook(), bookEntityService);
+        this.handleInternalReference(patchDto.getBook(), bookEntityService);
 
         return super.patchById(id, patchDto);
     }

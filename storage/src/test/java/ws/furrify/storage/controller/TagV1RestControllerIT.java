@@ -1,5 +1,7 @@
 package ws.furrify.storage.controller;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +55,10 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testCreate() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test543").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateTagRequest request = new CreateTagRequest();
-        request.setName("test591");
+        request.setName(UUID.randomUUID().toString().replace("-", ""));
         request.setCategory(EntityIdRequest.builder().id(tagCategory.getId()).build());
         request.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
 
@@ -72,8 +74,8 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testFindById() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test295").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test000").category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         TagDTO foundTag = super.findById(tag.getId());
 
@@ -87,9 +89,9 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testFindAll() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test111").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test999").category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag2 = tagRepository.save(Tag.builder().name("test777").category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<TagDTO> tags = super.findAll(PageRequest.of(0, 10));
 
@@ -103,9 +105,9 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testPatch() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory2 = tagCategoryRepository.save(TagCategory.builder().hexColor("#c3c").name("test333").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test888").category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory2 = tagCategoryRepository.save(TagCategory.builder().hexColor("#c3c").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchTagRequest request = new PatchTagRequest();
         request.setCategory(JsonNullable.of(EntityIdRequest.builder().id(tagCategory2.getId()).build()));
@@ -123,8 +125,8 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testDelete() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test444").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test555").category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(tag.getId()));
     }

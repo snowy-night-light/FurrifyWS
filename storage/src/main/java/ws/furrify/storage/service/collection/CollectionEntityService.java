@@ -28,16 +28,16 @@ public class CollectionEntityService extends BaseEntityCrudService<Collection, C
 
     @Override
     public CollectionDTO patchById(UUID id, PatchCollectionRequest patchDto) {
-        super.handlePatchCollectionInternalReferences(patchDto.getPosts(), postEntityService);
-        super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
+        super.handleCollectionInternalReferences(patchDto.getPosts(), postEntityService);
+        super.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
 
         return super.patchById(id, patchDto);
     }
 
     @Override
     public CollectionDTO create(CollectionDTO dto) {
-        super.handleCreateInternalCollectionReferences(dto, CollectionDTO::getPosts, CollectionDTO::setPosts, postEntityService);
-        super.handleCreateInternalReference(dto, CollectionDTO::getLibrary, CollectionDTO::setLibrary, libraryEntityService);
+        super.handleInternalCollectionReferences(dto, CollectionDTO::getPosts, CollectionDTO::setPosts, postEntityService);
+        super.handleInternalReference(dto, CollectionDTO::getLibrary, CollectionDTO::setLibrary, libraryEntityService);
 
         return super.create(dto);
     }

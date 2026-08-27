@@ -10,6 +10,7 @@ import ws.furrify.storage.dto.tag.category.TagCategoryDTO;
 import ws.furrify.storage.dto.tag.category.request.PatchTagCategoryRequest;
 import ws.furrify.storage.service.library.LibraryEntityService;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -25,14 +26,22 @@ public class TagCategoryEntityService extends BaseEntityCrudService<TagCategory,
 
     @Override
     public TagCategoryDTO patchById(UUID id, PatchTagCategoryRequest patchDto) {
-        this.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
+        this.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
+
+        super.handleUniqueConstraint(patchDto, Map.of(
+                "name", PatchTagCategoryRequest::getName
+        ));
 
         return super.patchById(id, patchDto);
     }
 
     @Override
     public TagCategoryDTO create(TagCategoryDTO dto) {
-        this.handleCreateInternalReference(dto, TagCategoryDTO::getLibrary, TagCategoryDTO::setLibrary, libraryEntityService);
+        this.handleInternalReference(dto, TagCategoryDTO::getLibrary, TagCategoryDTO::setLibrary, libraryEntityService);
+
+        super.handleUniqueConstraint(dto, Map.of(
+                "name", TagCategoryDTO::getName
+        ));
 
         return super.create(dto);
     }

@@ -34,20 +34,20 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
     @Override
     public BookDTO create(BookDTO dto) {
-        this.handleCreateInternalReference(dto, BookDTO::getCover, BookDTO::setCover, mediaEntityService);
-        this.handleCreateInternalReference(dto, BookDTO::getLibrary, BookDTO::setLibrary, libraryEntityService);
-        this.handleCreateInternalCollectionReferences(dto, BookDTO::getTags, BookDTO::setTags, tagEntityService);
-        this.handleCreateInternalCollectionReferences(dto, BookDTO::getArtists, BookDTO::setArtists, artistEntityService);
+        this.handleInternalReference(dto, BookDTO::getCover, BookDTO::setCover, mediaEntityService);
+        this.handleInternalReference(dto, BookDTO::getLibrary, BookDTO::setLibrary, libraryEntityService);
+        this.handleInternalCollectionReferences(dto, BookDTO::getTags, BookDTO::setTags, tagEntityService);
+        this.handleInternalCollectionReferences(dto, BookDTO::getArtists, BookDTO::setArtists, artistEntityService);
 
         return super.create(dto);
     }
 
     @Override
     public BookDTO patchById(UUID id, PatchBookRequest patchDto) {
-        this.handlePatchInternalReference(patchDto.getCover(), mediaEntityService);
-        this.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
-        this.handlePatchCollectionInternalReferences(patchDto.getTags(), tagEntityService);
-        this.handlePatchCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
+        this.handleInternalReference(patchDto.getCover(), mediaEntityService);
+        this.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
+        this.handleCollectionInternalReferences(patchDto.getTags(), tagEntityService);
+        this.handleCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
 
         return super.patchById(id, patchDto);
     }

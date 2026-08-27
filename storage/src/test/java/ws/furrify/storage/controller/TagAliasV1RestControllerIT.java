@@ -1,5 +1,7 @@
 package ws.furrify.storage.controller;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,11 +53,11 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
     @Override
     @Test
     protected void testCreate() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test543").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().category(tagCategory).name("test123").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().category(tagCategory).name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         CreateTagAliasRequest request = new CreateTagAliasRequest();
-        request.setAlias("test591");
+        request.setAlias(UUID.randomUUID().toString().replace("-", ""));
         request.setTargetTag(EntityIdRequest.builder().id(tag.getId()).build());
 
         TagAliasDTO createdTagAlias = super.create(request);
@@ -69,9 +71,9 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
     @Override
     @Test
     protected void testFindById() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test295").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test000").category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias("test295alias").targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         TagAliasDTO foundTagAlias = super.findById(tagAlias.getId());
 
@@ -84,10 +86,10 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
     @Override
     @Test
     protected void testFindAll() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test111").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test999").category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        tagAliasRepository.save(TagAlias.builder().alias("test111alias1").targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        tagAliasRepository.save(TagAlias.builder().alias("test111alias2").targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<TagAliasDTO> aliases = super.findAll(PageRequest.of(0, 10));
 
@@ -100,9 +102,9 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
     @Override
     @Test
     protected void testPatch() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test888").category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias("test222alias").targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchTagAliasRequest request = new PatchTagAliasRequest();
         request.setAlias(JsonNullable.of("newaliasname"));
@@ -119,9 +121,9 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
     @Override
     @Test
     protected void testDelete() {
-        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test444").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test555").category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias("test444alias").targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(tagAlias.getId()));
     }
