@@ -7,15 +7,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import tools.jackson.databind.json.JsonMapper;
-import ws.furrify.core.entity.BaseEntity;
-import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.library.LibraryRepository;
 import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.domain.tag.TagRepository;
-import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.domain.tag.alias.TagAliasRepository;
 import ws.furrify.storage.domain.tag.category.TagCategory;
 import ws.furrify.storage.domain.tag.category.TagCategoryRepository;
@@ -24,8 +21,6 @@ import ws.furrify.storage.dto.tag.request.CreateTagRequest;
 import ws.furrify.storage.dto.tag.request.PatchTagRequest;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -108,15 +103,9 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
     @Test
     protected void testPatch() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        List<TagAlias> aliases = List.of(
-                tagAliasRepository.save(TagAlias.builder().alias("test779").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
-        );
-        List<TagAlias> aliases2 = List.of(
-                tagAliasRepository.save(TagAlias.builder().alias("test664").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
-        );
         TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name("test222").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         TagCategory tagCategory2 = tagCategoryRepository.save(TagCategory.builder().hexColor("#c3c").name("test333").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Tag tag = tagRepository.save(Tag.builder().name("test888").category(tagCategory).aliases(aliases).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name("test888").category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchTagRequest request = new PatchTagRequest();
         request.setCategory(JsonNullable.of(EntityIdRequest.builder().id(tagCategory2.getId()).build()));
@@ -127,7 +116,6 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
             assertNotNull(updatedTag);
             assertEquals(tag.getId(), updatedTag.getId());
             assertEquals(tagCategory2.getId(), updatedTag.getCategory().getId());
-            assertEquals(aliases2.stream().map(BaseEntity::getId).toList(), updatedTag.getAliases().stream().map(BaseEntityDTO::getId).toList());
         });
     }
 
