@@ -10,6 +10,7 @@ import ws.furrify.storage.domain.tag.alias.TagAlias;
 import ws.furrify.storage.dto.tag.alias.TagAliasDTO;
 import ws.furrify.storage.dto.tag.alias.request.PatchTagAliasRequest;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -25,14 +26,22 @@ public class TagAliasEntityService extends BaseEntityCrudService<TagAlias, TagAl
 
     @Override
     public TagAliasDTO create(TagAliasDTO dto) {
-        super.handleCreateInternalReference(dto, TagAliasDTO::getTargetTag, TagAliasDTO::setTargetTag, tagEntityService);
+        super.handleInternalReference(dto, TagAliasDTO::getTargetTag, TagAliasDTO::setTargetTag, tagEntityService);
+
+        super.handleUniqueConstraint(dto, Map.of(
+                "alias", TagAliasDTO::getAlias
+        ));
 
         return super.create(dto);
     }
 
     @Override
     public TagAliasDTO patchById(UUID id, PatchTagAliasRequest patchDto) {
-        super.handlePatchInternalReference(patchDto.getTargetTag(), tagEntityService);
+        super.handleInternalReference(patchDto.getTargetTag(), tagEntityService);
+
+        super.handleUniqueConstraint(patchDto, Map.of(
+                "alias", PatchTagAliasRequest::getAlias
+        ));
 
         return super.patchById(id, patchDto);
     }

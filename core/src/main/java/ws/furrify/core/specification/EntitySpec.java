@@ -112,9 +112,13 @@ public class EntitySpec {
 
     private static Path<?> getPath(Root<?> root, String field) {
         PropertyPath propertyPath = PropertyPath.from(field, root.getJavaType());
-        Path<Object> path = (Path) root;
+        Path<?> path = root;
         while (propertyPath != null) {
-            path = path.get(propertyPath.getSegment());
+            if (propertyPath.isCollection()) {
+                path = ((jakarta.persistence.criteria.From<?, ?>) path).join(propertyPath.getSegment());
+            } else {
+                path = path.get(propertyPath.getSegment());
+            }
             propertyPath = propertyPath.next();
         }
         return path;
@@ -223,5 +227,35 @@ public class EntitySpec {
         }
 
         return (joinStep != null) ? joinStep.build() : unrestricted();
+    }
+
+    public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> specCombineAllWithAnd(Iterable<EntitySpecResult<ENTITY>> specs) {
+        if (specs == null) return unrestricted();
+        
+        EntitySpecJoinStep<ENTITY> joinStep = null;
+        for (EntitySpecResult<ENTITY> spec : specs) {
+            if (joinStep == null) {
+                joinStep = EntitySpec.from(spec);
+            } else {
+                joinStep = joinStep.and(spec);
+            }
+        }
+        
+        return joinStep != null ? joinStep.build() : unrestricted();
+    }
+
+    public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> specCombineAllWithOr(Iterable<EntitySpecResult<ENTITY>> specs) {
+        if (specs == null) return unrestricted();
+        
+        EntitySpecJoinStep<ENTITY> joinStep = null;
+        for (EntitySpecResult<ENTITY> spec : specs) {
+            if (joinStep == null) {
+                joinStep = EntitySpec.from(spec);
+            } else {
+                joinStep = joinStep.or(spec);
+            }
+        }
+        
+        return joinStep != null ? joinStep.build() : unrestricted();
     }
 }

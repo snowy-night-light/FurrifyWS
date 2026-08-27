@@ -35,7 +35,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
             throw new ReferenceNotFoundException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
-        super.handleCreateInternalCollectionReferences(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
+        super.handleInternalCollectionReferences(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
 
         return super.create(dto);
     }
@@ -46,7 +46,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
             throw new ServiceLogicException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(patchDto.getFileReferenceId()));
         }
 
-        super.handlePatchCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
+        super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
         return super.patchById(id, patchDto);
     }

@@ -34,7 +34,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
     @Override
     public BookChapterVersionDTO patchById(UUID id, PatchBookChapterVersionRequest patchDto) {
-        this.handlePatchInternalReference(patchDto.getChapter(), bookChapterEntityService);
+        this.handleInternalReference(patchDto.getChapter(), bookChapterEntityService);
 
         return super.patchById(id, patchDto);
     }
@@ -42,7 +42,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     @Override
     @Transactional
     public BookChapterVersionDTO create(BookChapterVersionDTO dto) {
-        this.handleCreateInternalReference(dto, BookChapterVersionDTO::getChapter, BookChapterVersionDTO::setChapter, this.bookChapterEntityService);
+        this.handleInternalReference(dto, BookChapterVersionDTO::getChapter, BookChapterVersionDTO::setChapter, this.bookChapterEntityService);
 
         int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
         dto.setChapterVersion(highestVersion + 1);

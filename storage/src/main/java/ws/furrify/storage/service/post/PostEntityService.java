@@ -37,24 +37,24 @@ public class PostEntityService extends BaseEntityCrudService<Post, PostDTO, Patc
 
     @Override
     public PostDTO patchById(UUID id, PatchPostRequest patchDto) {
-        super.handlePatchCollectionInternalReferences(patchDto.getTags(), tagEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getDisplayMediaList(), mediaEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getAttachments(), mediaEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
-        super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
+        super.handleCollectionInternalReferences(patchDto.getTags(), tagEntityService);
+        super.handleCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
+        super.handleCollectionInternalReferences(patchDto.getDisplayMediaList(), mediaEntityService);
+        super.handleCollectionInternalReferences(patchDto.getAttachments(), mediaEntityService);
+        super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
+        super.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
 
         return super.patchById(id, patchDto);
     }
 
     @Override
     public PostDTO create(PostDTO dto) {
-        super.handleCreateInternalCollectionReferences(dto, PostDTO::getTags, PostDTO::setTags, tagEntityService);
-        super.handleCreateInternalCollectionReferences(dto, PostDTO::getArtists, PostDTO::setArtists, artistEntityService);
-        super.handleCreateInternalCollectionReferences(dto, PostDTO::getDisplayMediaList, PostDTO::setDisplayMediaList, mediaEntityService);
-        super.handleCreateInternalCollectionReferences(dto, PostDTO::getAttachments, PostDTO::setAttachments, mediaEntityService);
-        super.handleCreateInternalCollectionReferences(dto, PostDTO::getSources, PostDTO::setSources, sourceEntityService);
-        super.handleCreateInternalReference(dto, PostDTO::getLibrary, PostDTO::setLibrary, libraryEntityService);
+        super.handleInternalCollectionReferences(dto, PostDTO::getTags, PostDTO::setTags, tagEntityService);
+        super.handleInternalCollectionReferences(dto, PostDTO::getArtists, PostDTO::setArtists, artistEntityService);
+        super.handleInternalCollectionReferences(dto, PostDTO::getDisplayMediaList, PostDTO::setDisplayMediaList, mediaEntityService);
+        super.handleInternalCollectionReferences(dto, PostDTO::getAttachments, PostDTO::setAttachments, mediaEntityService);
+        super.handleInternalCollectionReferences(dto, PostDTO::getSources, PostDTO::setSources, sourceEntityService);
+        super.handleInternalReference(dto, PostDTO::getLibrary, PostDTO::setLibrary, libraryEntityService);
 
         return super.create(dto);
     }

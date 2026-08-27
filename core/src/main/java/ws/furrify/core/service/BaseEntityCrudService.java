@@ -16,21 +16,22 @@ import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.ReferenceNotFoundException;
+import ws.furrify.core.exception.UniqueConstraintViolationException;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
 import ws.furrify.core.utils.SecurityContextUtils;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import static ws.furrify.core.specification.EntitySpec.specEquals;
 
 @RequiredArgsConstructor
 @Slf4j
 public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> {
-    private final BaseEntityRepository<ENTITY> entityRepository;
-    private final BaseDTOMapper<ENTITY, DTO, PATCH_REQ> dtoMapper;
+    protected final BaseEntityRepository<ENTITY> entityRepository;
+    protected final BaseDTOMapper<ENTITY, DTO, PATCH_REQ> dtoMapper;
 
     @Transactional
     public Optional<DTO> findById(UUID id) {
@@ -86,10 +87,10 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
-    void handleCreateInternalReference(DTO dto,
-                                       Function<DTO, REF_DTO> getter,
-                                       BiConsumer<DTO, REF_DTO> setter,
-                                       BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
+    void handleInternalReference(DTO dto,
+                                 Function<DTO, REF_DTO> getter,
+                                 BiConsumer<DTO, REF_DTO> setter,
+                                 BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
         REF_DTO refEntity = getter.apply(dto);
 
         if (refEntity != null) {
@@ -100,12 +101,45 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         }
     }
 
+    public <VALUE> void handleUniqueConstraint(DTO dto, Map<String, Function<DTO, VALUE>> values) {
+        handleUniqueConstraintInternal(dto, values);
+    }
+
+    public <VALUE> void handleUniqueConstraint(PATCH_REQ patchReq, Map<String, Function<PATCH_REQ, VALUE>> values) {
+        handleUniqueConstraintInternal(patchReq, values);
+    }
+
+    private <T, VALUE> void handleUniqueConstraintInternal(T source, Map<String, Function<T, VALUE>> values) {
+        List<EntitySpecResult<ENTITY>> specs = new ArrayList<>();
+
+        values.forEach((field, getter) -> {
+            Object val = getter.apply(source);
+            if (val instanceof JsonNullable<?> jsonNullable) {
+                if (!jsonNullable.isPresent()) return;
+                val = jsonNullable.orElse(null);
+            }
+            
+            specs.add(
+                    EntitySpec.<ENTITY>specBuilder()
+                            .where(field, specEquals(val))
+                            .build()
+            );
+        });
+
+        if (specs.isEmpty()) return;
+        
+        EntitySpecResult<ENTITY> combinedSpec = EntitySpec.specCombineAllWithAnd(specs);
+        long totalCount = entityRepository.count(combinedSpec);
+        if (totalCount > 0) {
+            throw new UniqueConstraintViolationException(Errors.UNIQUE_CONSTRAINT_VIOLATION.getErrorMessage(String.join(",", values.keySet())));
+        }
+    }
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
-    void handleCreateInternalCollectionReferences(DTO dto,
-                                                  Function<DTO, List<REF_DTO>> getter,
-                                                  BiConsumer<DTO, List<REF_DTO>> setter,
-                                                  BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
+    void handleInternalCollectionReferences(DTO dto,
+                                            Function<DTO, List<REF_DTO>> getter,
+                                            BiConsumer<DTO, List<REF_DTO>> setter,
+                                            BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
         List<REF_DTO> refEntities = getter.apply(dto);
 
         if (refEntities != null) {
@@ -120,7 +154,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
-    void handlePatchInternalReference(JsonNullable<EntityIdRequest> entityIdRequest, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
+    void handleInternalReference(JsonNullable<EntityIdRequest> entityIdRequest, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
         if (entityIdRequest.isPresent()) {
             if (!referenceEntityService.existsById(entityIdRequest.get().getId())) {
                 throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.get().getId()));
@@ -129,7 +163,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
-    void handlePatchCollectionInternalReferences(JsonNullable<List<EntityIdRequest>> entityIdRequests, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
+    void handleCollectionInternalReferences(JsonNullable<List<EntityIdRequest>> entityIdRequests, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
         if (entityIdRequests.isPresent()) {
             for (EntityIdRequest entityIdRequest : entityIdRequests.get()) {
                 if (!referenceEntityService.existsById(entityIdRequest.getId())) {

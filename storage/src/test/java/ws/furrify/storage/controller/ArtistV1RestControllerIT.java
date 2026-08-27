@@ -67,8 +67,8 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
 
         CreateArtistRequest request = new CreateArtistRequest();
         request.setNicknames(List.of(
-                ArtistNickname.of("Test_nickname", 1),
-                ArtistNickname.of("Tester", 2)
+                ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1),
+                ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 2)
         ));
         request.setAvatar(EntityIdRequest.builder().id(avatar.getId()).build());
         request.setSources(
@@ -90,7 +90,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
     @Test
     protected void testFindById() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         ArtistDTO foundArtist = super.findById(artist.getId());
 
@@ -104,8 +104,8 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
     @Test
     protected void testFindAll() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<ArtistDTO> artists = super.findAll(PageRequest.of(0, 10));
 
@@ -123,12 +123,12 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
                 sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
         );
         Media avatar = mediaRepository.save(Media.builder().priority(12).fileReferenceId(UUID.randomUUID()).sources(sources).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).avatar(avatar).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).avatar(avatar).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchArtistRequest request = new PatchArtistRequest();
         request.setNicknames(JsonNullable.of(List.of(
-                ArtistNickname.of("Test_nickname", 1),
-                ArtistNickname.of("Tester", 2)
+                ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1),
+                ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 2)
         )));
 
         Media newAvatar = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
@@ -155,7 +155,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
     @Test
     protected void testDelete() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of("Test", 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(artist.getId()));
     }

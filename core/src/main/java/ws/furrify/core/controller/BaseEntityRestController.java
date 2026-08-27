@@ -43,19 +43,19 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
         return entityCrudService.getAllPaged(decodedSpec, pageable);
     }
 
-    @PostMapping()
+    @PostMapping(produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.CREATED)
     protected DTO save(@RequestBody @Valid CREATE_REQ dto) {
         return entityCrudService.create(requestDtoMapper.toDto(dto));
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping(value = "/{id}", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.OK)
     protected DTO patch(@PathVariable UUID id, @RequestBody @Valid PATCH_REQ patchRequestDto) {
         return entityCrudService.patchById(id, patchRequestDto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.OK)
     protected void delete(@PathVariable UUID id) {
         entityCrudService.deleteById(id);

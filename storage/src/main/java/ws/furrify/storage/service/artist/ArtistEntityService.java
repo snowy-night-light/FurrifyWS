@@ -4,14 +4,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
+import ws.furrify.core.exception.Errors;
+import ws.furrify.core.exception.UniqueConstraintViolationException;
 import ws.furrify.core.service.BaseEntityCrudService;
+import ws.furrify.core.specification.EntitySpec;
+import ws.furrify.core.specification.EntitySpecJoinStep;
 import ws.furrify.storage.domain.artist.Artist;
+import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 import ws.furrify.storage.dto.artist.request.PatchArtistRequest;
 import ws.furrify.storage.service.library.LibraryEntityService;
 import ws.furrify.storage.service.media.MediaEntityService;
 import ws.furrify.storage.service.source.SourceEntityService;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,19 +37,44 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
 
     @Override
     public ArtistDTO create(ArtistDTO dto) {
-        super.handleCreateInternalReference(dto, ArtistDTO::getAvatar, ArtistDTO::setAvatar, mediaEntityService);
-        super.handleCreateInternalReference(dto, ArtistDTO::getLibrary, ArtistDTO::setLibrary, libraryEntityService);
-        super.handleCreateInternalCollectionReferences(dto, ArtistDTO::getSources, ArtistDTO::setSources, sourceEntityService);
+        super.handleInternalReference(dto, ArtistDTO::getAvatar, ArtistDTO::setAvatar, mediaEntityService);
+        super.handleInternalReference(dto, ArtistDTO::getLibrary, ArtistDTO::setLibrary, libraryEntityService);
+        super.handleInternalCollectionReferences(dto, ArtistDTO::getSources, ArtistDTO::setSources, sourceEntityService);
+
+        checkNicknameUniqueness(dto.getNicknames());
 
         return super.create(dto);
     }
 
     @Override
     public ArtistDTO patchById(UUID id, PatchArtistRequest patchDto) {
-        super.handlePatchInternalReference(patchDto.getAvatar(), mediaEntityService);
-        super.handlePatchInternalReference(patchDto.getLibrary(), libraryEntityService);
-        super.handlePatchCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
+        super.handleInternalReference(patchDto.getAvatar(), mediaEntityService);
+        super.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
+        super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
+
+        if (patchDto.getNicknames() != null && patchDto.getNicknames().isPresent()) {
+            checkNicknameUniqueness(patchDto.getNicknames().get());
+        }
 
         return super.patchById(id, patchDto);
+    }
+
+    private void checkNicknameUniqueness(List<ArtistNickname> nicknames) {
+        if (nicknames == null || nicknames.isEmpty()) return;
+        EntitySpecJoinStep<Artist> specBuilder = null;
+        for (ArtistNickname nickname : nicknames) {
+            if (specBuilder == null) {
+                specBuilder = EntitySpec.<Artist>specBuilder()
+                        .where("nicknames.nickname", EntitySpec.specEquals(nickname.getNickname()));
+            } else {
+                specBuilder = specBuilder.or()
+                        .where("nicknames.nickname", EntitySpec.specEquals(nickname.getNickname()));
+            }
+        }
+        if (specBuilder != null && entityRepository.count(specBuilder.build()) > 0) {
+            throw new UniqueConstraintViolationException(
+                    Errors.UNIQUE_CONSTRAINT_VIOLATION.getErrorMessage("nicknames.nickname")
+            );
+        }
     }
 }
