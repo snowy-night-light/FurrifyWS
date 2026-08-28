@@ -28,7 +28,7 @@ public class TagCategoryEntityService extends BaseEntityCrudService<TagCategory,
     public TagCategoryDTO patchById(UUID id, PatchTagCategoryRequest patchDto) {
         this.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
 
-        super.handleUniqueConstraint(patchDto, Map.of(
+        super.handleUniqueConstraint(id, patchDto, Map.of(
                 "name", PatchTagCategoryRequest::getName
         ));
 

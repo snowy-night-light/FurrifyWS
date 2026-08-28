@@ -39,7 +39,7 @@ public class TagAliasEntityService extends BaseEntityCrudService<TagAlias, TagAl
     public TagAliasDTO patchById(UUID id, PatchTagAliasRequest patchDto) {
         super.handleInternalReference(patchDto.getTargetTag(), tagEntityService);
 
-        super.handleUniqueConstraint(patchDto, Map.of(
+        super.handleUniqueConstraint(id, patchDto, Map.of(
                 "alias", PatchTagAliasRequest::getAlias
         ));
 
