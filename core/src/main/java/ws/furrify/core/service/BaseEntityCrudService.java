@@ -102,14 +102,14 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     public <VALUE> void handleUniqueConstraint(DTO dto, Map<String, Function<DTO, VALUE>> values) {
-        handleUniqueConstraintInternal(dto, values);
+        handleUniqueConstraintInternal(dto, values, null);
     }
 
-    public <VALUE> void handleUniqueConstraint(PATCH_REQ patchReq, Map<String, Function<PATCH_REQ, VALUE>> values) {
-        handleUniqueConstraintInternal(patchReq, values);
+    public <VALUE> void handleUniqueConstraint(UUID id, PATCH_REQ patchReq, Map<String, Function<PATCH_REQ, VALUE>> values) {
+        handleUniqueConstraintInternal(patchReq, values, id);
     }
 
-    private <T, VALUE> void handleUniqueConstraintInternal(T source, Map<String, Function<T, VALUE>> values) {
+    private <T, VALUE> void handleUniqueConstraintInternal(T source, Map<String, Function<T, VALUE>> values, UUID currentRecordId) {
         List<EntitySpecResult<ENTITY>> specs = new ArrayList<>();
 
         values.forEach((field, getter) -> {
@@ -129,6 +129,14 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         if (specs.isEmpty()) return;
         
         EntitySpecResult<ENTITY> combinedSpec = EntitySpec.specCombineAllWithAnd(specs);
+        
+        if (currentRecordId != null) {
+            combinedSpec = EntitySpec.<ENTITY>specBuilder()
+                    .where("id", EntitySpec.specNotEquals(currentRecordId))
+                    .and(combinedSpec)
+                    .build();
+        }
+
         long totalCount = entityRepository.count(combinedSpec);
         if (totalCount > 0) {
             throw new UniqueConstraintViolationException(Errors.UNIQUE_CONSTRAINT_VIOLATION.getErrorMessage(String.join(",", values.keySet())));
