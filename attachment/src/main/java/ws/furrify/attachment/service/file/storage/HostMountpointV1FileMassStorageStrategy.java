@@ -50,8 +50,7 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
     }
 
     private Path getDestinationThumbnailFilePath(UUID id, File file) {
-        String ext = Files.getFileExtension(file.getName());
-        return Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail" + (ext.isEmpty() ? "" : "." + ext));
+        return Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail.jpg");
     }
 
     private Path getDestinationDirectoryPath(UUID id) {

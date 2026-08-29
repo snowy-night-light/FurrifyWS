@@ -9,6 +9,7 @@ import ws.furrify.attachment.domain.file.vo.AttachmentFileHash;
 import ws.furrify.core.entity.UserScopedEntity;
 
 import java.net.URI;
+import ws.furrify.core.converters.URIConverter;
 import java.util.List;
 
 @Entity
@@ -40,9 +41,11 @@ public class AttachmentFile extends UserScopedEntity {
     private Long fileSize;
 
     @Column(nullable = true)
+    @Convert(converter = URIConverter.class)
     private URI fileUri;
 
     @Column(nullable = true)
+    @Convert(converter = URIConverter.class)
     private URI thumbnailUri;
 
     @Column(nullable = true)
