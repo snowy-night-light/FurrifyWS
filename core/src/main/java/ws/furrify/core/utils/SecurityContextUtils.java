@@ -9,6 +9,7 @@ import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +19,8 @@ import static ws.furrify.core.specification.EntitySpec.specEquals;
 public class SecurityContextUtils {
 
     private final static String USER_SCOPE_OWNER_VARIABLE_NAME = "ownerId";
+
+    private final static String SERVICE_CLIENT_CLAIM = "service_client";
 
     public static Optional<Jwt> getCurrentUserPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -33,7 +36,21 @@ public class SecurityContextUtils {
         return SecurityContextUtils.getCurrentUserPrincipal().map(Jwt::getSubject).map(UUID::fromString);
     }
 
+    public static boolean isServiceToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .anyMatch(auth -> Objects.requireNonNull(auth.getAuthority()).equalsIgnoreCase("ROLE_" + SERVICE_CLIENT_CLAIM));
+    }
+
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> getUserScopedSecuritySpec() {
+        if (isServiceToken()) {
+            return EntitySpec.unrestricted();
+        }
+
         return EntitySpec.<ENTITY>specBuilder().where(USER_SCOPE_OWNER_VARIABLE_NAME, specEquals(getCurrentSubject().orElseThrow(() -> new IllegalStateException("Current user subject was not found. Cannot construct spec.")))).build();
     }
 }

@@ -10,6 +10,10 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
 
     private final OAuth2AuthorizedClientManager authorizedClientManager;
@@ -24,15 +28,17 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
 
     @Override
     public void apply(RequestTemplate template) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
 
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            String tokenValue = jwtAuth.getToken().getTokenValue();
-            template.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenValue);
-
-            return;
+        if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
+            String authorization = servletRequestAttributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
+            if (authorization != null && authorization.startsWith("Bearer ")) {
+                template.header(HttpHeaders.AUTHORIZATION, authorization);
+                return;
+            }
         }
 
+        // Fallback to Service Token
         OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest
                 .withClientRegistrationId(KEYCLOAK_INTERNAL_CONFIG_ID)
                 .principal(principalName)
