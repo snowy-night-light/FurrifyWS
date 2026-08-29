@@ -74,8 +74,6 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(dto.getFileName()));
         }
-
-
     }
 
     @Transactional
