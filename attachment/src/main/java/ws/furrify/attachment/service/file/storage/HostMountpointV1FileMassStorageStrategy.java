@@ -1,6 +1,7 @@
 package ws.furrify.attachment.service.file.storage;
 
 import com.google.common.io.Files;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.FileSystemUtils;
 import ws.furrify.attachment.exception.AttachmentErrors;
 import ws.furrify.attachment.service.file.storage.thumbnail.ThumbnailGenerator;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
+@Slf4j
 public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageStrategy {
 
     private final String MOUNT_POINT_PATH = "/furrify/data";
@@ -24,25 +26,32 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
             Path destinationFilePath = getDestinationFilePath(id, file);
             Path destinationThumbnailFilePath = getDestinationThumbnailFilePath(id, file);
 
-            // Main file
-            Files.move(file, destinationFilePath.toFile());
+            // Ensure parent directory exists
+            destinationFilePath.getParent().toFile().mkdirs();
 
             // Thumbnail
             File thumbnailFile = thumbnailGenerator.generateThumbnail(mimeType, file);
             Files.move(thumbnailFile, destinationThumbnailFilePath.toFile());
 
+            // Main file
+            Files.move(file, destinationFilePath.toFile());
+
             return UploadedFileReference.of(destinationFilePath.toUri(), destinationThumbnailFilePath.toUri(), getStorageServiceId());
         } catch (IOException e) {
+            log.error("Failed to process attachment file.", e);
+
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage());
         }
     }
 
     private Path getDestinationFilePath(UUID id, File file) {
-        return Path.of(MOUNT_POINT_PATH + "/" + id + "/attachment" + Files.getFileExtension(file.getName()));
+        String ext = Files.getFileExtension(file.getName());
+        return Path.of(MOUNT_POINT_PATH + "/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext));
     }
 
     private Path getDestinationThumbnailFilePath(UUID id, File file) {
-        return Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail" + Files.getFileExtension(file.getName()));
+        String ext = Files.getFileExtension(file.getName());
+        return Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail" + (ext.isEmpty() ? "" : "." + ext));
     }
 
     private Path getDestinationDirectoryPath(UUID id) {

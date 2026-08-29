@@ -20,12 +20,13 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Artist extends UserScopedEntity {
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "artist_nicknames",
             joinColumns = @JoinColumn(name = "artist_id"),
             uniqueConstraints = @UniqueConstraint(name = "UK_artist_nickname", columnNames = {"nickname"})
-    )    @NotEmpty
+    )
+    @NotEmpty
     List<ArtistNickname> nicknames;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

@@ -41,8 +41,8 @@ public class GatewayApplication {
 						.filters(f -> f.rewritePath("/storage/(?<segment>.*)", "/${segment}"))
 						.uri("lb://furrify-storage-service"))
 				.route("furrify-attachment", r -> r
-						.path("/attachment/**")
-						.filters(f -> f.rewritePath("/attachment/(?<segment>.*)", "/${segment}"))
+						.path("/attachments/**")
+						.filters(f -> f.rewritePath("/attachments/(?<segment>.*)", "/${segment}"))
 						.uri("lb://furrify-attachment-service"))
 				.build();
 	}

@@ -41,7 +41,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         super.handleInternalReference(dto, ArtistDTO::getLibrary, ArtistDTO::setLibrary, libraryEntityService);
         super.handleInternalCollectionReferences(dto, ArtistDTO::getSources, ArtistDTO::setSources, sourceEntityService);
 
-        checkNicknameUniqueness(dto.getNicknames());
+        checkNicknameUniqueness(dto.getNicknames(), null);
 
         return super.create(dto);
     }
@@ -53,13 +53,13 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
         if (patchDto.getNicknames() != null && patchDto.getNicknames().isPresent()) {
-            checkNicknameUniqueness(patchDto.getNicknames().get());
+            checkNicknameUniqueness(patchDto.getNicknames().get(), id);
         }
 
         return super.patchById(id, patchDto);
     }
 
-    private void checkNicknameUniqueness(List<ArtistNickname> nicknames) {
+    private void checkNicknameUniqueness(List<ArtistNickname> nicknames, UUID recordId) {
         if (nicknames == null || nicknames.isEmpty()) return;
         EntitySpecJoinStep<Artist> specBuilder = null;
         for (ArtistNickname nickname : nicknames) {
@@ -71,10 +71,19 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
                         .where("nicknames.nickname", EntitySpec.specEquals(nickname.getNickname()));
             }
         }
-        if (specBuilder != null && entityRepository.count(specBuilder.build()) > 0) {
-            throw new UniqueConstraintViolationException(
-                    Errors.UNIQUE_CONSTRAINT_VIOLATION.getErrorMessage("nicknames.nickname")
-            );
+        if (specBuilder != null) {
+            var finalSpec = specBuilder.build();
+            if (recordId != null) {
+                finalSpec = EntitySpec.<Artist>specBuilder()
+                        .where("id", EntitySpec.specNotEquals(recordId))
+                        .and(finalSpec)
+                        .build();
+            }
+            if (entityRepository.count(finalSpec) > 0) {
+                throw new UniqueConstraintViolationException(
+                        Errors.UNIQUE_CONSTRAINT_VIOLATION.getErrorMessage("nicknames.nickname")
+                );
+            }
         }
     }
 }
