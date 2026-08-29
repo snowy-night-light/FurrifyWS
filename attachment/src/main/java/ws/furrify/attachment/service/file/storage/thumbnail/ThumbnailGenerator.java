@@ -73,7 +73,7 @@ public class ThumbnailGenerator {
     }
 
     private File generateVideoThumbnail(File file) throws IOException {
-        File tempFile = File.createTempFile(THUMBNAIL_FILE_PREFIX, THUMBNAIL_FORMAT);
+        File tempFile = File.createTempFile(THUMBNAIL_FILE_PREFIX, "." + THUMBNAIL_FORMAT);
 
         try (FFmpegFrameGrabber frameGrabber = new FFmpegFrameGrabber(file);
              Java2DFrameConverter converter = new Java2DFrameConverter()) {
@@ -98,7 +98,7 @@ public class ThumbnailGenerator {
     }
 
     private File generateImageThumbnail(File file) throws IOException {
-        File tempFile = File.createTempFile(THUMBNAIL_FILE_PREFIX, THUMBNAIL_FORMAT);
+        File tempFile = File.createTempFile(THUMBNAIL_FILE_PREFIX, "." + THUMBNAIL_FORMAT);
 
         Thumbnails.of(file)
                 .size(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
