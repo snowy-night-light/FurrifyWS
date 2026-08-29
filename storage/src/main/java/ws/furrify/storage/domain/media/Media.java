@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.validator.constraints.Range;
+import jakarta.validation.constraints.Min;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.source.Source;
 
@@ -22,7 +22,7 @@ import java.util.UUID;
 public class Media extends UserScopedEntity {
 
     @Column(nullable = false)
-    @Range(min = 0)
+    @Min(0)
     @NotNull
     Integer priority;
 

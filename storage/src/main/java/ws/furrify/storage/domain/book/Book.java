@@ -10,6 +10,7 @@ import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.media.Media;
+import ws.furrify.storage.domain.source.Source;
 import ws.furrify.storage.domain.tag.Tag;
 
 import java.util.List;
@@ -41,6 +42,9 @@ public class Book extends UserScopedEntity {
 
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "book")
     List<BookChapter> chapters;
+
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    List<Source> sources;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "library_id", nullable = false)

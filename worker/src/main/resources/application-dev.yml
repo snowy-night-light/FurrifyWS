@@ -1,0 +1,63 @@
+scalar:
+  enabled: true
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        ignoreExceptions:
+          - feign.FeignException.NotFound
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            scope: openid
+            authorization-grant-type: authorization_code
+            client-id: ${KEYCLOAK_CLIENT_ID}
+
+          keycloak-internal:
+            provider: keycloak
+            client-id: ${KEYCLOAK_SERVICE_CLIENT_ID}
+            client-secret: ${KEYCLOAK_SERVICE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid
+
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+
+
+  datasource:
+    driverClassName: org.h2.Driver
+    username: 'sa'
+    password: 'password'
+    url: jdbc:h2:mem:testdb
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: true

@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
+import ws.furrify.storage.domain.source.Source;
 
 import java.util.List;
 
@@ -30,4 +31,7 @@ public class BookChapter extends UserScopedEntity {
 
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "chapter")
     List<BookChapterVersion> versions;
+
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    List<Source> sources;
 }

@@ -12,6 +12,7 @@
         <module>core</module>
         <module>test-core</module>
         <module>storage</module>
+        <module>worker</module>
         <module>eureka</module>
         <module>gateway</module>
         <module>attachment</module>

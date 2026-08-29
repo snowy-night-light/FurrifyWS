@@ -2,7 +2,7 @@ package ws.furrify.storage.dto.media.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.hibernate.validator.constraints.Range;
+import jakarta.validation.constraints.Min;
 import org.openapitools.jackson.nullable.JsonNullable;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.entity.request.EntityIdRequest;
@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Data
 public class PatchMediaRequest implements BasePatchEntityRequest<Media, MediaDTO> {
-    private JsonNullable<@NotNull @Range(min = 0) Integer> priority;
+    private JsonNullable<@NotNull @Min(0) Integer> priority;
 
     private JsonNullable<@NotNull UUID> fileReferenceId;
 
