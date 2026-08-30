@@ -67,7 +67,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     @Transactional
-    protected DTO putById(UUID id, DTO dto) {
+    protected DTO internalPutById(UUID id, DTO dto) {
         ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.putEntity(source, dto);
