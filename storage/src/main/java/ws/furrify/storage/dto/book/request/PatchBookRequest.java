@@ -19,7 +19,12 @@ public class PatchBookRequest implements BasePatchEntityRequest<Book, BookDTO> {
     private JsonNullable<@NotBlank String> description = JsonNullable.undefined();
 
     private JsonNullable<EntityIdRequest> cover = JsonNullable.undefined();
+    private JsonNullable<@NotNull EntityIdRequest> status = JsonNullable.undefined();
+    private JsonNullable<@NotNull EntityIdRequest> rating = JsonNullable.undefined();
     private JsonNullable<@NotNull EntityIdRequest> library = JsonNullable.undefined();
+    private JsonNullable<@NotNull Integer> likes = JsonNullable.undefined();
+    private JsonNullable<@NotNull Integer> dislikes = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> tags = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> artists = JsonNullable.undefined();
+    private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
 }
