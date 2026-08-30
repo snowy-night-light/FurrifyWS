@@ -20,5 +20,7 @@ public class BookChapterVersionDTO extends UserScopedEntityDTO<BookChapterVersio
     private String authorNotesEnd;
     private String authorNotesStart;
 
+    private Long wordCount;
+
     private BookChapterDTO chapter;
 }

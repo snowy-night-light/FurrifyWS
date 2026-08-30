@@ -8,6 +8,7 @@ import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.dto.book.BookDTO;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
+import ws.furrify.storage.dto.source.SourceDTO;
 
 import java.util.List;
 
@@ -20,5 +21,9 @@ public class BookChapterDTO extends UserScopedEntityDTO<BookChapter> {
 
     private BookDTO book;
 
+    private Long views;
+    private Long currentNumberOfWords;
+
+    private List<SourceDTO> sources;
     private List<BookChapterVersionDTO> versions;
 }

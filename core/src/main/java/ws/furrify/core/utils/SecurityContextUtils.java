@@ -47,7 +47,9 @@ public class SecurityContextUtils {
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> getUserScopedSecuritySpec() {
-        if (isServiceToken()) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || isServiceToken()) {
             return EntitySpec.unrestricted();
         }
 

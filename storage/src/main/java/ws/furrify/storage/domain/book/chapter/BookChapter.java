@@ -32,6 +32,12 @@ public class BookChapter extends UserScopedEntity {
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "chapter")
     List<BookChapterVersion> versions;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Source> sources;
+
+    @Column(nullable = false)
+    Long views = 0L;
+
+    @Column(nullable = false)
+    Long currentNumberOfWords = 0L;
 }

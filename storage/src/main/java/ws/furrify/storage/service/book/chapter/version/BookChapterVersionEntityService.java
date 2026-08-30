@@ -1,10 +1,12 @@
 package ws.furrify.storage.service.book.chapter.version;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -27,16 +29,20 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
     private final BookChapterEntityService bookChapterEntityService;
     @Autowired
-    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, BookChapterEntityService bookChapterEntityService) {
+    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService) {
         super(entityRepository, dtoMapper);
         this.bookChapterEntityService = bookChapterEntityService;
     }
 
     @Override
+    @Transactional
     public BookChapterVersionDTO patchById(UUID id, PatchBookChapterVersionRequest patchDto) {
         this.handleInternalReference(patchDto.getChapter(), bookChapterEntityService);
 
-        return super.patchById(id, patchDto);
+        BookChapterVersionDTO bookChapterVersionDTO = super.patchById(id, patchDto);
+        this.countChapterWordsAsync(bookChapterVersionDTO);
+
+        return bookChapterVersionDTO;
     }
 
     @Override
@@ -47,7 +53,38 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
         dto.setChapterVersion(highestVersion + 1);
 
-        return super.create(dto);
+        BookChapterVersionDTO createdDto = super.create(dto);
+        this.countChapterWordsAsync(createdDto);
+
+        return createdDto;
+    }
+
+    @Async
+    @Transactional
+    protected void countChapterWordsAsync(BookChapterVersionDTO bookChapterVersionDTO) {
+        String content = bookChapterVersionDTO.getContent();
+
+        long wordCount = 0;
+
+        boolean word = false;
+        int endOfLine = content.length() - 1;
+
+        for (int i = 0; i < content.length(); i++) {
+            if (Character.isLetter(content.charAt(i)) && i != endOfLine) {
+                word = true;
+            } else if (!Character.isLetter(content.charAt(i)) && word) {
+                wordCount++;
+                word = false;
+            } else if (Character.isLetter(content.charAt(i)) && i == endOfLine) {
+                wordCount++;
+            }
+        }
+
+        bookChapterVersionDTO.setWordCount(wordCount);
+
+        this.internalPutById(bookChapterVersionDTO.getId(), bookChapterVersionDTO);
+
+        this.bookChapterEntityService.updateChapterCurrentWordCountAsync(bookChapterVersionDTO.getChapter().getId());
     }
 
     @Transactional

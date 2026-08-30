@@ -20,6 +20,8 @@ public enum StorageErrors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      */
+    DISLIKES_DISABLED_EXCEPTION("Dislikes are not enabled for library [id={0}]."),
+    LIKES_DISABLED_EXCEPTION("Likes are not enabled for library [id={0}]."),
     REFERENCE_NOT_FOUND("Reference with [id={0}] has not been found in external service."),
     NO_TAG_FOUND("Tag [value={0}] was not found."),
     VIDEO_FRAME_EXTRACTION_FAILED("Video frame extraction for thumbnail has failed."),
