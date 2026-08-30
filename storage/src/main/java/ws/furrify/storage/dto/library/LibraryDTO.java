@@ -25,4 +25,6 @@ public class LibraryDTO extends UserScopedEntityDTO<Library> {
     private List<ArtistDTO> artists;
     private List<CollectionDTO> collections;
     private List<BookDTO> books;
+    private Boolean likesEnabled;
+    private Boolean dislikesEnabled;
 }

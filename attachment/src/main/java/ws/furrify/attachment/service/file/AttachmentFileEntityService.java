@@ -106,7 +106,7 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
 
         dto.setUploadStatus(FileUploadStatus.CORRUPTED);
 
-        putById(id, dto);
+        internalPutById(id, dto);
     }
 
     @Transactional
@@ -121,7 +121,7 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
 
             dto.setFileSize(file.length());
 
-            putById(dto.getId(), dto);
+            internalPutById(dto.getId(), dto);
         } catch (Exception e) {
             log.warn("Failed to upload attachment file.", e);
 

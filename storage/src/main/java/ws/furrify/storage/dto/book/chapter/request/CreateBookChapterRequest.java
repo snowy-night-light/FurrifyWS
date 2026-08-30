@@ -8,6 +8,8 @@ import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
 
+import java.util.List;
+
 @Data
 public class CreateBookChapterRequest implements BaseCreateEntityRequest<BookChapter, BookChapterDTO> {
 
@@ -16,4 +18,6 @@ public class CreateBookChapterRequest implements BaseCreateEntityRequest<BookCha
 
     @NotNull
     private EntityIdRequest book;
+
+    private List<@NotNull EntityIdRequest> sources;
 }

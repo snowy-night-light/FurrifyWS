@@ -9,9 +9,12 @@ import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
 
+import java.util.List;
+
 @Data
 public class PatchBookChapterRequest implements BasePatchEntityRequest<BookChapter, BookChapterDTO> {
     private JsonNullable<@NotBlank String> title = JsonNullable.undefined();
 
     private JsonNullable<@NotNull EntityIdRequest> book = JsonNullable.undefined();
+    private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
 }

@@ -4,14 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
-
-import jakarta.validation.constraints.Min;
 
 @Entity
 @Getter
@@ -37,6 +35,10 @@ public class BookChapterVersion extends UserScopedEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     @NotNull
     String authorNotesStart;
+
+    @Column(nullable = false)
+    @NotNull
+    Long wordCount = 0L;
 
     @NotNull
     @ManyToOne

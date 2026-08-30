@@ -49,4 +49,10 @@ public class Library extends UserScopedEntity {
 
     @OneToMany(mappedBy = "library", cascade = CascadeType.REMOVE)
     List<Book> books;
+
+    @Column(nullable = false)
+    Boolean likesEnabled = false;
+
+    @Column(nullable = false)
+    Boolean dislikesEnabled = false;
 }

@@ -29,7 +29,11 @@ public class Book extends UserScopedEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false, length = 10240)
     @NotNull
-    String description;
+    String descriptionHtml;
+
+    @Column(columnDefinition = "TEXT", nullable = false, length = 1024)
+    @NotNull
+    String shortDescriptionHtml;
 
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     Media cover;
@@ -40,13 +44,31 @@ public class Book extends UserScopedEntity {
     @OneToMany(fetch = FetchType.EAGER)
     List<Artist> artists;
 
+    @Enumerated(EnumType.STRING)
+    BookStatus status;
+
+    @Enumerated(EnumType.STRING)
+    BookRating rating;
+
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "book")
     List<BookChapter> chapters;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Source> sources;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "library_id", nullable = false)
     Library library;
+
+    @Column(nullable = false)
+    Long views = 0L;
+
+    @Column(nullable = false)
+    Long totalWordCount = 0L;
+
+    @Column(nullable = true)
+    Integer likes;
+
+    @Column(nullable = true)
+    Integer dislikes;
 }
