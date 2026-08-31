@@ -15,6 +15,7 @@ import ws.furrify.storage.dto.media.MediaDTO;
 import ws.furrify.storage.dto.source.SourceDTO;
 import ws.furrify.storage.dto.tag.TagDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -24,9 +25,15 @@ import java.util.List;
 public class BookDTO extends UserScopedEntityDTO<Book> {
     private String title;
 
-    private String description;
+    private String externalId;
+    private Integer chapterNumber;
+
+    private String descriptionHtml;
+    private String shortDescriptionHtml;
 
     private MediaDTO cover;
+    private BookDTO prequel;
+    private BookDTO sequel;
 
     private Long totalWordCount;
 
@@ -44,4 +51,6 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private List<SourceDTO> sources;
 
     private LibraryDTO library;
+
+    private ZonedDateTime publishDate;
 }

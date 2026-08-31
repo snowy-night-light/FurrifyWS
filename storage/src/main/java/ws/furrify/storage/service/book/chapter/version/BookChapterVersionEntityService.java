@@ -1,5 +1,6 @@
 package ws.furrify.storage.service.book.chapter.version;
 
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -19,7 +20,9 @@ import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 import ws.furrify.storage.dto.book.chapter.version.request.PatchBookChapterVersionRequest;
 import ws.furrify.storage.service.book.chapter.BookChapterEntityService;
+import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
@@ -39,6 +42,16 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     public BookChapterVersionDTO patchById(UUID id, PatchBookChapterVersionRequest patchDto) {
         this.handleInternalReference(patchDto.getChapter(), bookChapterEntityService);
 
+        // Sanitize content
+        if (patchDto.getContentHtml().isPresent()) {
+            patchDto.setContentHtml(JsonNullable.of(sanitizeHtml(patchDto.getContentHtml().get())));
+        }
+
+        // If content is updated, update the contentUpdatedAt field unless passed directly in dto
+        if (!patchDto.getContentUpdatedAt().isPresent() && patchDto.getContentHtml().isPresent()) {
+            patchDto.setContentUpdatedAt(JsonNullable.of(ZonedDateTime.now()));
+        }
+
         BookChapterVersionDTO bookChapterVersionDTO = super.patchById(id, patchDto);
         this.countChapterWordsAsync(bookChapterVersionDTO);
 
@@ -53,6 +66,14 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
         dto.setChapterVersion(highestVersion + 1);
 
+        // Sanitize content
+        dto.setContentHtml(sanitizeHtml(dto.getContentHtml()));
+
+        // Set content updated at unless passed directly in dto
+        if(dto.getContentUpdatedAt() == null) {
+             dto.setContentUpdatedAt(ZonedDateTime.now());
+        }
+
         BookChapterVersionDTO createdDto = super.create(dto);
         this.countChapterWordsAsync(createdDto);
 
@@ -62,7 +83,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     @Async
     @Transactional
     protected void countChapterWordsAsync(BookChapterVersionDTO bookChapterVersionDTO) {
-        String content = bookChapterVersionDTO.getContent();
+        String content = bookChapterVersionDTO.getContentHtml();
 
         long wordCount = 0;
 
@@ -85,6 +106,10 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         this.internalPutById(bookChapterVersionDTO.getId(), bookChapterVersionDTO);
 
         this.bookChapterEntityService.updateChapterCurrentWordCountAsync(bookChapterVersionDTO.getChapter().getId());
+    }
+
+    private String sanitizeHtml(String html) {
+        return ContentHtmlSanitizerUtil.sanitize(html);
     }
 
     @Transactional

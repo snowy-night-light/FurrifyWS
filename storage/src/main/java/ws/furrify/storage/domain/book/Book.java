@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.validator.constraints.Length;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
@@ -13,6 +14,7 @@ import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.source.Source;
 import ws.furrify.storage.domain.tag.Tag;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
@@ -29,11 +31,22 @@ public class Book extends UserScopedEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false, length = 10240)
     @NotNull
+    @Length(max = 10240)
     String descriptionHtml;
+
+    @Column()
+    String externalId;
 
     @Column(columnDefinition = "TEXT", nullable = false, length = 1024)
     @NotNull
+    @Length(max = 1024)
     String shortDescriptionHtml;
+
+    @OneToOne(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    Book sequel;
+
+    @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    Book prequel;
 
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     Media cover;
@@ -71,4 +84,8 @@ public class Book extends UserScopedEntity {
 
     @Column(nullable = true)
     Integer dislikes;
+
+    @Column(nullable = false)
+    @NotNull
+    ZonedDateTime publishDate;
 }

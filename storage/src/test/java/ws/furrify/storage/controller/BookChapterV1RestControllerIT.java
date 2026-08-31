@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.StorageApplication;
 import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.book.BookRepository;
@@ -17,10 +18,10 @@ import ws.furrify.storage.domain.library.LibraryRepository;
 import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
 import ws.furrify.storage.dto.book.chapter.request.CreateBookChapterRequest;
 import ws.furrify.storage.dto.book.chapter.request.PatchBookChapterRequest;
-import ws.furrify.core.entity.request.EntityIdRequest;
-import java.util.List;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,7 +53,7 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
     private void setupData() {
         if (defaultBook == null) {
             Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-            defaultBook = bookRepository.save(Book.builder().title("Test book").description("Desc").library(library).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+            defaultBook = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(library).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         }
     }
 

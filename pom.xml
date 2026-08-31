@@ -196,6 +196,12 @@
                             <dateLibrary>java8</dateLibrary>
                             <useSpringBoot3>true</useSpringBoot3>
                         </configOptions>
+                        <typeMappings>
+                            <typeMapping>OffsetDateTime=ZonedDateTime</typeMapping>
+                        </typeMappings>
+                        <importMappings>
+                            <importMapping>java.time.OffsetDateTime=java.time.ZonedDateTime</importMapping>
+                        </importMappings>
                     </configuration>
                 </plugin>
                 <plugin>

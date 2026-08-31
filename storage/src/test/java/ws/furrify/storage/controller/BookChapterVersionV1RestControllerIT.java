@@ -56,7 +56,7 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
     private void setupData() {
         if (defaultChapter == null) {
             Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-            Book book = bookRepository.save(Book.builder().title("Test book").description("Desc").library(library).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+            Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(library).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
             defaultChapter = bookChapterRepository.save(BookChapter.builder().title("Test chapter").book(book).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         }
     }
@@ -67,7 +67,7 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
         setupData();
 
         CreateBookChapterVersionRequest request = new CreateBookChapterVersionRequest();
-        request.setContent("Test content");
+        request.setContentHtml("Test contentHtml");
         request.setChapter(EntityIdRequest.builder().id(defaultChapter.getId()).build());
         request.setAuthorNotesStart("Start");
         request.setAuthorNotesEnd("End");
@@ -76,7 +76,7 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
 
         assertAll(() -> {
             assertNotNull(createdVersion);
-            assertEquals("Test content", createdVersion.getContent());
+            assertEquals("Test contentHtml", createdVersion.getContentHtml());
             assertEquals(defaultChapter.getId(), createdVersion.getChapter().getId());
         });
     }
@@ -85,14 +85,14 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
     @Test
     protected void testFindById() {
         setupData();
-        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).content("Test content").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).contentHtml("Test contentHtml").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         BookChapterVersionDTO foundVersion = super.findById(version.getId());
 
         assertAll(() -> {
             assertNotNull(foundVersion);
             assertEquals(version.getId(), foundVersion.getId());
-            assertEquals("Test content", foundVersion.getContent());
+            assertEquals("Test contentHtml", foundVersion.getContentHtml());
         });
     }
 
@@ -100,8 +100,8 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
     @Test
     protected void testFindAll() {
         setupData();
-        bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).content("Test content").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(2).content("Test content 2").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).contentHtml("Test contentHtml").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(2).contentHtml("Test contentHtml 2").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<BookChapterVersionDTO> versions = super.findAll(PageRequest.of(0, 10));
 
@@ -115,17 +115,17 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
     @Test
     protected void testPatch() {
         setupData();
-        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).content("Test content").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).contentHtml("Test contentHtml").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchBookChapterVersionRequest request = new PatchBookChapterVersionRequest();
-        request.setContent(JsonNullable.of("Patched content"));
+        request.setContentHtml(JsonNullable.of("Patched contentHtml"));
 
         BookChapterVersionDTO updatedVersion = super.patch(version.getId(), request);
 
         assertAll(() -> {
             assertNotNull(updatedVersion);
             assertEquals(version.getId(), updatedVersion.getId());
-            assertEquals("Patched content", updatedVersion.getContent());
+            assertEquals("Patched contentHtml", updatedVersion.getContentHtml());
         });
     }
 
@@ -133,7 +133,7 @@ public class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest
     @Test
     protected void testDelete() {
         setupData();
-        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).content("Test content").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).contentHtml("Test contentHtml").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(version.getId()));
     }
