@@ -10,6 +10,7 @@ import ws.furrify.storage.dto.book.BookDTO;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 import ws.furrify.storage.dto.source.SourceDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -19,11 +20,17 @@ import java.util.List;
 public class BookChapterDTO extends UserScopedEntityDTO<BookChapter> {
     private String title;
 
+    private String externalId;
+
     private BookDTO book;
+
+    private Integer chapterNumber;
 
     private Long views;
     private Long currentNumberOfWords;
 
     private List<SourceDTO> sources;
     private List<BookChapterVersionDTO> versions;
+
+    private ZonedDateTime publishDate;
 }

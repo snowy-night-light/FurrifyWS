@@ -14,20 +14,28 @@ import ws.furrify.storage.dto.book.BookDTOMapper;
 import ws.furrify.storage.dto.book.chapter.request.PatchBookChapterRequest;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTOMapper;
+import ws.furrify.storage.dto.source.SourceDTOMapper;
 
 import java.util.List;
 
 @Mapper(
-        config = BaseDTOMapper.class
+        config = BaseDTOMapper.class,
+        uses = {SourceDTOMapper.class}
 )
 public abstract class BookChapterDTOMapper implements BaseDTOMapper<BookChapter, BookChapterDTO, PatchBookChapterRequest> {
 
     protected BookChapterVersionDTOMapper bookChapterVersionDTOMapper;
     protected BookDTOMapper bookDTOMapper;
+    protected SourceDTOMapper sourceDTOMapper;
 
     @Autowired
     public void setBookChapterVersionDTOMapper(@Lazy BookChapterVersionDTOMapper bookChapterVersionDTOMapper) {
         this.bookChapterVersionDTOMapper = bookChapterVersionDTOMapper;
+    }
+
+    @Autowired
+    public void setSourceDTOMapper(SourceDTOMapper sourceDTOMapper) {
+        this.sourceDTOMapper = sourceDTOMapper;
     }
 
     @Autowired
@@ -62,4 +70,5 @@ public abstract class BookChapterDTOMapper implements BaseDTOMapper<BookChapter,
         }
         return bookChapterVersionDTOMapper.toEntityList(versions, context);
     }
+
 }

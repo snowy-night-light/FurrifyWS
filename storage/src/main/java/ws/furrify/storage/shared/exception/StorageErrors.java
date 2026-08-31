@@ -20,6 +20,7 @@ public enum StorageErrors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      */
+    DUPLICATE_CHAPTER_NUMBER_EXCEPTION("Chapter with number [chapterNumber={0}] already exists in referenced book [bookId={1}]."),
     DISLIKES_DISABLED_EXCEPTION("Dislikes are not enabled for library [id={0}]."),
     LIKES_DISABLED_EXCEPTION("Likes are not enabled for library [id={0}]."),
     REFERENCE_NOT_FOUND("Reference with [id={0}] has not been found in external service."),

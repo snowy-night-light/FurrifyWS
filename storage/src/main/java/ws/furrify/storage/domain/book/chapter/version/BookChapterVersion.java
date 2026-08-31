@@ -11,6 +11,8 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 
+import java.time.ZonedDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -24,9 +26,12 @@ public class BookChapterVersion extends UserScopedEntity {
     @NotNull
     Integer chapterVersion;
 
+    @Column(columnDefinition = "TEXT", nullable = true)
+    String contentStylesheet;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     @NotNull
-    String content;
+    String contentHtml;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     @NotNull
@@ -44,4 +49,7 @@ public class BookChapterVersion extends UserScopedEntity {
     @ManyToOne
     @JoinColumn(name = "chapter_id")
     BookChapter chapter;
+
+    @Column(nullable = false)
+    ZonedDateTime contentUpdatedAt;
 }
