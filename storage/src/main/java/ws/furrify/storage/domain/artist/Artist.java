@@ -2,8 +2,11 @@ package ws.furrify.storage.domain.artist;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.validator.constraints.Length;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.domain.media.Media;
@@ -28,6 +31,19 @@ public class Artist extends UserScopedEntity {
     )
     @NotEmpty
     List<ArtistNickname> nicknames;
+
+    @Column()
+    String externalId;
+
+    @NotNull
+    @Column(nullable = false, length = 1024)
+    @Length(max = 1024)
+    String bioHtml;
+
+    @NotNull
+    @Column(nullable = false)
+    @Size(min = 0)
+    Integer followersCount = 0;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @ToString.Exclude

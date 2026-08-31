@@ -1,5 +1,6 @@
 package ws.furrify.storage.service.artist;
 
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -16,6 +17,7 @@ import ws.furrify.storage.dto.artist.request.PatchArtistRequest;
 import ws.furrify.storage.service.library.LibraryEntityService;
 import ws.furrify.storage.service.media.MediaEntityService;
 import ws.furrify.storage.service.source.SourceEntityService;
+import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,9 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         super.handleInternalReference(dto, ArtistDTO::getLibrary, ArtistDTO::setLibrary, libraryEntityService);
         super.handleInternalCollectionReferences(dto, ArtistDTO::getSources, ArtistDTO::setSources, sourceEntityService);
 
+        // Sanitize bio html
+        dto.setBioHtml(sanitizeHtml(dto.getBioHtml()));
+
         checkNicknameUniqueness(dto.getNicknames(), null);
 
         return super.create(dto);
@@ -52,11 +57,20 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         super.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
         super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
+        // Sanitize bio html
+        if (patchDto.getBioHtml().isPresent()) {
+            patchDto.setBioHtml(JsonNullable.of(sanitizeHtml(patchDto.getBioHtml().get())));
+        }
+
         if (patchDto.getNicknames() != null && patchDto.getNicknames().isPresent()) {
             checkNicknameUniqueness(patchDto.getNicknames().get(), id);
         }
 
         return super.patchById(id, patchDto);
+    }
+
+    private String sanitizeHtml(String html) {
+        return ContentHtmlSanitizerUtil.sanitize(html);
     }
 
     private void checkNicknameUniqueness(List<ArtistNickname> nicknames, UUID recordId) {

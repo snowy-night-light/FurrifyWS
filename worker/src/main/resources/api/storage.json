@@ -2001,11 +2001,21 @@
             "type": "string",
             "format": "uuid"
           },
+          "externalId": {
+            "type": "string"
+          },
           "nicknames": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ArtistNickname"
             }
+          },
+          "bioHtml": {
+            "type": "string"
+          },
+          "followersCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "sources": {
             "type": "array",
@@ -2068,14 +2078,39 @@
           "title": {
             "type": "string"
           },
+          "externalId": {
+            "type": "string"
+          },
           "book": {
             "$ref": "#/components/schemas/BookDTO"
+          },
+          "chapterNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currentNumberOfWords": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
           },
           "versions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BookChapterVersionDTO"
             }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2112,7 +2147,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "content": {
+          "contentHtml": {
             "type": "string"
           },
           "authorNotesEnd": {
@@ -2121,8 +2156,19 @@
           "authorNotesStart": {
             "type": "string"
           },
+          "contentStylesheet": {
+            "type": "string"
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "chapter": {
             "$ref": "#/components/schemas/BookChapterDTO"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2158,11 +2204,49 @@
           "title": {
             "type": "string"
           },
-          "description": {
+          "externalId": {
+            "type": "string"
+          },
+          "chapterNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
             "type": "string"
           },
           "cover": {
             "$ref": "#/components/schemas/MediaDTO"
+          },
+          "prequel": {
+            "$ref": "#/components/schemas/BookDTO"
+          },
+          "sequel": {
+            "$ref": "#/components/schemas/BookDTO"
+          },
+          "totalWordCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dislikes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
           },
           "chapters": {
             "type": "array",
@@ -2182,8 +2266,37 @@
               "$ref": "#/components/schemas/ArtistDTO"
             }
           },
-          "library": {}
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "library": {},
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
+      },
+      "BookRating": {
+        "type": "string",
+        "enum": [
+          "UNRATED",
+          "SAFE",
+          "TEEN",
+          "MATURE",
+          "EXPLICIT"
+        ]
+      },
+      "BookStatus": {
+        "type": "string",
+        "enum": [
+          "COMPLETED",
+          "ON_HOLD",
+          "IN_PROGRESS",
+          "CANCELED"
+        ]
       },
       "CollectionDTO": {
         "type": "object",
@@ -2281,6 +2394,12 @@
             "items": {
               "$ref": "#/components/schemas/BookDTO"
             }
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -2437,11 +2556,10 @@
             "additionalProperties": {}
           },
           "strategy": {
-            "$ref": "#/components/schemas/SourceStrategy"
+            "type": "string"
           }
         }
       },
-      "SourceStrategy": {},
       "TagAliasDTO": {
         "type": "object",
         "properties": {
@@ -2611,7 +2729,7 @@
             "additionalProperties": {}
           },
           "strategy": {
-            "$ref": "#/components/schemas/SourceStrategy"
+            "type": "string"
           }
         },
         "required": [
@@ -2699,9 +2817,17 @@
           "title": {
             "type": "string",
             "minLength": 1
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
           }
         },
         "required": [
+          "dislikesEnabled",
+          "likesEnabled",
           "title"
         ]
       },
@@ -2725,16 +2851,45 @@
       "CreateBookRequest": {
         "type": "object",
         "properties": {
+          "externalId": {
+            "type": "string"
+          },
           "title": {
             "type": "string",
             "minLength": 1
           },
-          "description": {
-            "type": "string",
-            "minLength": 1
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
+            "type": "string"
           },
           "cover": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sequel": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "prequel": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dislikes": {
+            "type": "integer",
+            "format": "int32"
           },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
@@ -2750,33 +2905,80 @@
             "items": {
               "$ref": "#/components/schemas/EntityIdRequest"
             }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
-          "description",
-          "title"
+          "descriptionHtml",
+          "library",
+          "publishDate",
+          "rating",
+          "shortDescriptionHtml",
+          "status",
+          "title",
+          "views"
         ]
       },
       "CreateBookChapterRequest": {
         "type": "object",
         "properties": {
+          "externalId": {
+            "type": "string"
+          },
           "title": {
             "type": "string",
             "minLength": 1
           },
+          "views": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 2147483647,
+            "minimum": 0
+          },
           "book": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "chapterNumber": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "minimum": 1
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
           "book",
-          "title"
+          "chapterNumber",
+          "publishDate",
+          "title",
+          "views"
         ]
       },
       "CreateBookChapterVersionRequest": {
         "type": "object",
         "properties": {
-          "content": {
+          "contentHtml": {
+            "type": "string"
+          },
+          "contentStylesheet": {
             "type": "string"
           },
           "authorNotesEnd": {
@@ -2787,16 +2989,23 @@
           },
           "chapter": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
           "chapter",
-          "content"
+          "contentHtml"
         ]
       },
       "CreateArtistRequest": {
         "type": "object",
         "properties": {
+          "externalId": {
+            "type": "string"
+          },
           "nicknames": {
             "type": "array",
             "items": {
@@ -2810,6 +3019,15 @@
               "$ref": "#/components/schemas/EntityIdRequest"
             }
           },
+          "followersCount": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "minimum": 0
+          },
+          "bioHtml": {
+            "type": "string"
+          },
           "avatar": {
             "$ref": "#/components/schemas/EntityIdRequest"
           },
@@ -2818,6 +3036,7 @@
           }
         },
         "required": [
+          "followersCount",
           "nicknames"
         ]
       },
@@ -2868,7 +3087,7 @@
             "additionalProperties": {}
           },
           "sourceStrategy": {
-            "$ref": "#/components/schemas/SourceStrategy"
+            "type": "string"
           }
         }
       },
@@ -2940,6 +3159,12 @@
         "properties": {
           "title": {
             "type": "string"
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -2966,14 +3191,40 @@
           "title": {
             "type": "string"
           },
-          "description": {
+          "externalId": {
+            "type": "string"
+          },
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
             "type": "string"
           },
           "cover": {
             "$ref": "#/components/schemas/EntityIdRequest"
           },
+          "sequel": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "prequel": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
+          },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "likes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dislikes": {
+            "type": "integer",
+            "format": "int32"
           },
           "tags": {
             "type": "array",
@@ -2986,6 +3237,16 @@
             "items": {
               "$ref": "#/components/schemas/EntityIdRequest"
             }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2995,15 +3256,39 @@
           "title": {
             "type": "string"
           },
+          "externalId": {
+            "type": "string"
+          },
+          "chapterNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
           "book": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
       "PatchBookChapterVersionRequest": {
         "type": "object",
         "properties": {
-          "content": {
+          "contentHtml": {
+            "type": "string"
+          },
+          "contentStylesheet": {
             "type": "string"
           },
           "authorNotesEnd": {
@@ -3014,6 +3299,10 @@
           },
           "chapter": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -3026,11 +3315,21 @@
               "$ref": "#/components/schemas/ArtistNickname"
             }
           },
+          "externalId": {
+            "type": "string"
+          },
           "sources": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EntityIdRequest"
             }
+          },
+          "bioHtml": {
+            "type": "string"
+          },
+          "followersCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "avatar": {
             "$ref": "#/components/schemas/EntityIdRequest"

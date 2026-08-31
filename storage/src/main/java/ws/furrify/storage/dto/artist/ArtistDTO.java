@@ -19,7 +19,13 @@ import java.util.List;
 @NoArgsConstructor
 public class ArtistDTO extends UserScopedEntityDTO<Artist> {
 
+    private String externalId;
+
     private List<ArtistNickname> nicknames;
+
+    private String bioHtml;
+
+    private Integer followersCount;
 
     private List<SourceDTO> sources;
 

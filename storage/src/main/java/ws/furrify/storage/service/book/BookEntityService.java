@@ -1,5 +1,6 @@
 package ws.furrify.storage.service.book;
 
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ import ws.furrify.storage.service.media.MediaEntityService;
 import ws.furrify.storage.service.source.SourceEntityService;
 import ws.furrify.storage.service.tag.TagEntityService;
 import ws.furrify.storage.shared.exception.StorageErrors;
+import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
 import java.util.UUID;
 
@@ -57,10 +59,17 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     public BookDTO create(BookDTO dto) {
         this.handleInternalReference(dto, BookDTO::getCover, BookDTO::setCover, mediaEntityService);
         this.handleInternalReference(dto, BookDTO::getLibrary, BookDTO::setLibrary, libraryEntityService);
+        this.handleInternalReference(dto, BookDTO::getSequel, BookDTO::setSequel, this);
+        this.handleInternalReference(dto, BookDTO::getPrequel, BookDTO::setPrequel, this);
         this.handleInternalCollectionReferences(dto, BookDTO::getTags, BookDTO::setTags, tagEntityService);
         this.handleInternalCollectionReferences(dto, BookDTO::getArtists, BookDTO::setArtists, artistEntityService);
         this.handleInternalCollectionReferences(dto, BookDTO::getSources, BookDTO::setSources, sourceEntityService);
 
+        // Sanitize html
+        dto.setDescriptionHtml(sanitizeHtml(dto.getDescriptionHtml()));
+        dto.setShortDescriptionHtml(sanitizeHtml(dto.getShortDescriptionHtml()));
+
+        // Verify user can update likes and dislikes based on library setting
         LibraryDTO libraryDTO = dto.getLibrary();
         checkLikesEnabled(libraryDTO, dto.getLikes(), dto.getDislikes());
 
@@ -70,11 +79,22 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     @Override
     public BookDTO patchById(UUID id, PatchBookRequest patchDto) {
         this.handleInternalReference(patchDto.getCover(), mediaEntityService);
+        this.handleInternalReference(patchDto.getSequel(), this);
+        this.handleInternalReference(patchDto.getPrequel(), this);
         this.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
         this.handleCollectionInternalReferences(patchDto.getTags(), tagEntityService);
         this.handleCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
         this.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
+        // Sanitize html
+        if (patchDto.getDescriptionHtml().isPresent()) {
+            patchDto.setDescriptionHtml(JsonNullable.of(sanitizeHtml(patchDto.getDescriptionHtml().get())));
+        }
+        if (patchDto.getShortDescriptionHtml().isPresent()) {
+            patchDto.setShortDescriptionHtml(JsonNullable.of(sanitizeHtml(patchDto.getShortDescriptionHtml().get())));
+        }
+
+        // Verify user can update likes and dislikes based on library setting
         LibraryDTO libraryDTO = super.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id))).getLibrary();
         checkLikesEnabled(libraryDTO, patchDto.getLikes().orElse(null), patchDto.getDislikes().orElse(null));
 
@@ -96,6 +116,10 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         if (likes != null && !libraryDTO.getLikesEnabled()) {
             throw new ServiceLogicException(StorageErrors.LIKES_DISABLED_EXCEPTION.getErrorMessage(libraryDTO.getId()));
         }
+    }
+
+    private String sanitizeHtml(String html) {
+        return ContentHtmlSanitizerUtil.sanitize(html);
     }
 
     @Async

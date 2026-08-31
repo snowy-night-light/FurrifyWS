@@ -3,6 +3,7 @@ package ws.furrify.storage.domain.book.chapter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -10,6 +11,7 @@ import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.domain.source.Source;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
@@ -29,6 +31,12 @@ public class BookChapter extends UserScopedEntity {
     @JoinColumn(name = "book_id")
     Book book;
 
+    @Column()
+    String externalId;
+
+    @Column(nullable = false)
+    Integer chapterNumber;
+
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "chapter")
     List<BookChapterVersion> versions;
 
@@ -36,8 +44,14 @@ public class BookChapter extends UserScopedEntity {
     List<Source> sources;
 
     @Column(nullable = false)
+    @NotNull
+    @Size(min = 0)
     Long views = 0L;
 
     @Column(nullable = false)
     Long currentNumberOfWords = 0L;
+
+    @Column(nullable = false)
+    @NotNull
+    ZonedDateTime publishDate;
 }
