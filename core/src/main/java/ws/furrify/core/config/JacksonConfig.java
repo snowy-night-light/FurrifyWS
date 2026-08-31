@@ -8,6 +8,7 @@ import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.ValueSerializer;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
+import ws.furrify.core.serializers.PluginJacksonModule;
 import ws.furrify.core.serializers.StrategyJacksonModule;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 public abstract class JacksonConfig {
 
     private final StrategyJacksonModule strategyJacksonModule;
+    private final PluginJacksonModule pluginJacksonModule;
     private final List<ValueSerializer<?>> serializers;
     private final List<ValueDeserializer<?>> deserializers;
 
@@ -40,6 +42,7 @@ public abstract class JacksonConfig {
 
         return JsonMapper.builder()
                 .addModule(strategyJacksonModule.strategyHierarchyModule())
+                .addModule(pluginJacksonModule.pluginHierarchyModule())
                 .addModule(new JsonNullableJackson3Module())
                 .addModule(componentModule)
                 .build();
