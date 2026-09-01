@@ -21,7 +21,7 @@ public class UserWorkerTask extends UserScopedEntity {
 
     String log;
 
-    WorkStatus status;
+    WorkStatus status = WorkStatus.NOT_STARTED;
 
     ZonedDateTime startAt;
     ZonedDateTime startedAt;

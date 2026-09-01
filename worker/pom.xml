@@ -15,6 +15,11 @@
     <dependencies>
         <dependency>
             <groupId>ws.furrify</groupId>
+            <artifactId>storage</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ws.furrify</groupId>
             <artifactId>core</artifactId>
             <version>${version}</version>
         </dependency>
@@ -56,12 +61,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-scalar</artifactId>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -136,7 +135,7 @@
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-attachment-client</id>
+                        <id>generate-storage-client</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -146,6 +145,19 @@
                             </additionalProperties>
                             <inputSpec>${project.baseUri}src/main/resources/api/storage.json</inputSpec>
                             <apiPackage>ws.furrify.openapi.gen.storage.api</apiPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-attachment-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <additionalProperties>
+                                <additionalProperty>serviceName=furrify-attachment-service</additionalProperty>
+                            </additionalProperties>
+                            <inputSpec>${project.baseUri}src/main/resources/api/attachment.json</inputSpec>
+                            <apiPackage>ws.furrify.openapi.gen.attachment.api</apiPackage>
                         </configuration>
                     </execution>
                 </executions>

@@ -5,4 +5,8 @@ import ws.furrify.core.model.PluginIntf;
 
 @Schema(type = "string")
 public interface WorkerPluginIntf extends PluginIntf {
+    /**
+     * @return Unique plugin source identifier.
+     */
+    String getProviderName();
 }

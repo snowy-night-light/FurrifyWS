@@ -8,11 +8,6 @@ import java.util.UUID;
 @Schema(type = "string")
 public interface ImportV1WorkerPluginIntf extends WorkerPluginIntf {
     /**
-     * @return Name used as a key for storing statistics tied to the specific source.
-     */
-    String getProviderName();
-
-    /**
      * Validates the provided file against the plugin's required schema.
      * 
      * @param file The file to validate

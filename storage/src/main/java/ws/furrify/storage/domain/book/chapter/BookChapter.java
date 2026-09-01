@@ -3,7 +3,7 @@ package ws.furrify.storage.domain.book.chapter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -45,7 +45,7 @@ public class BookChapter extends UserScopedEntity {
 
     @Column(nullable = false)
     @NotNull
-    @Size(min = 0)
+    @PositiveOrZero
     Long views = 0L;
 
     @Column(nullable = false)
