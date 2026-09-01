@@ -15,6 +15,7 @@ import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
+import ws.furrify.core.utils.AsyncUtils;
 import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
@@ -31,10 +32,13 @@ import static ws.furrify.core.specification.EntitySpec.specEquals;
 public class BookChapterVersionEntityService extends BaseEntityCrudService<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> {
 
     private final BookChapterEntityService bookChapterEntityService;
+    private final AsyncUtils asyncUtils;
+
     @Autowired
-    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService) {
+    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService, AsyncUtils asyncUtils) {
         super(entityRepository, dtoMapper);
         this.bookChapterEntityService = bookChapterEntityService;
+        this.asyncUtils = asyncUtils;
     }
 
     @Override
@@ -53,7 +57,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         }
 
         BookChapterVersionDTO bookChapterVersionDTO = super.patchById(id, patchDto);
-        this.countChapterWordsAsync(bookChapterVersionDTO);
+        asyncUtils.runAsync(() -> this.countChapterWordsAsync(bookChapterVersionDTO));
 
         return bookChapterVersionDTO;
     }
@@ -75,7 +79,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         }
 
         BookChapterVersionDTO createdDto = super.create(dto);
-        this.countChapterWordsAsync(createdDto);
+        asyncUtils.runAsync(() -> this.countChapterWordsAsync(createdDto));
 
         return createdDto;
     }

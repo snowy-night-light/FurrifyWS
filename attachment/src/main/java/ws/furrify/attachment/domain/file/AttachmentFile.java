@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ws.furrify.attachment.domain.file.vo.AttachmentFileHash;
+import ws.furrify.core.converters.URIConverter;
 import ws.furrify.core.entity.UserScopedEntity;
 
 import java.net.URI;
-import ws.furrify.core.converters.URIConverter;
 import java.util.List;
 
 @Entity
@@ -23,6 +23,10 @@ public class AttachmentFile extends UserScopedEntity {
     @Column(nullable = false, length = 255)
     @NotBlank
     private String fileName;
+
+    @Column(nullable = false, length = 255)
+    @NotBlank
+    private String fileExtension;
 
     @Column(nullable = true)
     @ElementCollection(fetch = FetchType.EAGER)
@@ -50,5 +54,6 @@ public class AttachmentFile extends UserScopedEntity {
 
     @Column(nullable = true)
     private String storageServiceId;
+
 
 }

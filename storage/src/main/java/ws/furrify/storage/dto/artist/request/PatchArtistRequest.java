@@ -2,7 +2,7 @@ package ws.furrify.storage.dto.artist.request;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.openapitools.jackson.nullable.JsonNullable;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
@@ -22,7 +22,7 @@ public class PatchArtistRequest implements BasePatchEntityRequest<Artist, Artist
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
 
     private JsonNullable<@NotNull String> bioHtml = JsonNullable.undefined();
-    private JsonNullable<@NotNull @Size(min = 0) Integer> followersCount = JsonNullable.undefined();
+    private JsonNullable<@NotNull @PositiveOrZero Integer> followersCount = JsonNullable.undefined();
     private JsonNullable<EntityIdRequest> avatar = JsonNullable.undefined();
 
     private JsonNullable<EntityIdRequest> library = JsonNullable.undefined();

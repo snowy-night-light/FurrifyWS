@@ -23,7 +23,6 @@ public enum StorageErrors implements ErrorMessageFormatterIntf {
     DUPLICATE_CHAPTER_NUMBER_EXCEPTION("Chapter with number [chapterNumber={0}] already exists in referenced book [bookId={1}]."),
     DISLIKES_DISABLED_EXCEPTION("Dislikes are not enabled for library [id={0}]."),
     LIKES_DISABLED_EXCEPTION("Likes are not enabled for library [id={0}]."),
-    REFERENCE_NOT_FOUND("Reference with [id={0}] has not been found in external service."),
     NO_TAG_FOUND("Tag [value={0}] was not found."),
     VIDEO_FRAME_EXTRACTION_FAILED("Video frame extraction for thumbnail has failed."),
     HARD_LIMIT_FOR_ENTITY_TYPE("Hard limit of [limit={0}] has been reached for [entity={1}], further create requests will not be accepted."),

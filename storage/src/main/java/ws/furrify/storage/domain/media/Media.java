@@ -27,6 +27,7 @@ public class Media extends UserScopedEntity {
     Integer priority;
 
     @Column(nullable = false)
+    @NotNull
     UUID fileReferenceId;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

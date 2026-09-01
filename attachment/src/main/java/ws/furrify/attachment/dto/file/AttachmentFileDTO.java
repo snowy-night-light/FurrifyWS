@@ -18,6 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AttachmentFileDTO extends UserScopedEntityDTO<AttachmentFile> {
     private String fileName;
+    private String fileExtension;
 
     private List<AttachmentFileHashDTO> fileHashes;
 

@@ -3,6 +3,7 @@ package ws.furrify.storage.domain.artist;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -42,7 +43,7 @@ public class Artist extends UserScopedEntity {
 
     @NotNull
     @Column(nullable = false)
-    @Size(min = 0)
+    @PositiveOrZero
     Integer followersCount = 0;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

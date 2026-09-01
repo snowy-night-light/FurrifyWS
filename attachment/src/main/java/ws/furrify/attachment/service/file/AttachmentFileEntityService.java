@@ -149,6 +149,11 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
 
         dto.setMimeType(mimeType);
         dto.setFileSize(dto.getFileSize());
+
+        int dotIndex = dto.getFileName().lastIndexOf(".");
+        if (dotIndex >= 0) {
+            dto.setFileExtension(dto.getFileName().substring(dotIndex + 1));
+        }
     }
 
 }

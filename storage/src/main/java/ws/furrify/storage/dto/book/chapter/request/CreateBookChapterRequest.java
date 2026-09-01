@@ -1,8 +1,6 @@
 package ws.furrify.storage.dto.book.chapter.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.EntityIdRequest;
@@ -21,7 +19,7 @@ public class CreateBookChapterRequest implements BaseCreateEntityRequest<BookCha
     private String title;
 
     @NotNull
-    @Size(min = 0)
+    @PositiveOrZero
     private Long views;
 
     @NotNull
@@ -29,7 +27,7 @@ public class CreateBookChapterRequest implements BaseCreateEntityRequest<BookCha
 
     private List<@NotNull EntityIdRequest> sources;
 
-    @Size(min = 1)
+    @Positive
     @NotNull
     private Integer chapterNumber;
 

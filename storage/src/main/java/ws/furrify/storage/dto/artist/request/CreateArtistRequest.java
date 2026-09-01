@@ -2,7 +2,7 @@ package ws.furrify.storage.dto.artist.request;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.EntityIdRequest;
@@ -22,7 +22,7 @@ public class CreateArtistRequest implements BaseCreateEntityRequest<Artist, Arti
 
     private List<@NotNull EntityIdRequest> sources;
 
-    @Size(min = 0)
+    @PositiveOrZero
     @NotNull
     private Integer followersCount;
 

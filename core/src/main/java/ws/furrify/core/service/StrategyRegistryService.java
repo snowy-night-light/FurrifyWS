@@ -27,6 +27,8 @@ public class StrategyRegistryService implements ApplicationContextAware {
 
     @PostConstruct
     public void init() {
+        log.debug("Strategy beans injected: {}", strategies.size());
+
         for (StrategyIntf strategy : strategies) {
             String simpleName = strategy.getClass().getSimpleName();
 

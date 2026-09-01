@@ -1,8 +1,6 @@
 package ws.furrify.storage.dto.book.chapter.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.openapitools.jackson.nullable.JsonNullable;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
@@ -17,8 +15,8 @@ import java.util.List;
 public class PatchBookChapterRequest implements BasePatchEntityRequest<BookChapter, BookChapterDTO> {
     private JsonNullable<@NotBlank String> title = JsonNullable.undefined();
     private JsonNullable<String> externalId = JsonNullable.undefined();
-    private JsonNullable<@NotNull @Size(min = 1) Integer> chapterNumber = JsonNullable.undefined();
-    private JsonNullable<@NotNull @Size(min = 0) Long> views = JsonNullable.undefined();
+    private JsonNullable<@NotNull @Positive Integer> chapterNumber = JsonNullable.undefined();
+    private JsonNullable<@NotNull @PositiveOrZero Long> views = JsonNullable.undefined();
 
     private JsonNullable<@NotNull EntityIdRequest> book = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();

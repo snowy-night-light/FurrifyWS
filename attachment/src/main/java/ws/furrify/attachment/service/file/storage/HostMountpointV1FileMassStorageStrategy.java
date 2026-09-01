@@ -31,7 +31,9 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
 
             // Thumbnail
             File thumbnailFile = thumbnailGenerator.generateThumbnail(mimeType, file);
-            Files.move(thumbnailFile, destinationThumbnailFilePath.toFile());
+            if (thumbnailFile != null) {
+                Files.move(thumbnailFile, destinationThumbnailFilePath.toFile());
+            }
 
             // Main file
             Files.move(file, destinationFilePath.toFile());

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
+import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.BaseEntityCrudService;
@@ -12,7 +13,6 @@ import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.dto.media.MediaDTO;
 import ws.furrify.storage.dto.media.request.PatchMediaRequest;
 import ws.furrify.storage.service.source.SourceEntityService;
-import ws.furrify.storage.shared.exception.StorageErrors;
 
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
     @Override
     public MediaDTO create(MediaDTO dto) {
         if (attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(dto.getFileReferenceId()).getBody() == null) {
-            throw new ReferenceNotFoundException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
+            throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
         super.handleInternalCollectionReferences(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
@@ -43,7 +43,7 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
     @Override
     public MediaDTO patchById(UUID id, PatchMediaRequest patchDto) {
         if (patchDto.getFileReferenceId().isPresent() && attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(patchDto.getFileReferenceId().get()).getBody() == null) {
-            throw new ServiceLogicException(StorageErrors.REFERENCE_NOT_FOUND.getErrorMessage(patchDto.getFileReferenceId()));
+            throw new ServiceLogicException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(patchDto.getFileReferenceId()));
         }
 
         super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
