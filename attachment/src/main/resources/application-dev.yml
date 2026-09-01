@@ -44,3 +44,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: true
+  servlet:
+    multipart:
+      max-file-size: 10GB
+      max-request-size: 10GB

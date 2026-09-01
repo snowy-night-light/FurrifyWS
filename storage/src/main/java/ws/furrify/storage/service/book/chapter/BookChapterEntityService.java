@@ -16,6 +16,7 @@ import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
+import ws.furrify.core.utils.AsyncUtils;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
@@ -37,13 +38,15 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
     private final BookEntityService bookEntityService;
     private final BookChapterVersionEntityService bookChapterVersionEntityService;
     private final SourceEntityService sourceEntityService;
+    private final AsyncUtils asyncUtils;
 
     @Autowired
-    public BookChapterEntityService(BaseEntityRepository<BookChapter> entityRepository, BaseDTOMapper<BookChapter, BookChapterDTO, PatchBookChapterRequest> dtoMapper, @Lazy BookEntityService bookEntityService, BookChapterVersionEntityService bookChapterVersionEntityService, SourceEntityService sourceEntityService) {
+    public BookChapterEntityService(BaseEntityRepository<BookChapter> entityRepository, BaseDTOMapper<BookChapter, BookChapterDTO, PatchBookChapterRequest> dtoMapper, @Lazy BookEntityService bookEntityService, BookChapterVersionEntityService bookChapterVersionEntityService, SourceEntityService sourceEntityService, AsyncUtils asyncUtils) {
         super(entityRepository, dtoMapper);
         this.bookEntityService = bookEntityService;
         this.bookChapterVersionEntityService = bookChapterVersionEntityService;
         this.sourceEntityService = sourceEntityService;
+        this.asyncUtils = asyncUtils;
     }
 
     @Override
@@ -106,7 +109,7 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
         this.internalPutById(chapterId, bookChapterDTO);
 
-        this.bookEntityService.updateBookTotalWordCountAsync(bookChapterDTO.getBook().getId());
+        asyncUtils.runAsync(() -> this.bookEntityService.updateBookTotalWordCountAsync(bookChapterDTO.getBook().getId()));
     }
 
 }

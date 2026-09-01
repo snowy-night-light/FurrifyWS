@@ -1,12 +1,14 @@
 package ws.furrify.worker.domain.worker.plugin;
 
-import jakarta.persistence.Convert;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import ws.furrify.core.converters.PluginDBConverter;
 import ws.furrify.worker.domain.worker.UserWorkerTask;
-import ws.furrify.worker.shared.plugin.WorkerPluginIntf;
+
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -16,6 +18,14 @@ import ws.furrify.worker.shared.plugin.WorkerPluginIntf;
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PluginImportUserWorkerTask extends UserWorkerTask {
-    @Convert(converter = PluginDBConverter.class)
-    WorkerPluginIntf workerPlugin;
+    @Column(nullable = false)
+    @NotNull
+    UUID fileReferenceId;
+
+    @Column(nullable = false)
+    @NotBlank
+    String provider;
+
+    @Column(nullable = false)
+    UUID destinationLibraryReferenceId;
 }
