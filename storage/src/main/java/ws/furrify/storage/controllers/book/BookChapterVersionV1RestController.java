@@ -13,7 +13,7 @@ import ws.furrify.storage.dto.book.chapter.version.request.PatchBookChapterVersi
 
 
 @RestController
-@RequestMapping("/v1/book/chapters/versions")
+@RequestMapping("/v1/books/chapters/versions")
 class BookChapterVersionV1RestController extends BaseEntityRestController<BookChapterVersion, BookChapterVersionDTO, CreateBookChapterVersionRequest, PatchBookChapterVersionRequest> {
 
     @Autowired
