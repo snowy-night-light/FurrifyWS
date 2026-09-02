@@ -57,6 +57,9 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
         this.checkChapterNumberForDuplicates(dto.getBook().getId(), null, dto.getChapterNumber());
 
+        // Later calculated
+        dto.setCurrentNumberOfWords(0L);
+
         return super.create(dto);
     }
 
