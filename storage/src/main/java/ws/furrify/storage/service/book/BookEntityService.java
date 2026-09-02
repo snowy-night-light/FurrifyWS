@@ -65,6 +65,9 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         this.handleInternalCollectionReferences(dto, BookDTO::getArtists, BookDTO::setArtists, artistEntityService);
         this.handleInternalCollectionReferences(dto, BookDTO::getSources, BookDTO::setSources, sourceEntityService);
 
+        // Later calculated
+        dto.setTotalWordCount(0L);
+
         // Sanitize html
         dto.setDescriptionHtml(sanitizeHtml(dto.getDescriptionHtml()));
         dto.setShortDescriptionHtml(sanitizeHtml(dto.getShortDescriptionHtml()));
