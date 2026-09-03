@@ -1,9 +1,11 @@
 package ws.furrify.attachment.controller.file;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import ws.furrify.attachment.domain.file.AttachmentFile;
 import ws.furrify.attachment.dto.file.AttachmentFileDTO;
 import ws.furrify.attachment.dto.file.request.AttachmentFileRequestMapper;
@@ -15,6 +17,8 @@ import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 
 import java.util.UUID;
+
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @RestController
 @RequestMapping("/v1/files")
@@ -31,12 +35,32 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
     }
 
     @Override
+    @Operation(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = "multipart/form-data",
+                            schema = @Schema(implementation = CreateAttachmentFileRequest.class)
+                    )
+            )
+    )
+    @PostMapping(consumes = "multipart/form-data", produces = {APPLICATION_JSON})
+    @ResponseStatus(HttpStatus.CREATED)
     protected AttachmentFileDTO save(@ModelAttribute CreateAttachmentFileRequest dto) {
         return attachmentFileEntityService.createWithFileUpload(attachmentFileRequestDtoMapper.toDto(dto), dto.getFile());
     }
 
     @Override
-    protected AttachmentFileDTO patch(UUID id, @ModelAttribute PatchAttachmentFileRequest patchRequestDto) {
+    @Operation(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = "multipart/form-data",
+                            schema = @Schema(implementation = PatchAttachmentFileRequest.class)
+                    )
+            )
+    )
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data", produces = {APPLICATION_JSON})
+    @ResponseStatus(HttpStatus.OK)
+    protected AttachmentFileDTO patch(@PathVariable UUID id, @ModelAttribute PatchAttachmentFileRequest patchRequestDto) {
         return attachmentFileEntityService.patchWithFileUpload(id, patchRequestDto, patchRequestDto.getFile().orElse(null));
     }
 }

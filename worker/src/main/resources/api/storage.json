@@ -610,7 +610,7 @@
         }
       }
     },
-    "/v1/book/chapters": {
+    "/v1/books/chapters": {
       "get": {
         "tags": [
           "book-chapter-v-1-rest-controller"
@@ -676,7 +676,7 @@
         }
       }
     },
-    "/v1/book/chapters/versions": {
+    "/v1/books/chapters/versions": {
       "get": {
         "tags": [
           "book-chapter-version-v-1-rest-controller"
@@ -1636,7 +1636,7 @@
         }
       }
     },
-    "/v1/book/chapters/{id}": {
+    "/v1/books/chapters/{id}": {
       "get": {
         "tags": [
           "book-chapter-v-1-rest-controller"
@@ -1728,7 +1728,7 @@
         }
       }
     },
-    "/v1/book/chapters/versions/{id}": {
+    "/v1/books/chapters/versions/{id}": {
       "get": {
         "tags": [
           "book-chapter-version-v-1-rest-controller"
@@ -2026,7 +2026,11 @@
           "avatar": {
             "$ref": "#/components/schemas/MediaDTO"
           },
-          "library": {}
+          "library": {},
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "ArtistNickname": {
@@ -2035,7 +2039,7 @@
           "nickname": {
             "type": "string",
             "minLength": 1,
-            "pattern": "^[A-Za-z0-9._\\-]+(?: [A-Za-z0-9._\\-]+)*$"
+            "pattern": "^\\S+(?: \\S+)*$"
           },
           "priority": {
             "type": "integer",
@@ -2274,6 +2278,10 @@
           },
           "library": {},
           "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalUpdatedAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -2915,12 +2923,15 @@
           "publishDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
           "descriptionHtml",
           "library",
-          "publishDate",
           "rating",
           "shortDescriptionHtml",
           "status",
@@ -2941,7 +2952,6 @@
           "views": {
             "type": "integer",
             "format": "int64",
-            "maximum": 2147483647,
             "minimum": 0
           },
           "book": {
@@ -2956,8 +2966,7 @@
           "chapterNumber": {
             "type": "integer",
             "format": "int32",
-            "maximum": 2147483647,
-            "minimum": 1
+            "minimum": 0
           },
           "publishDate": {
             "type": "string",
@@ -2967,7 +2976,6 @@
         "required": [
           "book",
           "chapterNumber",
-          "publishDate",
           "title",
           "views"
         ]
@@ -3022,7 +3030,6 @@
           "followersCount": {
             "type": "integer",
             "format": "int32",
-            "maximum": 2147483647,
             "minimum": 0
           },
           "bioHtml": {
@@ -3033,6 +3040,10 @@
           },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
@@ -3226,6 +3237,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
           "tags": {
             "type": "array",
             "items": {
@@ -3245,6 +3260,10 @@
             }
           },
           "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalUpdatedAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -3336,6 +3355,10 @@
           },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

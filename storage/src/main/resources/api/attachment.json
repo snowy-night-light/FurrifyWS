@@ -60,7 +60,7 @@
         "operationId": "AttachmentFileV1RestController_save",
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/CreateAttachmentFileRequest"
               }
@@ -72,7 +72,7 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AttachmentFileDTO"
                 }
@@ -152,7 +152,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/PatchAttachmentFileRequest"
               }
@@ -164,7 +164,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AttachmentFileDTO"
                 }
@@ -224,6 +224,9 @@
             "format": "uuid"
           },
           "fileName": {
+            "type": "string"
+          },
+          "fileExtension": {
             "type": "string"
           },
           "fileHashes": {

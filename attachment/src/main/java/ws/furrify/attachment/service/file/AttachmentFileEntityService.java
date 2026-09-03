@@ -29,6 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import ws.furrify.core.specification.EntitySpec;
+import ws.furrify.core.specification.EntitySpecResult;
+
 
 @Service
 @Slf4j
@@ -112,7 +117,31 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
     @Transactional
     protected void uploadFile(AttachmentFileDTO dto, File file, boolean replaceExisting) {
         try {
-            UploadedFileReference uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getId(), dto.getMimeType(), file, replaceExisting);
+            UploadedFileReference uploadedFileRef = null;
+
+            // Check if file with same hash exists
+            AttachmentFileDTO existingFile = null;
+            if (dto.getFileHashes() != null && !dto.getFileHashes().isEmpty()) {
+                for (AttachmentFileHashDTO hashDTO : dto.getFileHashes()) {
+                    EntitySpecResult<AttachmentFile> entitySpecResult = EntitySpec.<AttachmentFile>specBuilder()
+                            .where("fileHashes.hash", EntitySpec.specEquals(hashDTO.getHash()))
+                            .build();
+
+                    Page<AttachmentFileDTO> page = this.getAllPaged(entitySpecResult.specString(), PageRequest.of(0, 1));
+                    if (!page.isEmpty()) {
+                        existingFile = page.getContent().get(0);
+                        break;
+                    }
+                }
+            }
+
+            if (existingFile != null && existingFile.getFileUri() != null) {
+                uploadedFileRef = fileMassStorageStrategy.linkFile(dto.getId(), dto.getMimeType(), existingFile.getFileUri(), existingFile.getThumbnailUri());
+                file.delete();
+            } else {
+                uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getId(), dto.getMimeType(), file, replaceExisting);
+            }
+
             dto.setFileUri(uploadedFileRef.getFileUri());
             dto.setThumbnailUri(uploadedFileRef.getThumbnailUri());
 

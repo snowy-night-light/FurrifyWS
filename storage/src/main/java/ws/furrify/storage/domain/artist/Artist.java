@@ -4,16 +4,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.validator.constraints.Length;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
+import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.domain.source.Source;
-import ws.furrify.storage.domain.library.Library;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
@@ -56,4 +56,7 @@ public class Artist extends UserScopedEntity {
     @ManyToOne(optional = true)
     @JoinColumn(name = "library_id")
     Library library;
+
+    @Column(nullable = true)
+    ZonedDateTime externalUpdatedAt;
 }

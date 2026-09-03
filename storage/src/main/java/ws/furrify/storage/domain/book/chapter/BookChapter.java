@@ -23,7 +23,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BookChapter extends UserScopedEntity {
     @NotBlank
-    @Column(nullable = false, length = 128)
+    @Column(nullable = false, length = 255)
     String title;
 
     @NotNull
@@ -51,7 +51,6 @@ public class BookChapter extends UserScopedEntity {
     @Column(nullable = false)
     Long currentNumberOfWords = 0L;
 
-    @Column(nullable = false)
-    @NotNull
+    @Column(nullable = true)
     ZonedDateTime publishDate;
 }

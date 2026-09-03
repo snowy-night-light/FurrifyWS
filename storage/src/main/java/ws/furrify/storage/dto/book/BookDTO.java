@@ -53,4 +53,5 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private LibraryDTO library;
 
     private ZonedDateTime publishDate;
+    private ZonedDateTime externalUpdatedAt;
 }

@@ -9,6 +9,8 @@ import java.util.UUID;
 public interface FileMassStorageStrategy extends StrategyIntf {
     UploadedFileReference uploadFile(UUID id, String mimeType, File file, boolean replaceExisting);
 
+    UploadedFileReference linkFile(UUID id, String mimeType, java.net.URI existingFileUri, java.net.URI existingThumbnailUri);
+
     boolean removeFileDirectory(UUID id);
 
     String getStorageServiceId();

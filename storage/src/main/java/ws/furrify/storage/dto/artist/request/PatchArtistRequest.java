@@ -11,6 +11,7 @@ import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -26,4 +27,5 @@ public class PatchArtistRequest implements BasePatchEntityRequest<Artist, Artist
     private JsonNullable<EntityIdRequest> avatar = JsonNullable.undefined();
 
     private JsonNullable<EntityIdRequest> library = JsonNullable.undefined();
+    private JsonNullable<ZonedDateTime> externalUpdatedAt = JsonNullable.undefined();
 }

@@ -10,6 +10,7 @@ import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.dto.artist.ArtistDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -30,4 +31,6 @@ public class CreateArtistRequest implements BaseCreateEntityRequest<Artist, Arti
     private EntityIdRequest avatar;
 
     private EntityIdRequest library;
+
+    private ZonedDateTime externalUpdatedAt;
 }

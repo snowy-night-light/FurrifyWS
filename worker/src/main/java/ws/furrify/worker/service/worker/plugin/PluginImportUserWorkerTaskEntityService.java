@@ -36,6 +36,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import static org.openapitools.model.FileUploadStatus.UPLOADED;
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 import static ws.furrify.core.specification.EntitySpec.specLessThan;
 import static ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED;
@@ -65,12 +66,24 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
             throw new ServiceLogicException(Errors.UNRECOGNIZED_PROVIDER.getErrorMessage(dto.getProvider()));
         }
 
-        if (attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(dto.getFileReferenceId()).getBody() == null) {
+        try {
+            if (attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(dto.getFileReferenceId()).getBody() == null) {
+                throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
+            }
+        } catch (feign.FeignException.NotFound e) {
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
+        } catch (Exception e) {
+            throw new ServiceLogicException("Failed to verify attachment file: " + e.getMessage());
         }
 
-        if (libraryV1RestControllerApiClient.libraryV1RestControllerGetById(dto.getDestinationLibraryReferenceId()).getBody() == null) {
+        try {
+            if (libraryV1RestControllerApiClient.libraryV1RestControllerGetById(dto.getDestinationLibraryReferenceId()).getBody() == null) {
+                throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getDestinationLibraryReferenceId()));
+            }
+        } catch (feign.FeignException.NotFound e) {
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getDestinationLibraryReferenceId()));
+        } catch (Exception e) {
+            throw new ServiceLogicException("Failed to verify destination library: " + e.getMessage());
         }
 
 
@@ -115,11 +128,18 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
                 return;
             }
 
-            AttachmentFileDTO attachmentFileDTO = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(task.getFileReferenceId()).getBody();
+            AttachmentFileDTO attachmentFileDTO = null;
+            try {
+                attachmentFileDTO = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(task.getFileReferenceId()).getBody();
+            } catch (Exception e) {
+                log.error("Failed to fetch attachment file reference [id={}]: {}", task.getFileReferenceId(), e.getMessage());
+                failTask(task, "Failed to fetch attachment file reference: " + e.getMessage());
+                return;
+            }
 
-            if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null) {
-                log.error("File reference [id={}] not found! Cannot process scheduled task.", task.getFileReferenceId());
-                failTask(task, "File reference [id=" + task.getFileReferenceId() + "] not found! Cannot process scheduled task.");
+            if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null || attachmentFileDTO.getUploadStatus() != UPLOADED) {
+                log.error("File reference [id={}] not found or not uploaded! Cannot process scheduled task.", task.getFileReferenceId());
+                failTask(task, "File reference [id=" + task.getFileReferenceId() + "] not found or not uploaded! Cannot process scheduled task.");
                 return;
             }
 

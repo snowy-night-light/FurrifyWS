@@ -154,6 +154,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
             setter.accept(
                     dto,
                     refEntities.stream()
+                            .distinct()
                             .map(refEntity -> referenceEntityService.findById(refEntity.getId())
                                     .orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(refEntity.getId()))))
                             .toList()
@@ -173,7 +174,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
     void handleCollectionInternalReferences(JsonNullable<List<EntityIdRequest>> entityIdRequests, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
         if (entityIdRequests.isPresent()) {
-            for (EntityIdRequest entityIdRequest : entityIdRequests.get()) {
+            for (EntityIdRequest entityIdRequest : entityIdRequests.get().stream().distinct().toList()) {
                 if (!referenceEntityService.existsById(entityIdRequest.getId())) {
                     throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
                 }
