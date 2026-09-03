@@ -23,6 +23,8 @@ import ws.furrify.storage.domain.tag.category.TagCategoryRepository;
 import ws.furrify.storage.dto.book.BookDTO;
 import ws.furrify.storage.dto.book.request.CreateBookRequest;
 import ws.furrify.storage.dto.book.request.PatchBookRequest;
+import ws.furrify.storage.domain.book.BookStatus;
+import ws.furrify.storage.domain.book.BookRating;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
@@ -84,6 +86,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         request.setLibrary(EntityIdRequest.builder().id(defaultLibrary.getId()).build());
         request.setTags(List.of(EntityIdRequest.builder().id(tag.getId()).build()));
         request.setArtists(List.of(EntityIdRequest.builder().id(artist.getId()).build()));
+        request.setShortDescriptionHtml("Short desc");
+        request.setStatus(BookStatus.COMPLETED);
+        request.setRating(BookRating.SAFE);
+        request.setViews(10L);
 
         BookDTO createdBook = super.create(request);
 
@@ -91,6 +97,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertNotNull(createdBook);
             assertEquals("Test book", createdBook.getTitle());
             assertEquals("Test descriptionHtml", createdBook.getDescriptionHtml());
+            assertEquals("Short desc", createdBook.getShortDescriptionHtml());
+            assertEquals(BookStatus.COMPLETED, createdBook.getStatus());
+            assertEquals(BookRating.SAFE, createdBook.getRating());
+            assertEquals(10L, createdBook.getViews());
             assertNotNull(createdBook.getTags());
             assertEquals(1, createdBook.getTags().size());
             assertEquals(tag.getId(), createdBook.getTags().getFirst().getId());
@@ -107,7 +117,7 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         BookDTO foundBook = super.findById(book.getId());
 
@@ -133,8 +143,8 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        bookRepository.save(Book.builder().title("Test book 2").descriptionHtml("Desc").library(defaultLibrary).tags(List.of(tag2)).artists(List.of(artist2)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookRepository.save(Book.builder().title("Test book 2").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).tags(List.of(tag2)).artists(List.of(artist2)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<BookDTO> books = super.findAll(PageRequest.of(0, 10));
 
@@ -153,12 +163,16 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchBookRequest request = new PatchBookRequest();
         request.setTitle(JsonNullable.of("Patched title"));
         request.setTags(JsonNullable.of(List.of(EntityIdRequest.builder().id(tag2.getId()).build())));
         request.setArtists(JsonNullable.of(List.of(EntityIdRequest.builder().id(artist2.getId()).build())));
+        request.setShortDescriptionHtml(JsonNullable.of("Patched short desc"));
+        request.setStatus(JsonNullable.of(BookStatus.IN_PROGRESS));
+        request.setRating(JsonNullable.of(BookRating.TEEN));
+        request.setViews(JsonNullable.of(20L));
 
         BookDTO updatedBook = super.patch(book.getId(), request);
 
@@ -166,6 +180,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertNotNull(updatedBook);
             assertEquals(book.getId(), updatedBook.getId());
             assertEquals("Patched title", updatedBook.getTitle());
+            assertEquals("Patched short desc", updatedBook.getShortDescriptionHtml());
+            assertEquals(BookStatus.IN_PROGRESS, updatedBook.getStatus());
+            assertEquals(BookRating.TEEN, updatedBook.getRating());
+            assertEquals(20L, updatedBook.getViews());
             assertNotNull(updatedBook.getTags());
             assertEquals(1, updatedBook.getTags().size());
             assertEquals(tag2.getId(), updatedBook.getTags().getFirst().getId());
@@ -179,7 +197,7 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
     @Test
     protected void testDelete() {
         setupData();
-        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(book.getId()));
     }

@@ -46,12 +46,16 @@ public class LibraryV1RestControllerIT extends BaseCrudControllerTest<Library, L
     protected void testCreate() {
         CreateLibraryRequest request = new CreateLibraryRequest();
         request.setTitle("Test library");
+        request.setLikesEnabled(false);
+        request.setDislikesEnabled(false);
 
         LibraryDTO createdLibrary = super.create(request);
 
         assertAll(() -> {
             assertNotNull(createdLibrary);
             assertEquals("Test library", createdLibrary.getTitle());
+            assertEquals(false, createdLibrary.getLikesEnabled());
+            assertEquals(false, createdLibrary.getDislikesEnabled());
         });
     }
 
@@ -90,6 +94,8 @@ public class LibraryV1RestControllerIT extends BaseCrudControllerTest<Library, L
 
         PatchLibraryRequest request = new PatchLibraryRequest();
         request.setTitle(JsonNullable.of("Patched title"));
+        request.setLikesEnabled(JsonNullable.of(true));
+        request.setDislikesEnabled(JsonNullable.of(true));
 
         LibraryDTO updatedLibrary = super.patch(library.getId(), request);
 
@@ -97,6 +103,8 @@ public class LibraryV1RestControllerIT extends BaseCrudControllerTest<Library, L
             assertNotNull(updatedLibrary);
             assertEquals(library.getId(), updatedLibrary.getId());
             assertEquals("Patched title", updatedLibrary.getTitle());
+            assertEquals(true, updatedLibrary.getLikesEnabled());
+            assertEquals(true, updatedLibrary.getDislikesEnabled());
         });
     }
 

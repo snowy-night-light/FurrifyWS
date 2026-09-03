@@ -33,14 +33,13 @@ public class BookChapterVersion extends UserScopedEntity {
     @NotNull
     String contentHtml;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    @NotNull
+    @Column(columnDefinition = "TEXT", nullable = true)
     String authorNotesEnd;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    @NotNull
+    @Column(columnDefinition = "TEXT", nullable = true)
     String authorNotesStart;
 
+    @Builder.Default
     @Column(nullable = false)
     @NotNull
     Long wordCount = 0L;
@@ -50,6 +49,7 @@ public class BookChapterVersion extends UserScopedEntity {
     @JoinColumn(name = "chapter_id")
     BookChapter chapter;
 
+    @Builder.Default
     @Column(nullable = false)
-    ZonedDateTime contentUpdatedAt;
+    ZonedDateTime contentUpdatedAt = ZonedDateTime.now();
 }

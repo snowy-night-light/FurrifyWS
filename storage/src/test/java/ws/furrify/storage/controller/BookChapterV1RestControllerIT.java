@@ -47,13 +47,13 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
 
     @Override
     protected String getControllerPath() {
-        return "/v1/book/chapters";
+        return "/v1/books/chapters";
     }
 
     private void setupData() {
         if (defaultBook == null) {
             Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-            defaultBook = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").library(library).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+            defaultBook = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(library).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         }
     }
 
@@ -65,6 +65,8 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
         CreateBookChapterRequest request = new CreateBookChapterRequest();
         request.setTitle("Test chapter");
         request.setBook(EntityIdRequest.builder().id(defaultBook.getId()).build());
+        request.setViews(0L);
+        request.setChapterNumber(1);
 
         BookChapterDTO createdChapter = super.create(request);
 
@@ -72,6 +74,8 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
             assertNotNull(createdChapter);
             assertEquals("Test chapter", createdChapter.getTitle());
             assertEquals(defaultBook.getId(), createdChapter.getBook().getId());
+            assertEquals(0L, createdChapter.getViews());
+            assertEquals(1, createdChapter.getChapterNumber());
         });
     }
 
@@ -79,7 +83,7 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
     @Test
     protected void testFindById() {
         setupData();
-        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         BookChapterDTO foundChapter = super.findById(chapter.getId());
 
@@ -94,8 +98,8 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
     @Test
     protected void testFindAll() {
         setupData();
-        bookChapterRepository.save(BookChapter.builder().title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        bookChapterRepository.save(BookChapter.builder().title("Test chapter 2").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter 2").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<BookChapterDTO> chapters = super.findAll(PageRequest.of(0, 10));
 
@@ -109,10 +113,12 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
     @Test
     protected void testPatch() {
         setupData();
-        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PatchBookChapterRequest request = new PatchBookChapterRequest();
         request.setTitle(JsonNullable.of("Patched title"));
+        request.setViews(JsonNullable.of(25L));
+        request.setChapterNumber(JsonNullable.of(2));
 
         BookChapterDTO updatedChapter = super.patch(chapter.getId(), request);
 
@@ -120,6 +126,8 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
             assertNotNull(updatedChapter);
             assertEquals(chapter.getId(), updatedChapter.getId());
             assertEquals("Patched title", updatedChapter.getTitle());
+            assertEquals(25L, updatedChapter.getViews());
+            assertEquals(2, updatedChapter.getChapterNumber());
         });
     }
 
@@ -127,7 +135,7 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
     @Test
     protected void testDelete() {
         setupData();
-        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(chapter.getId()));
     }
