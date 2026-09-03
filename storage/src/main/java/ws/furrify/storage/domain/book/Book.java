@@ -74,9 +74,11 @@ public class Book extends UserScopedEntity {
     Library library;
 
     @Column(nullable = false)
+    @Builder.Default
     Long views = 0L;
 
     @Column(nullable = false)
+    @Builder.Default
     Long totalWordCount = 0L;
 
     @Column(nullable = true)

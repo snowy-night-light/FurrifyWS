@@ -1,6 +1,10 @@
 scalar:
   enabled: true
 
+logging:
+  level:
+    ws.furrify.plugins.fimfarchive: DEBUG
+
 eureka:
   instance:
     hostname: localhost
