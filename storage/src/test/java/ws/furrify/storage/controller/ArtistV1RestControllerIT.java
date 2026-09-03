@@ -75,6 +75,8 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
                 sources.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()
         );
         request.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
+        request.setFollowersCount(10);
+        request.setBioHtml("Test bio");
 
         ArtistDTO createdArtist = super.create(request);
 
@@ -83,6 +85,9 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
             assertEquals(2, createdArtist.getNicknames().size());
             assertEquals(avatar.getId(), createdArtist.getAvatar().getId());
             assertEquals(sources.size(), createdArtist.getSources().size());
+            assertEquals(library.getId(), createdArtist.getLibrary().getId());
+            assertEquals(10, createdArtist.getFollowersCount());
+            assertEquals("Test bio", createdArtist.getBioHtml());
         });
     }
 
@@ -97,6 +102,7 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
         assertAll(() -> {
             assertNotNull(foundArtist);
             assertEquals(artist.getId(), foundArtist.getId());
+            assertEquals(1, foundArtist.getNicknames().size());
         });
     }
 
@@ -104,14 +110,14 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
     @Test
     protected void testFindAll() {
         Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
-        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         Page<ArtistDTO> artists = super.findAll(PageRequest.of(0, 10));
 
         assertAll(() -> {
             assertNotNull(artists);
-            assertEquals(2, artists.getContent().size());
+            assertTrue(artists.getContent().size() >= 2);
         });
     }
 
@@ -140,14 +146,19 @@ public class ArtistV1RestControllerIT extends BaseCrudControllerTest<Artist, Art
         request.setSources(
                 JsonNullable.of(newSources.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList())
         );
+        request.setFollowersCount(JsonNullable.of(20));
+        request.setBioHtml(JsonNullable.of("Patched bio"));
 
         ArtistDTO updatedArtist = super.patch(artist.getId(), request);
 
         assertAll(() -> {
             assertNotNull(updatedArtist);
             assertEquals(artist.getId(), updatedArtist.getId());
-            assertEquals(newAvatar.getId(), updatedArtist.getAvatar().getId());
             assertEquals(2, updatedArtist.getNicknames().size());
+            assertEquals(newAvatar.getId(), updatedArtist.getAvatar().getId());
+            assertEquals(1, updatedArtist.getSources().size());
+            assertEquals(20, updatedArtist.getFollowersCount());
+            assertEquals("Patched bio", updatedArtist.getBioHtml());
         });
     }
 

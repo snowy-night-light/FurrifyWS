@@ -43,11 +43,13 @@ public class BookChapter extends UserScopedEntity {
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     List<Source> sources;
 
+    @Builder.Default
     @Column(nullable = false)
     @NotNull
     @PositiveOrZero
     Long views = 0L;
 
+    @Builder.Default
     @Column(nullable = false)
     Long currentNumberOfWords = 0L;
 

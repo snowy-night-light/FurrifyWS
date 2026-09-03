@@ -53,6 +53,8 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
 
         Mockito.when(fileMassStorageStrategy.uploadFile(any(), any(), any(), anyBoolean()))
                 .thenAnswer(invocation -> mockFileMassStorageStrategy.uploadFile(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
+        Mockito.when(fileMassStorageStrategy.linkFile(any(), any(), any(), any()))
+                .thenAnswer(invocation -> mockFileMassStorageStrategy.linkFile(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
         Mockito.when(fileMassStorageStrategy.getStorageServiceId())
                 .thenReturn(mockFileMassStorageStrategy.getStorageServiceId());
     }
@@ -128,7 +130,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
     @Test
     protected void testFindById() {
         AttachmentFile attachmentFile = attachmentFileRepository.save(
-                AttachmentFile.builder()
+                AttachmentFile.builder().fileExtension("png")
                         .fileUri(URI.create("https://example.com/test.png"))
                         .thumbnailUri(URI.create("https://example.com/test.png"))
                         .uploadStatus(FileUploadStatus.UPLOADED)
@@ -149,7 +151,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
     @Test
     protected void testFindAll() {
         attachmentFileRepository.save(
-                AttachmentFile.builder()
+                AttachmentFile.builder().fileExtension("png")
                         .fileUri(URI.create("https://example.com/test.png"))
                         .thumbnailUri(URI.create("https://example.com/test.png"))
                         .uploadStatus(FileUploadStatus.UPLOADED)
@@ -159,7 +161,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
         );
 
         attachmentFileRepository.save(
-                AttachmentFile.builder()
+                AttachmentFile.builder().fileExtension("png")
                         .fileUri(URI.create("https://example.com/test2.png"))
                         .thumbnailUri(URI.create("https://example.com/test2.png"))
                         .uploadStatus(FileUploadStatus.UPLOADED)
@@ -187,7 +189,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
         File file = new File(resourceUrl.toURI());
 
         AttachmentFile attachmentFile = attachmentFileRepository.save(
-                AttachmentFile.builder()
+                AttachmentFile.builder().fileExtension("png")
                         .fileUri(URI.create("https://example.com/test.png"))
                         .thumbnailUri(URI.create("https://example.com/test.png"))
                         .uploadStatus(FileUploadStatus.UPLOADED)
@@ -212,7 +214,7 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
     @Test
     protected void testDelete() {
         AttachmentFile attachmentFile = attachmentFileRepository.save(
-                AttachmentFile.builder()
+                AttachmentFile.builder().fileExtension("png")
                         .fileUri(URI.create("https://example.com/test.png"))
                         .thumbnailUri(URI.create("https://example.com/test.png"))
                         .uploadStatus(FileUploadStatus.UPLOADED)
