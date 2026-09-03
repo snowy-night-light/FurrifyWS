@@ -60,7 +60,7 @@
         "operationId": "AttachmentFileV1RestController_save",
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/CreateAttachmentFileRequest"
               }
@@ -152,7 +152,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/PatchAttachmentFileRequest"
               }

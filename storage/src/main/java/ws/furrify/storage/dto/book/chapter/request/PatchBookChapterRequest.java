@@ -20,5 +20,5 @@ public class PatchBookChapterRequest implements BasePatchEntityRequest<BookChapt
 
     private JsonNullable<@NotNull EntityIdRequest> book = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
-    private JsonNullable<@NotNull ZonedDateTime> publishDate = JsonNullable.undefined();
+    private JsonNullable<ZonedDateTime> publishDate = JsonNullable.undefined();
 }

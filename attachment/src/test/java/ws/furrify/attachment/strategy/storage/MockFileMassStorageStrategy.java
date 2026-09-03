@@ -15,6 +15,11 @@ public class MockFileMassStorageStrategy implements FileMassStorageStrategy {
     }
 
     @Override
+    public UploadedFileReference linkFile(UUID id, String mimeType, URI existingFileUri, URI existingThumbnailUri) {
+        return UploadedFileReference.of(URI.create("https://example.com/test.png"), URI.create("https://example.com/thumbnail.jpg"), getStorageServiceId());
+    }
+
+    @Override
     public boolean removeFileDirectory(UUID id) {
         return true;
     }

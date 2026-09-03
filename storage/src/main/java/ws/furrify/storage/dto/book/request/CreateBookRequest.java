@@ -47,6 +47,6 @@ public class CreateBookRequest implements BaseCreateEntityRequest<Book, BookDTO>
     private List<@NotNull EntityIdRequest> artists;
     private List<@NotNull EntityIdRequest> sources;
 
-    @NotNull
     private ZonedDateTime publishDate;
+    private ZonedDateTime externalUpdatedAt;
 }
