@@ -31,6 +31,5 @@ public class CreateBookChapterRequest implements BaseCreateEntityRequest<BookCha
     @NotNull
     private Integer chapterNumber;
 
-    @NotNull
     private ZonedDateTime publishDate;
 }

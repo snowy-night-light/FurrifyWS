@@ -11,6 +11,7 @@ import ws.furrify.storage.dto.library.LibraryDTO;
 import ws.furrify.storage.dto.media.MediaDTO;
 import ws.furrify.storage.dto.source.SourceDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -32,4 +33,6 @@ public class ArtistDTO extends UserScopedEntityDTO<Artist> {
     private MediaDTO avatar;
 
     private LibraryDTO library;
+
+    private ZonedDateTime externalUpdatedAt;
 }

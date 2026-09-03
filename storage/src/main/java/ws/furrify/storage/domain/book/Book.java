@@ -26,7 +26,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Book extends UserScopedEntity {
     @NotBlank
-    @Column(nullable = false, length = 128)
+    @Column(nullable = false, length = 255)
     String title;
 
     @Column(columnDefinition = "TEXT", nullable = false, length = 10240)
@@ -51,10 +51,10 @@ public class Book extends UserScopedEntity {
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     Media cover;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     List<Tag> tags;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     List<Artist> artists;
 
     @Enumerated(EnumType.STRING)
@@ -85,7 +85,9 @@ public class Book extends UserScopedEntity {
     @Column(nullable = true)
     Integer dislikes;
 
-    @Column(nullable = false)
-    @NotNull
+    @Column(nullable = true)
     ZonedDateTime publishDate;
+
+    @Column(nullable = true)
+    ZonedDateTime externalUpdatedAt;
 }

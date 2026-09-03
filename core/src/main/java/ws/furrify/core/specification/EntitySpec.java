@@ -30,14 +30,21 @@ public class EntitySpec {
     public static final String LIKE_IGNORE_CASE_OPERATOR = " like^ ";
     public static final String NOT_LIKE_IGNORE_CASE_OPERATOR = " !like^ ";
     private static final String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
-    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^~a-zA-Z]+)\\s+([^)&|]+)\\)?");
+    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^~a-zA-Z]+)\\s+('(?:[^'\\\\\\\\]|\\\\\\\\.)*'|\\\"(?:[^\\\"\\\\\\\\]|\\\\\\\\.)*\\\"|[^)&|]+)\\)?");
 
+    private static String formatValueForSpecString(Object value) {
+        if (value == null) return "null";
+        if (value instanceof String strValue) {
+            return "'" + strValue.replace("'", "\\\\'") + "'";
+        }
+        return String.valueOf(value);
+    }
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> unrestricted() {
         return new EntitySpecResult<>("", (root, query, cb) -> cb.conjunction());
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specEquals(Object value) {
-        return new InternalExpression<>(EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             if (v == null) return cb.isNull(path);
             return cb.equal(path, coerceValue(path, v));
@@ -45,7 +52,7 @@ public class EntitySpec {
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotEquals(Object value) {
-        return new InternalExpression<>(NOT_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(NOT_EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             if (v == null) return cb.isNotNull(path);
             return cb.notEqual(path, coerceValue(path, v));
@@ -54,7 +61,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specGreaterThan(Object value) {
-        return new InternalExpression<>(GREATER_THAN_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(GREATER_THAN_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
@@ -66,7 +73,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specGreaterThanOrEqual(Object value) {
-        return new InternalExpression<>(GREATER_THAN_OR_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(GREATER_THAN_OR_EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
@@ -78,7 +85,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLessThan(Object value) {
-        return new InternalExpression<>(LESS_THAN_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(LESS_THAN_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
@@ -90,7 +97,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLessThanOrEqual(Object value) {
-        return new InternalExpression<>(LESS_THAN_OR_EQUAL_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(LESS_THAN_OR_EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
@@ -134,7 +141,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specEqualsIgnoreCase(Object value) {
-        return new InternalExpression<>(EQUAL_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(EQUAL_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof String strValue) {
@@ -146,7 +153,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotEqualsIgnoreCase(Object value) {
-        return new InternalExpression<>(NOT_EQUAL_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(NOT_EQUAL_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof String strValue) {
@@ -158,19 +165,19 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLike(Object value) {
-        return new InternalExpression<>(LIKE_OPERATOR + value, (f, v) -> (root, query, cb) ->
+        return new InternalExpression<>(LIKE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) ->
                 cb.like((Path<String>) getPath(root, f), String.valueOf(v)), value, null);
     }
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotLike(Object value) {
-        return new InternalExpression<>(NOT_LIKE_OPERATOR + value, (f, v) -> (root, query, cb) ->
+        return new InternalExpression<>(NOT_LIKE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) ->
                 cb.notLike((Path<String>) getPath(root, f), String.valueOf(v)), value, null);
     }
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLikeIgnoreCase(Object value) {
-        return new InternalExpression<>(LIKE_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(LIKE_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             if (v instanceof String strValue) {
                 return cb.like(cb.lower((Path<String>) path), strValue.toLowerCase());
@@ -181,7 +188,7 @@ public class EntitySpec {
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotLikeIgnoreCase(Object value) {
-        return new InternalExpression<>(NOT_LIKE_IGNORE_CASE_OPERATOR + value, (f, v) -> (root, query, cb) -> {
+        return new InternalExpression<>(NOT_LIKE_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
             Path<?> path = getPath(root, f);
             if (v instanceof String strValue) {
                 return cb.notLike(cb.lower((Path<String>) path), strValue.toLowerCase());
@@ -220,7 +227,13 @@ public class EntitySpec {
             String rawValue = matcher.group(3).trim();
 
             Object parsedValue;
-            if (rawValue.equalsIgnoreCase("null")) {
+            if (rawValue.startsWith("'") && rawValue.endsWith("'")) {
+                rawValue = rawValue.substring(1, rawValue.length() - 1).replace("\\\\'", "'");
+                parsedValue = rawValue;
+            } else if (rawValue.startsWith("\\\"") && rawValue.endsWith("\\\"")) {
+                rawValue = rawValue.substring(1, rawValue.length() - 1).replace("\\\\\\\"", "\\\"");
+                parsedValue = rawValue;
+            } else if (rawValue.equalsIgnoreCase("null")) {
                 parsedValue = null;
             } else if (rawValue.matches(UUID_REGEX)) {
                 parsedValue = UUID.fromString(rawValue);

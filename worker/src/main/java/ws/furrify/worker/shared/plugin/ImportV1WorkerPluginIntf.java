@@ -1,6 +1,7 @@
 package ws.furrify.worker.shared.plugin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import ws.furrify.worker.model.WorkerPluginResults;
 
 import java.io.File;
 import java.util.UUID;
@@ -20,5 +21,5 @@ public interface ImportV1WorkerPluginIntf extends WorkerPluginIntf {
      * 
      * @param file The archive file containing the data to load
      */
-    void loadSchemaDataIntoLibrary(File file, UUID libraryId);
+    WorkerPluginResults loadSchemaDataIntoLibrary(File file, UUID libraryId);
 }

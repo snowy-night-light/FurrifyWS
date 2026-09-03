@@ -31,8 +31,10 @@ public class PatchBookRequest implements BasePatchEntityRequest<Book, BookDTO> {
     private JsonNullable<@NotNull EntityIdRequest> library = JsonNullable.undefined();
     private JsonNullable<@NotNull Integer> likes = JsonNullable.undefined();
     private JsonNullable<@NotNull Integer> dislikes = JsonNullable.undefined();
+    private JsonNullable<@NotNull Long> views = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> tags = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> artists = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
-    private JsonNullable<@NotNull ZonedDateTime> publishDate = JsonNullable.undefined();
+    private JsonNullable<ZonedDateTime> publishDate = JsonNullable.undefined();
+    private JsonNullable<ZonedDateTime> externalUpdatedAt = JsonNullable.undefined();
 }

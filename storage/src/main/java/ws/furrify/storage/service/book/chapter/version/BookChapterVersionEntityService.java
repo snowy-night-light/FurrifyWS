@@ -70,6 +70,9 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
         dto.setChapterVersion(highestVersion + 1);
 
+        // Updated later async
+        dto.setWordCount(0L);
+
         // Sanitize content
         dto.setContentHtml(sanitizeHtml(dto.getContentHtml()));
 
