@@ -34,7 +34,6 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
         this.attachmentFileRequestDtoMapper = (AttachmentFileRequestMapper) requestDtoMapper;
     }
 
-    @Override
     @Operation(
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
@@ -45,11 +44,10 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
     )
     @PostMapping(consumes = "multipart/form-data", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.CREATED)
-    protected AttachmentFileDTO save(@ModelAttribute CreateAttachmentFileRequest dto) {
+    protected AttachmentFileDTO saveWithUpload(@ModelAttribute CreateAttachmentFileRequest dto) {
         return attachmentFileEntityService.createWithFileUpload(attachmentFileRequestDtoMapper.toDto(dto), dto.getFile());
     }
 
-    @Override
     @Operation(
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
@@ -60,7 +58,7 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
     )
     @PatchMapping(value = "/{id}", consumes = "multipart/form-data", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.OK)
-    protected AttachmentFileDTO patch(@PathVariable UUID id, @ModelAttribute PatchAttachmentFileRequest patchRequestDto) {
+    protected AttachmentFileDTO patchWithUpload(@PathVariable UUID id, @ModelAttribute PatchAttachmentFileRequest patchRequestDto) {
         return attachmentFileEntityService.patchWithFileUpload(id, patchRequestDto, patchRequestDto.getFile().orElse(null));
     }
 }
