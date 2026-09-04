@@ -61,3 +61,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: true
+springdoc:
+  api-docs:
+    version: openapi_3_0
