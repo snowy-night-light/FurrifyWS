@@ -12,10 +12,13 @@ import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import java.net.URI;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
+@Schema(name = "AttachmentFileDTO")
 public class AttachmentFileDTO extends UserScopedEntityDTO<AttachmentFile> {
     private String fileName;
     private String fileExtension;
