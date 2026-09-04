@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -26,6 +27,7 @@ import ws.furrify.worker.domain.worker.WorkStatus;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf;
+import ws.furrify.worker.shared.plugin.exception.WorkerErrors;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,11 +37,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.openapitools.model.FileUploadStatus.UPLOADED;
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 import static ws.furrify.core.specification.EntitySpec.specLessThan;
-import static ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED;
+import static ws.furrify.worker.domain.worker.WorkStatus.*;
 
 @Service
 @Slf4j
@@ -86,13 +90,7 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
             throw new ServiceLogicException("Failed to verify destination library: " + e.getMessage());
         }
 
-
-        // TODO REMOVE
-        var meregedDto = super.create(dto);
-
-        this.asyncUtils.runAsync(this::processImportWorkerTasks);
-
-        return meregedDto;
+        return super.create(dto);
     }
 
     private List<String> getPluginProviders() {
@@ -101,7 +99,22 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
         return plugins.stream().map(ImportV1WorkerPluginIntf::getProviderName).toList();
     }
 
-    //@Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES) TODO
+    @Transactional
+    public void triggerExecution(UUID id) {
+        PluginImportUserWorkerTaskDTO task = this.findById(id)
+                .orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+
+        if(task.getStatus() == IN_PROGRESS || task.getStatus() == COMPLETED) {
+            throw new ServiceLogicException(WorkerErrors.or.getErrorMessage(id, task.getStatus()));
+        }
+
+        task.setStatus(IN_PROGRESS);
+        PluginImportUserWorkerTaskDTO updatedTask = this.internalPutById(task.getId(), task);
+
+        asyncUtils.runAsync(() -> processTask(updatedTask));
+    }
+
+    @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
     @Transactional
     protected void processImportWorkerTasks() {
         EntitySpecResult<PluginImportUserWorkerTask> spec = EntitySpec.<PluginImportUserWorkerTask>specBuilder()
@@ -112,71 +125,81 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
 
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "createdAt"));
 
-        List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
 
         Page<PluginImportUserWorkerTaskDTO> tasks = this.getAllPaged(spec.specString(), pageable);
 
-        tasks.forEach(task -> {
-            ImportV1WorkerPluginIntf plugin = plugins.stream()
-                    .filter(p -> p.getProviderName().equals(task.getProvider()))
-                    .findFirst()
-                    .orElse(null);
+        tasks.forEach((task) -> {
+            task.setStatus(IN_PROGRESS);
+            PluginImportUserWorkerTaskDTO updatedTask = this.internalPutById(task.getId(), task);
 
-            if (plugin == null) {
-                log.error("Plugin [provider={}] not found! Cannot process scheduled task.", task.getProvider());
-                failTask(task, "Plugin [provider=" + task.getProvider() + "] not found! Cannot process scheduled task.");
-                return;
-            }
-
-            AttachmentFileDTO attachmentFileDTO = null;
-            try {
-                attachmentFileDTO = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(task.getFileReferenceId()).getBody();
-            } catch (Exception e) {
-                log.error("Failed to fetch attachment file reference [id={}]: {}", task.getFileReferenceId(), e.getMessage());
-                failTask(task, "Failed to fetch attachment file reference: " + e.getMessage());
-                return;
-            }
-
-            if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null || attachmentFileDTO.getUploadStatus() != UPLOADED) {
-                log.error("File reference [id={}] not found or not uploaded! Cannot process scheduled task.", task.getFileReferenceId());
-                failTask(task, "File reference [id=" + task.getFileReferenceId() + "] not found or not uploaded! Cannot process scheduled task.");
-                return;
-            }
-
-            Path tempFilePath;
-            try {
-                tempFilePath = Files.createTempFile("plugin-iuwt-", "." + attachmentFileDTO.getFileExtension());
-            } catch (IOException e) {
-                log.error(e.getMessage());
-                failTask(task, "Error processing file: " + e.getMessage());
-                return;
-            }
-
-            File tempFile = tempFilePath.toFile();
-
-            try (InputStream in = attachmentFileDTO.getFileUri().toURL().openStream()) {
-                Files.copy(in, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
-
-                if (!plugin.validateSchema(tempFile)) {
-                    failTask(task, "File reference [id=" + task.getFileReferenceId() + "] failed pre plugin validation.");
-                    return;
-                }
-
-                plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId());
-
-                task.setStatus(WorkStatus.COMPLETED);
-                task.setFinishedAt(ZonedDateTime.now());
-                this.internalPutById(task.getId(), task);
-
-            } catch (IOException e) {
-                log.error(e.getMessage());
-                failTask(task, "Error processing file: " + e.getMessage());
-            } finally {
-                try {
-                    Files.deleteIfExists(tempFilePath);
-                } catch (IOException _) {}
-            }
+            processTask(updatedTask);
         });
+    }
+
+    @Transactional
+    protected void processTask(PluginImportUserWorkerTaskDTO task) {
+        List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
+
+        ImportV1WorkerPluginIntf plugin = plugins.stream()
+                .filter(p -> p.getProviderName().equals(task.getProvider()))
+                .findFirst()
+                .orElse(null);
+
+        if (plugin == null) {
+            log.error("Plugin [provider={}] not found! Cannot process scheduled task.", task.getProvider());
+            failTask(task, "Plugin [provider=" + task.getProvider() + "] not found! Cannot process scheduled task.");
+            return;
+        }
+
+        AttachmentFileDTO attachmentFileDTO = null;
+        try {
+            attachmentFileDTO = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(task.getFileReferenceId()).getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch attachment file reference [id={}]: {}", task.getFileReferenceId(), e.getMessage());
+            failTask(task, "Failed to fetch attachment file reference: " + e.getMessage());
+            return;
+        }
+
+        if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null || attachmentFileDTO.getUploadStatus() != UPLOADED) {
+            log.error("File reference [id={}] not found or not uploaded! Cannot process scheduled task.", task.getFileReferenceId());
+            failTask(task, "File reference [id=" + task.getFileReferenceId() + "] not found or not uploaded! Cannot process scheduled task.");
+            return;
+        }
+
+        Path tempFilePath;
+        try {
+            tempFilePath = Files.createTempFile("plugin-iuwt-", "." + attachmentFileDTO.getFileExtension());
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            failTask(task, "Error processing file: " + e.getMessage());
+            return;
+        }
+
+        File tempFile = tempFilePath.toFile();
+
+        try (InputStream in = attachmentFileDTO.getFileUri().toURL().openStream()) {
+            Files.copy(in, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+
+            if (!plugin.validateSchema(tempFile)) {
+                failTask(task, "File reference [id=" + task.getFileReferenceId() + "] failed pre plugin validation.");
+                return;
+            }
+
+            plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId());
+
+            task.setStatus(WorkStatus.COMPLETED);
+            task.setFinishedAt(ZonedDateTime.now());
+            this.internalPutById(task.getId(), task);
+
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            failTask(task, "Error processing file: " + e.getMessage());
+        } finally {
+            try {
+                Files.deleteIfExists(tempFilePath);
+            } catch (IOException _) {
+            }
+        }
     }
 
     @Transactional
@@ -186,4 +209,5 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
         task.setFinishedAt(ZonedDateTime.now());
         this.internalPutById(task.getId(), task);
     }
+
 }
