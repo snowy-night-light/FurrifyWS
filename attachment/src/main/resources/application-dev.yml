@@ -48,3 +48,6 @@ spring:
     multipart:
       max-file-size: 10GB
       max-request-size: 10GB
+springdoc:
+  api-docs:
+    version: openapi_3_0

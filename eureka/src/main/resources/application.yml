@@ -9,3 +9,6 @@ eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
+springdoc:
+  api-docs:
+    version: openapi_3_0

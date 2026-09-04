@@ -9,3 +9,7 @@ spring:
     active: prod
 server:
   port: 8061
+
+springdoc:
+  api-docs:
+    version: openapi_3_0
