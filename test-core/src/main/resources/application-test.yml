@@ -1,2 +1,6 @@
 keycloak:
   enabled: false
+
+springdoc:
+  api-docs:
+    version: openapi_3_0
