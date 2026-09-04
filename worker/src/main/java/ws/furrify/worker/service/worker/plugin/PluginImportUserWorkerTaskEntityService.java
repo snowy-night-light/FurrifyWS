@@ -109,6 +109,7 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
         }
 
         task.setStatus(IN_PROGRESS);
+        task.setStartedAt(ZonedDateTime.now());
         PluginImportUserWorkerTaskDTO updatedTask = this.internalPutById(task.getId(), task);
 
         asyncUtils.runAsync(() -> processTask(updatedTask));
@@ -130,6 +131,7 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
 
         tasks.forEach((task) -> {
             task.setStatus(IN_PROGRESS);
+            task.setStartedAt(ZonedDateTime.now());
             PluginImportUserWorkerTaskDTO updatedTask = this.internalPutById(task.getId(), task);
 
             processTask(updatedTask);
@@ -160,7 +162,7 @@ public class PluginImportUserWorkerTaskEntityService extends BaseEntityCrudServi
             return;
         }
 
-        if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null || attachmentFileDTO.getUploadStatus() != UPLOADED) {
+        if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null || !UPLOADED.name().equals(attachmentFileDTO.getUploadStatus().name())) {
             log.error("File reference [id={}] not found or not uploaded! Cannot process scheduled task.", task.getFileReferenceId());
             failTask(task, "File reference [id=" + task.getFileReferenceId() + "] not found or not uploaded! Cannot process scheduled task.");
             return;

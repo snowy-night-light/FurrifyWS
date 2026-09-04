@@ -203,6 +203,14 @@
                             <dateLibrary>java8</dateLibrary>
                             <useSpringBoot3>true</useSpringBoot3>
                         </configOptions>
+                        <!-- TODO Temporary fix for OpenAPI 3.1 bug -->
+                        <inlineSchemaNameMappings>
+                            <inlineSchemaNameMapping>AttachmentFileV1RestController_save_201_response=AttachmentFileDTO</inlineSchemaNameMapping>
+                            <inlineSchemaNameMapping>LibraryV1RestController_save_201_response=LibraryDTO</inlineSchemaNameMapping>
+                            <inlineSchemaNameMapping>MediaV1RestController_save_201_response=MediaDTO</inlineSchemaNameMapping>
+                            <inlineSchemaNameMapping>AttachmentFileDTO_uploadStatus=FileUploadStatus</inlineSchemaNameMapping>
+                            <inlineSchemaNameMapping>MediaDTO_uploadStatus=FileUploadStatus</inlineSchemaNameMapping>
+                        </inlineSchemaNameMappings>
                         <typeMappings>
                             <typeMapping>OffsetDateTime=ZonedDateTime</typeMapping>
                         </typeMappings>
