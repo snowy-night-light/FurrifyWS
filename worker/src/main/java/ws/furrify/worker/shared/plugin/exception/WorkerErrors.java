@@ -1,4 +1,4 @@
-package ws.furrify.worker.exception;
+package ws.furrify.worker.shared.plugin.exception;
 
 import lombok.RequiredArgsConstructor;
 import ws.furrify.core.exception.ErrorMessageFormatterIntf;
@@ -20,7 +20,7 @@ public enum WorkerErrors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      **/
-     DUMMY("");
+     or("Task [id={0}] doesnt not allow execution with task status [status={1}].");
 
     private final String errorMessage;
 
