@@ -6,6 +6,7 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -64,6 +65,18 @@ public class GlobalRestExceptionHandler {
 
         String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
         return createErrorResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof tools.jackson.databind.DatabindException) {
+            Throwable mappingCause = cause.getCause();
+            if (mappingCause instanceof ws.furrify.core.exception.ServiceLogicException) {
+                return createErrorResponse(HttpStatus.BAD_REQUEST, mappingCause.getMessage());
+            }
+        }
+        return createErrorResponse(HttpStatus.BAD_REQUEST, "Malformed JSON request");
     }
 
     @ExceptionHandler(Exception.class)
