@@ -26,7 +26,6 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private String title;
 
     private String externalId;
-    private Integer chapterNumber;
 
     private String descriptionHtml;
     private String shortDescriptionHtml;

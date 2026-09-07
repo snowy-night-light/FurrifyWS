@@ -21,10 +21,9 @@ public class BookChapterDTO extends UserScopedEntityDTO<BookChapter> {
     private String title;
 
     private String externalId;
+    private Integer chapterNumber;
 
     private BookDTO book;
-
-    private Integer chapterNumber;
 
     private Long views;
     private Long currentNumberOfWords;
