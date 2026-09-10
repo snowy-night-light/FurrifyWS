@@ -2,7 +2,6 @@ package ws.furrify.storage.domain.artist;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -27,8 +26,7 @@ public class Artist extends UserScopedEntity {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "artist_nicknames",
-            joinColumns = @JoinColumn(name = "artist_id"),
-            uniqueConstraints = @UniqueConstraint(name = "UK_artist_nickname", columnNames = {"nickname"})
+            joinColumns = @JoinColumn(name = "artist_id")
     )
     @NotEmpty
     List<ArtistNickname> nicknames;
@@ -41,7 +39,6 @@ public class Artist extends UserScopedEntity {
     String bioHtml;
 
     @Builder.Default
-    @NotNull
     @Column(nullable = false)
     @PositiveOrZero
     Integer followersCount = 0;

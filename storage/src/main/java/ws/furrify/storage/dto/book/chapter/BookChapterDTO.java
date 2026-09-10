@@ -30,6 +30,7 @@ public class BookChapterDTO extends UserScopedEntityDTO<BookChapter> {
 
     private List<SourceDTO> sources;
     private List<BookChapterVersionDTO> versions;
+    private Integer versionsCount;
 
     private ZonedDateTime publishDate;
 }

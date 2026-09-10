@@ -7,7 +7,6 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
 import ws.furrify.worker.dto.worker.UserWorkerTaskDTO;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -18,5 +17,4 @@ public class PluginImportUserWorkerTaskDTO extends UserWorkerTaskDTO<PluginImpor
     private String provider;
     private UUID fileReferenceId;
     private UUID destinationLibraryReferenceId;
-    private ZonedDateTime startAt;
 }

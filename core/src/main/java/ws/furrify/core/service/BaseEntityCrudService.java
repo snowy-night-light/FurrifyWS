@@ -44,6 +44,11 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     @Transactional
+    public DTO getById(UUID id) {
+        return findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+    }
+
+    @Transactional
     public Page<DTO> getAllPaged(String spec, Pageable pageable) {
         return entityRepository.findAll(pageable, getCombinedSpecs(
                 EntitySpec.fromSpecString(spec)

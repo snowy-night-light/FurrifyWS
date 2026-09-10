@@ -26,6 +26,6 @@ public class TagAlias extends UserScopedEntity {
     @Column(unique = true, length = 64)
     @Size(max = 64)
     @NotBlank
-    @Pattern(regexp = "^[a-z0-9 ]+$")
+    @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$")
     String alias;
 }

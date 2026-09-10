@@ -1,5 +1,7 @@
 package ws.furrify.core.specification;
 
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import org.springframework.data.core.PropertyPath;
@@ -30,7 +32,7 @@ public class EntitySpec {
     public static final String LIKE_IGNORE_CASE_OPERATOR = " like^ ";
     public static final String NOT_LIKE_IGNORE_CASE_OPERATOR = " !like^ ";
     private static final String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
-    private static final Pattern SPEC_PATTERN = Pattern.compile("\\(?([\\w.]+)\\s+([!=><^~a-zA-Z]+)\\s+('(?:[^'\\\\\\\\]|\\\\\\\\.)*'|\\\"(?:[^\\\"\\\\\\\\]|\\\\\\\\.)*\\\"|[^)&|]+)\\)?");
+    private static final Pattern SPEC_PATTERN = Pattern.compile("([\\w.]+)\\s+([!=><^~a-zA-Z]+)\\s+('(?:[^'\\\\\\\\]|\\\\\\\\.)*'|\\\"(?:[^\\\"\\\\\\\\]|\\\\\\\\.)*\\\"|[^)&|]+)");
 
     private static String formatValueForSpecString(Object value) {
         if (value == null) return "null";
@@ -112,7 +114,7 @@ public class EntitySpec {
         Path<?> path = root;
         while (propertyPath != null) {
             if (propertyPath.isCollection()) {
-                path = ((jakarta.persistence.criteria.From<?, ?>) path).join(propertyPath.getSegment());
+                path = ((From<?, ?>) path).join(propertyPath.getSegment(), JoinType.LEFT);
             } else {
                 path = path.get(propertyPath.getSegment());
             }
@@ -212,69 +214,130 @@ public class EntitySpec {
         return builder;
     }
 
+    private static class SpecParser<ENTITY extends BaseEntity> {
+        private final String input;
+        private int pos = 0;
+
+        public SpecParser(String input) {
+            this.input = input;
+        }
+
+        public EntitySpecResult<ENTITY> parse() {
+            return parseOr();
+        }
+
+        private void skipWhitespace() {
+            while (pos < input.length() && Character.isWhitespace(input.charAt(pos))) {
+                pos++;
+            }
+        }
+
+        private boolean match(String str) {
+            skipWhitespace();
+            if (input.startsWith(str, pos)) {
+                pos += str.length();
+                return true;
+            }
+            return false;
+        }
+
+        private EntitySpecResult<ENTITY> parseOr() {
+            EntitySpecResult<ENTITY> left = parseAnd();
+            if (left == null) return null;
+
+            while (match("||")) {
+                EntitySpecResult<ENTITY> right = parseAnd();
+                if (right == null) throw new BadRequestException(Errors.INVALID_SPECIFICATION_FORMAT.getErrorMessage(input));
+                left = EntitySpec.from(left).or(right).build();
+            }
+            return left;
+        }
+
+        private EntitySpecResult<ENTITY> parseAnd() {
+            EntitySpecResult<ENTITY> left = parsePrimary();
+            if (left == null) return null;
+
+            while (match("&&")) {
+                EntitySpecResult<ENTITY> right = parsePrimary();
+                if (right == null) throw new BadRequestException(Errors.INVALID_SPECIFICATION_FORMAT.getErrorMessage(input));
+                left = EntitySpec.from(left).and(right).build();
+            }
+            return left;
+        }
+
+        private EntitySpecResult<ENTITY> parsePrimary() {
+            skipWhitespace();
+            if (match("(")) {
+                EntitySpecResult<ENTITY> expr = parseOr();
+                if (!match(")")) {
+                    throw new BadRequestException(Errors.INVALID_SPECIFICATION_FORMAT.getErrorMessage(input));
+                }
+                return expr;
+            }
+
+            Matcher m = SPEC_PATTERN.matcher(input);
+            m.region(pos, input.length());
+            if (m.lookingAt()) {
+                String field = m.group(1);
+                String operator = m.group(2);
+                String rawValue = m.group(3).trim();
+                pos = m.end();
+
+                Object parsedValue;
+                if (rawValue.startsWith("'") && rawValue.endsWith("'")) {
+                    rawValue = rawValue.substring(1, rawValue.length() - 1).replace("\\\\'", "'");
+                    parsedValue = rawValue;
+                } else if (rawValue.startsWith("\\\"") && rawValue.endsWith("\\\"")) {
+                    rawValue = rawValue.substring(1, rawValue.length() - 1).replace("\\\\\\\"", "\\\"");
+                    parsedValue = rawValue;
+                } else if (rawValue.equalsIgnoreCase("null")) {
+                    parsedValue = null;
+                } else if (rawValue.matches(UUID_REGEX)) {
+                    parsedValue = UUID.fromString(rawValue);
+                } else {
+                    parsedValue = rawValue;
+                }
+
+                EntitySpecExpression<ENTITY> expr = switch (operator.trim()) {
+                    case "=" -> EntitySpec.specEquals(parsedValue);
+                    case "!=" -> EntitySpec.specNotEquals(parsedValue);
+                    case ">" -> EntitySpec.specGreaterThan(parsedValue);
+                    case ">=" -> EntitySpec.specGreaterThanOrEqual(parsedValue);
+                    case "<" -> EntitySpec.specLessThan(parsedValue);
+                    case "<=" -> EntitySpec.specLessThanOrEqual(parsedValue);
+                    case "=^" -> EntitySpec.specEqualsIgnoreCase(parsedValue);
+                    case "!=^" -> EntitySpec.specNotEqualsIgnoreCase(parsedValue);
+                    case "like" -> EntitySpec.specLike(parsedValue);
+                    case "!like" -> EntitySpec.specNotLike(parsedValue);
+                    case "like^" -> EntitySpec.specLikeIgnoreCase(parsedValue);
+                    case "!like^" -> EntitySpec.specNotLikeIgnoreCase(parsedValue);
+                    default -> throw new BadRequestException(Errors.UNKNOWN_SPECIFICATION_OPERATOR.getErrorMessage(operator));
+                };
+
+                return EntitySpec.<ENTITY>specBuilder().where(field, expr).build();
+            }
+            return null;
+        }
+    }
+
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> fromSpecString(String specString) {
-        if (specString == null) {
+        if (specString == null || specString.trim().isEmpty()) {
             return EntitySpec.unrestricted();
         }
 
-        EntitySpecJoinStep<ENTITY> joinStep = null;
-        Matcher matcher = SPEC_PATTERN.matcher(specString);
+        SpecParser<ENTITY> parser = new SpecParser<>(specString);
+        EntitySpecResult<ENTITY> result = parser.parse();
 
-        int lastEnd = 0;
-        while (matcher.find()) {
-            String field = matcher.group(1);
-            String operator = matcher.group(2);
-            String rawValue = matcher.group(3).trim();
-
-            Object parsedValue;
-            if (rawValue.startsWith("'") && rawValue.endsWith("'")) {
-                rawValue = rawValue.substring(1, rawValue.length() - 1).replace("\\\\'", "'");
-                parsedValue = rawValue;
-            } else if (rawValue.startsWith("\\\"") && rawValue.endsWith("\\\"")) {
-                rawValue = rawValue.substring(1, rawValue.length() - 1).replace("\\\\\\\"", "\\\"");
-                parsedValue = rawValue;
-            } else if (rawValue.equalsIgnoreCase("null")) {
-                parsedValue = null;
-            } else if (rawValue.matches(UUID_REGEX)) {
-                parsedValue = UUID.fromString(rawValue);
-            } else {
-                parsedValue = rawValue;
-            }
-
-            EntitySpecExpression<ENTITY> expr = switch (operator.trim()) {
-                case "=" -> EntitySpec.specEquals(parsedValue);
-                case "!=" -> EntitySpec.specNotEquals(parsedValue);
-                case ">" -> EntitySpec.specGreaterThan(parsedValue);
-                case ">=" -> EntitySpec.specGreaterThanOrEqual(parsedValue);
-                case "<" -> EntitySpec.specLessThan(parsedValue);
-                case "<=" -> EntitySpec.specLessThanOrEqual(parsedValue);
-                case "=^" -> EntitySpec.specEqualsIgnoreCase(parsedValue);
-                case "!=^" -> EntitySpec.specNotEqualsIgnoreCase(parsedValue);
-                case "like" -> EntitySpec.specLike(parsedValue);
-                case "!like" -> EntitySpec.specNotLike(parsedValue);
-                case "like^" -> EntitySpec.specLikeIgnoreCase(parsedValue);
-                case "!like^" -> EntitySpec.specNotLikeIgnoreCase(parsedValue);
-                default -> throw new BadRequestException(Errors.UNKNOWN_SPECIFICATION_OPERATOR.getErrorMessage(operator));
-            };
-
-            if (joinStep == null) {
-                joinStep = EntitySpec.<ENTITY>specBuilder().where(field, expr);
-            } else {
-                String separator = specString.substring(lastEnd, matcher.start());
-                if (separator.contains("||")) {
-                    joinStep = joinStep.or().where(field, expr);
-                } else {
-                    joinStep = joinStep.and().where(field, expr);
-                }
-            }
-            lastEnd = matcher.end();
+        if (result == null) {
+            throw new BadRequestException(Errors.INVALID_SPECIFICATION_FORMAT.getErrorMessage(specString));
         }
-
-        if (joinStep == null && !specString.trim().isEmpty()) {
+        
+        parser.skipWhitespace();
+        if (parser.pos < specString.length()) {
             throw new BadRequestException(Errors.INVALID_SPECIFICATION_FORMAT.getErrorMessage(specString));
         }
 
-        return (joinStep != null) ? joinStep.build() : unrestricted();
+        return result;
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> specCombineAllWithAnd(Iterable<EntitySpecResult<ENTITY>> specs) {

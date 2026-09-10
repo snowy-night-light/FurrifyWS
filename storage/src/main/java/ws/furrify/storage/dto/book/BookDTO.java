@@ -44,6 +44,7 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private BookRating rating;
 
     private List<BookChapterDTO> chapters;
+    private Integer chaptersCount;
 
     private List<TagDTO> tags;
     private List<ArtistDTO> artists;

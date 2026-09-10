@@ -19,6 +19,7 @@ import java.util.List;
 @Setter
 @ToString
 @SuperBuilder(toBuilder = true)
+@EntityListeners(BookChapterEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BookChapter extends UserScopedEntity {
@@ -40,7 +41,11 @@ public class BookChapter extends UserScopedEntity {
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "chapter")
     List<BookChapterVersion> versions;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @Builder.Default
+    @Column(nullable = false)
+    Integer versionsCount = 0;
+
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     List<Source> sources;
 
     @Builder.Default

@@ -20,7 +20,9 @@ public enum WorkerErrors implements ErrorMessageFormatterIntf {
     /**
      * Exception types.
      **/
-     or("Task [id={0}] doesnt not allow execution with task status [status={1}].");
+     TASK_DOESNT_ALLOW_EXECUTION_WITH_STATUS("Task [id={0}] doesn't not allow execution with task status [status={1}]."),
+     TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS("Task [id={0}] doesn't not allow update with task status [status={1}]."),
+    TASK_DOESNT_ALLOW_REMOVAL_WITH_STATUS("Task [id={0}] can't be removed with task status [status={1}].");
 
     private final String errorMessage;
 

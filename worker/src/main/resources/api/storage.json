@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.1",
   "info": {
     "title": "OpenAPI definition",
     "version": "v0"
@@ -1946,22 +1946,22 @@
   "components": {
     "schemas": {
       "CreateTagRequest": {
+        "required": [
+          "category"
+        ],
         "type": "object",
         "properties": {
           "category": {
             "$ref": "#/components/schemas/EntityIdRequest"
           },
           "name": {
-            "type": "string",
-            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$"
+            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$",
+            "type": "string"
           },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
           }
-        },
-        "required": [
-          "category"
-        ]
+        }
       },
       "EntityIdRequest": {
         "type": "object",
@@ -2026,7 +2026,9 @@
           "avatar": {
             "$ref": "#/components/schemas/MediaDTO"
           },
-          "library": {},
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
           "externalUpdatedAt": {
             "type": "string",
             "format": "date-time"
@@ -2034,21 +2036,21 @@
         }
       },
       "ArtistNickname": {
+        "required": [
+          "nickname"
+        ],
         "type": "object",
         "properties": {
           "nickname": {
-            "type": "string",
             "minLength": 1,
-            "pattern": "^\\S+(?: \\S+)*$"
+            "pattern": "^\\S+(?: \\S+)*$",
+            "type": "string"
           },
           "priority": {
             "type": "integer",
             "format": "int32"
           }
-        },
-        "required": [
-          "nickname"
-        ]
+        }
       },
       "BookChapterDTO": {
         "type": "object",
@@ -2085,12 +2087,12 @@
           "externalId": {
             "type": "string"
           },
-          "book": {
-            "$ref": "#/components/schemas/BookDTO"
-          },
           "chapterNumber": {
             "type": "integer",
             "format": "int32"
+          },
+          "book": {
+            "$ref": "#/components/schemas/BookDTO"
           },
           "views": {
             "type": "integer",
@@ -2211,10 +2213,6 @@
           "externalId": {
             "type": "string"
           },
-          "chapterNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
           "descriptionHtml": {
             "type": "string"
           },
@@ -2276,7 +2274,9 @@
               "$ref": "#/components/schemas/SourceDTO"
             }
           },
-          "library": {},
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
           "publishDate": {
             "type": "string",
             "format": "date-time"
@@ -2338,7 +2338,9 @@
           "title": {
             "type": "string"
           },
-          "library": {}
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          }
         }
       },
       "LibraryDTO": {
@@ -2527,7 +2529,9 @@
               "$ref": "#/components/schemas/CollectionDTO"
             }
           },
-          "library": {}
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          }
         }
       },
       "SourceDTO": {
@@ -2561,7 +2565,9 @@
           },
           "data": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": {
+              "type": "object"
+            }
           },
           "strategy": {
             "type": "string"
@@ -2675,8 +2681,8 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "pattern": "^[a-z0-9 ]+$"
+            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$",
+            "type": "string"
           },
           "aliases": {
             "type": "array",
@@ -2693,73 +2699,80 @@
         }
       },
       "CreateTagCategoryRequest": {
+        "required": [
+          "hexColor",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "string"
           },
           "hexColor": {
-            "type": "string",
             "maxLength": 7,
             "minLength": 0,
-            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$"
+            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$",
+            "type": "string"
           },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
           }
-        },
-        "required": [
-          "hexColor",
-          "name"
-        ]
+        }
       },
       "CreateTagAliasRequest": {
+        "required": [
+          "targetTag"
+        ],
         "type": "object",
         "properties": {
           "targetTag": {
             "$ref": "#/components/schemas/EntityIdRequest"
           },
           "alias": {
-            "type": "string",
-            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$"
+            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$",
+            "type": "string"
           }
-        },
-        "required": [
-          "targetTag"
-        ]
+        }
       },
       "CreateSourceRequest": {
+        "required": [
+          "strategy"
+        ],
         "type": "object",
         "properties": {
           "data": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": {
+              "type": "object"
+            }
           },
           "strategy": {
             "type": "string"
           }
-        },
-        "required": [
-          "strategy"
-        ]
+        }
       },
       "CreatePostRequest": {
+        "required": [
+          "library",
+          "tags",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "string"
           },
           "description": {
             "type": "string"
           },
           "tags": {
+            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EntityIdRequest"
-            },
-            "minItems": 1
+            }
           },
           "artists": {
             "type": "array",
@@ -2788,20 +2801,19 @@
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
           }
-        },
-        "required": [
-          "library",
-          "tags",
-          "title"
-        ]
+        }
       },
       "CreateMediaRequest": {
+        "required": [
+          "fileReferenceId",
+          "priority"
+        ],
         "type": "object",
         "properties": {
           "priority": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32",
-            "minimum": 0
+            "format": "int32"
           },
           "fileReferenceId": {
             "type": "string",
@@ -2813,18 +2825,19 @@
               "$ref": "#/components/schemas/EntityIdRequest"
             }
           }
-        },
-        "required": [
-          "fileReferenceId",
-          "priority"
-        ]
+        }
       },
       "CreateLibraryRequest": {
+        "required": [
+          "dislikesEnabled",
+          "likesEnabled",
+          "title"
+        ],
         "type": "object",
         "properties": {
           "title": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "string"
           },
           "likesEnabled": {
             "type": "boolean"
@@ -2832,12 +2845,7 @@
           "dislikesEnabled": {
             "type": "boolean"
           }
-        },
-        "required": [
-          "dislikesEnabled",
-          "likesEnabled",
-          "title"
-        ]
+        }
       },
       "CreateCollectionRequest": {
         "type": "object",
@@ -2857,14 +2865,23 @@
         }
       },
       "CreateBookRequest": {
+        "required": [
+          "descriptionHtml",
+          "library",
+          "rating",
+          "shortDescriptionHtml",
+          "status",
+          "title",
+          "views"
+        ],
         "type": "object",
         "properties": {
           "externalId": {
             "type": "string"
           },
           "title": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "string"
           },
           "descriptionHtml": {
             "type": "string"
@@ -2928,31 +2945,28 @@
             "type": "string",
             "format": "date-time"
           }
-        },
-        "required": [
-          "descriptionHtml",
-          "library",
-          "rating",
-          "shortDescriptionHtml",
-          "status",
-          "title",
-          "views"
-        ]
+        }
       },
       "CreateBookChapterRequest": {
+        "required": [
+          "book",
+          "chapterNumber",
+          "title",
+          "views"
+        ],
         "type": "object",
         "properties": {
           "externalId": {
             "type": "string"
           },
           "title": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "string"
           },
           "views": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int64",
-            "minimum": 0
+            "format": "int64"
           },
           "book": {
             "$ref": "#/components/schemas/EntityIdRequest"
@@ -2964,23 +2978,22 @@
             }
           },
           "chapterNumber": {
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "type": "integer",
-            "format": "int32",
-            "minimum": 0
+            "format": "int32"
           },
           "publishDate": {
             "type": "string",
             "format": "date-time"
           }
-        },
-        "required": [
-          "book",
-          "chapterNumber",
-          "title",
-          "views"
-        ]
+        }
       },
       "CreateBookChapterVersionRequest": {
+        "required": [
+          "chapter",
+          "contentHtml"
+        ],
         "type": "object",
         "properties": {
           "contentHtml": {
@@ -3002,24 +3015,23 @@
             "type": "string",
             "format": "date-time"
           }
-        },
-        "required": [
-          "chapter",
-          "contentHtml"
-        ]
+        }
       },
       "CreateArtistRequest": {
+        "required": [
+          "nicknames"
+        ],
         "type": "object",
         "properties": {
           "externalId": {
             "type": "string"
           },
           "nicknames": {
+            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ArtistNickname"
-            },
-            "minItems": 1
+            }
           },
           "sources": {
             "type": "array",
@@ -3028,9 +3040,9 @@
             }
           },
           "followersCount": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32",
-            "minimum": 0
+            "format": "int32"
           },
           "bioHtml": {
             "type": "string"
@@ -3045,11 +3057,7 @@
             "type": "string",
             "format": "date-time"
           }
-        },
-        "required": [
-          "followersCount",
-          "nicknames"
-        ]
+        }
       },
       "PatchTagRequest": {
         "type": "object",
@@ -3095,7 +3103,9 @@
         "properties": {
           "data": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": {
+              "type": "object"
+            }
           },
           "sourceStrategy": {
             "type": "string"
@@ -3441,14 +3451,14 @@
         "type": "object",
         "properties": {
           "page": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32",
-            "minimum": 0
+            "format": "int32"
           },
           "size": {
+            "minimum": 1,
             "type": "integer",
-            "format": "int32",
-            "minimum": 1
+            "format": "int32"
           },
           "sort": {
             "type": "array",

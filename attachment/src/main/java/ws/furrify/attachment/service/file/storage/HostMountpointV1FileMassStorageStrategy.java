@@ -10,6 +10,7 @@ import ws.furrify.core.exception.ServiceLogicException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -38,7 +39,8 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
             // Main file
             Files.move(file, destinationFilePath.toFile());
 
-            return UploadedFileReference.of(destinationFilePath.toUri(), destinationThumbnailFilePath.toUri(), getStorageServiceId());
+            String ext = Files.getFileExtension(file.getName());
+            return UploadedFileReference.of(URI.create("/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext)), URI.create("/" + id + "/thumbnail.jpg"), getStorageServiceId());
         } catch (IOException e) {
             log.error("Failed to process attachment file.", e);
 
@@ -69,7 +71,7 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
             // Main file
            java.nio.file.Files.createLink(destinationFilePath, existingFilePath);
 
-            return UploadedFileReference.of(destinationFilePath.toUri(), destinationThumbnailFilePath.toUri(), getStorageServiceId());
+            return UploadedFileReference.of(URI.create("/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext)), URI.create("/" + id + "/thumbnail.jpg"), getStorageServiceId());
         } catch (IOException e) {
             log.error("Failed to link attachment file.", e);
 

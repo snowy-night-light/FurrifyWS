@@ -23,7 +23,7 @@ public class PatchArtistRequest implements BasePatchEntityRequest<Artist, Artist
     private JsonNullable<List<@NotNull EntityIdRequest>> sources = JsonNullable.undefined();
 
     private JsonNullable<String> bioHtml = JsonNullable.undefined();
-    private JsonNullable<@NotNull @PositiveOrZero Integer> followersCount = JsonNullable.undefined();
+    private JsonNullable<@PositiveOrZero Integer> followersCount = JsonNullable.undefined();
     private JsonNullable<EntityIdRequest> avatar = JsonNullable.undefined();
 
     private JsonNullable<EntityIdRequest> library = JsonNullable.undefined();
