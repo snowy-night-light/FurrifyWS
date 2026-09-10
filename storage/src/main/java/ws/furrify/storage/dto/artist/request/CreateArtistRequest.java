@@ -24,7 +24,6 @@ public class CreateArtistRequest implements BaseCreateEntityRequest<Artist, Arti
     private List<@NotNull EntityIdRequest> sources;
 
     @PositiveOrZero
-    @NotNull
     private Integer followersCount;
 
     private String bioHtml;

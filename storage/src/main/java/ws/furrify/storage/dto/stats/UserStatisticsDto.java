@@ -15,6 +15,7 @@ import java.util.List;
 public class UserStatisticsDto {
 
     private long postsCount;
+    private long booksCount;
     private long collectionsCount;
     private long librariesCount;
     private long tagsCount;
@@ -34,6 +35,7 @@ public class UserStatisticsDto {
     @NoArgsConstructor
     public static class DailyUserStatisticsChartData {
         private ZonedDateTime date;
+        private long newBooksCount;
         private long newPostsCount;
         private long newCollectionsCount;
         private long newTagsCount;

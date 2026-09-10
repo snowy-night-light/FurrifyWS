@@ -7,7 +7,7 @@ import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiCl
 
 @Component
 @RequiredArgsConstructor
-public class MediaEntityListener {
+class MediaEntityListener {
 
     private final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
 

@@ -5,9 +5,14 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
+
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -19,8 +24,20 @@ import static ws.furrify.core.specification.EntitySpec.specEquals;
 public class SecurityContextUtils {
 
     private final static String USER_SCOPE_OWNER_VARIABLE_NAME = "ownerId";
-
     private final static String SERVICE_CLIENT_CLAIM = "service_client";
+    private static final InheritableThreadLocal<UUID> OVERRIDE_SUBJECT = new InheritableThreadLocal<>();
+
+    public static void setOverrideSubject(UUID subject) {
+        OVERRIDE_SUBJECT.set(subject);
+    }
+
+    public static void clearOverrideSubject() {
+        OVERRIDE_SUBJECT.remove();
+    }
+
+    public static Optional<UUID> getOverrideSubject() {
+        return Optional.ofNullable(OVERRIDE_SUBJECT.get());
+    }
 
     public static Optional<Jwt> getCurrentUserPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -33,6 +50,19 @@ public class SecurityContextUtils {
     }
 
     public static Optional<UUID> getCurrentSubject() {
+        if (getOverrideSubject().isPresent()) {
+            return getOverrideSubject();
+        }
+
+        if (isServiceToken()) {
+            RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+            if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
+                String ownerIdHeader = servletRequestAttributes.getRequest().getHeader("X-Furrify-User-Id");
+                if (ownerIdHeader != null) {
+                    return Optional.of(UUID.fromString(ownerIdHeader));
+                }
+            }
+        }
         return SecurityContextUtils.getCurrentUserPrincipal().map(Jwt::getSubject).map(UUID::fromString);
     }
 
@@ -42,8 +72,26 @@ public class SecurityContextUtils {
             return false;
         }
 
-        return authentication.getAuthorities().stream()
+        boolean hasRole = authentication.getAuthorities().stream()
                 .anyMatch(auth -> Objects.requireNonNull(auth.getAuthority()).equalsIgnoreCase("ROLE_" + SERVICE_CLIENT_CLAIM));
+
+        if (hasRole) {
+            return true;
+        }
+
+        if (authentication instanceof JwtAuthenticationToken jwtToken) {
+            Jwt jwt = jwtToken.getToken();
+            String preferredUsername = jwt.getClaimAsString("preferred_username");
+            if (preferredUsername != null && preferredUsername.startsWith("service-account-")) {
+                return true;
+            }
+            String azp = jwt.getClaimAsString("azp");
+            if (azp != null && azp.equals("keycloak-internal")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> getUserScopedSecuritySpec() {

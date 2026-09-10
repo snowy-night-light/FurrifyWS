@@ -3,15 +3,16 @@ package ws.furrify.worker.dto.worker.plugin.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import ws.furrify.core.entity.request.BaseCreateEntityRequest;
+import lombok.EqualsAndHashCode;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
+import ws.furrify.worker.dto.worker.request.CreateUserWorkerTaskRequest;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class CreatePluginImportUserWorkerTaskRequest implements BaseCreateEntityRequest<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO> {
+public class CreatePluginImportUserWorkerTaskRequest extends CreateUserWorkerTaskRequest<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO> {
 
     @NotNull
     private UUID fileReferenceId;
@@ -20,7 +21,4 @@ public class CreatePluginImportUserWorkerTaskRequest implements BaseCreateEntity
 
     @NotBlank
     private String provider;
-
-    @NotNull
-    private ZonedDateTime startAt;
 }

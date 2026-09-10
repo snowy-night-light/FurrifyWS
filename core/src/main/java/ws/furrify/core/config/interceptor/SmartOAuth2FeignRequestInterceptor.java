@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import ws.furrify.core.utils.SecurityContextUtils;
 
 public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
 
@@ -28,8 +29,6 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
 
     @Override
     public void apply(RequestTemplate template) {
-
-        // 1. Try to propagate the user's HTTP token.
         RequestAttributes requestAttributes =
                 RequestContextHolder.getRequestAttributes();
 
@@ -45,7 +44,6 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
             }
         }
 
-        // 2. No servlet request / no user token -> use service client.
         OAuth2AuthorizeRequest authorizeRequest =
                 OAuth2AuthorizeRequest
                         .withClientRegistrationId(KEYCLOAK_INTERNAL_CONFIG_ID)
@@ -65,6 +63,10 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
         template.header(
                 HttpHeaders.AUTHORIZATION,
                 "Bearer " + authorizedClient.getAccessToken().getTokenValue()
+        );
+
+        SecurityContextUtils.getCurrentSubject().ifPresent(subject ->
+                template.header("X-Furrify-User-Id", subject.toString())
         );
     }
 }

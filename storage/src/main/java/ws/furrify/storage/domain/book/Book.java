@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
+@EntityListeners(BookEntityListener.class)
 @Getter
 @Setter
 @ToString
@@ -66,7 +67,11 @@ public class Book extends UserScopedEntity {
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "book")
     List<BookChapter> chapters;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @Column(nullable = false)
+    @Builder.Default
+    Integer chaptersCount = 0;
+
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     List<Source> sources;
 
     @ManyToOne(optional = false)

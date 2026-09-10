@@ -70,5 +70,4 @@ public abstract class BookChapterDTOMapper implements BaseDTOMapper<BookChapter,
         }
         return bookChapterVersionDTOMapper.toEntityList(versions, context);
     }
-
 }

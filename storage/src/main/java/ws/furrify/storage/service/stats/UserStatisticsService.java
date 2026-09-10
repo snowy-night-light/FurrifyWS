@@ -9,6 +9,8 @@ import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.ArtistRepository;
+import ws.furrify.storage.domain.book.Book;
+import ws.furrify.storage.domain.book.BookRepository;
 import ws.furrify.storage.domain.collection.Collection;
 import ws.furrify.storage.domain.collection.CollectionRepository;
 import ws.furrify.storage.domain.library.Library;
@@ -34,6 +36,7 @@ import static ws.furrify.core.specification.EntitySpec.specLessThanOrEqual;
 public class UserStatisticsService {
 
     private final PostRepository postRepository;
+    private final BookRepository bookRepository;
     private final CollectionRepository collectionRepository;
     private final LibraryRepository libraryRepository;
     private final TagRepository tagRepository;
@@ -71,6 +74,7 @@ public class UserStatisticsService {
         long librariesCount = libraryRepository.count(SecurityContextUtils.<Library>getUserScopedSecuritySpec().specification());
         long tagsCount = tagRepository.count(SecurityContextUtils.<Tag>getUserScopedSecuritySpec().specification());
         long artistsCount = artistRepository.count(SecurityContextUtils.<Artist>getUserScopedSecuritySpec().specification());
+        long booksCount = bookRepository.count(SecurityContextUtils.<Book>getUserScopedSecuritySpec().specification());
 
         // 7 days chart
         List<UserStatisticsDto.DailyUserStatisticsChartData> last7DaysChart = new ArrayList<>();
@@ -105,6 +109,14 @@ public class UserStatisticsService {
                             .specification()
             );
 
+            long newBooks = bookRepository.count(
+                    EntitySpec.from(SecurityContextUtils.<Book>getUserScopedSecuritySpec())
+                            .and().where("createdAt", specGreaterThanOrEqual(startOfDay))
+                            .and().where("createdAt", specLessThanOrEqual(endOfDay))
+                            .build()
+                            .specification()
+            );
+
             long newArtists = artistRepository.count(
                     EntitySpec.from(SecurityContextUtils.<Artist>getUserScopedSecuritySpec())
                             .and().where("createdAt", specGreaterThanOrEqual(startOfDay))
@@ -118,6 +130,7 @@ public class UserStatisticsService {
                     .newPostsCount(newPosts)
                     .newCollectionsCount(newCollections)
                     .newTagsCount(newTags)
+                    .newBooksCount(newBooks)
                     .newArtistsCount(newArtists)
                     .build());
         }
@@ -135,6 +148,7 @@ public class UserStatisticsService {
                 .postsCount(postsCount)
                 .collectionsCount(collectionsCount)
                 .librariesCount(librariesCount)
+                .booksCount(booksCount)
                 .tagsCount(tagsCount)
                                 .artistsCount(artistsCount)
                 .imagesCount(imagesCount)
