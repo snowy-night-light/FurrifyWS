@@ -1,7 +1,9 @@
 package ws.furrify.storage.dto.book.request;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
@@ -39,7 +41,11 @@ public class CreateBookRequest implements BaseCreateEntityRequest<Book, BookDTO>
     private BookRating rating;
     @NotNull
     private Long views;
+    @PositiveOrZero
+    @Nullable
     private Integer likes;
+    @PositiveOrZero
+    @Nullable
     private Integer dislikes;
     @NotNull
     private EntityIdRequest library;

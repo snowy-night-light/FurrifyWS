@@ -14,7 +14,7 @@ import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 
 import java.util.UUID;
 
-public abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorkerTask, DTO extends UserWorkerTaskDTO<ENTITY>, CREATE_REQ extends CreateUserWorkerTaskRequest<ENTITY, DTO>, PATCH_REQ extends PatchUserWorkerTaskRequest<ENTITY, DTO>> extends BaseEntityRestController<ENTITY, DTO, CREATE_REQ, PATCH_REQ> {
+abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorkerTask, DTO extends UserWorkerTaskDTO<ENTITY>, CREATE_REQ extends CreateUserWorkerTaskRequest<ENTITY, DTO>, PATCH_REQ extends PatchUserWorkerTaskRequest<ENTITY, DTO>> extends BaseEntityRestController<ENTITY, DTO, CREATE_REQ, PATCH_REQ> {
     private final UserWorkerTaskBaseEntityService<ENTITY, DTO, PATCH_REQ> entityCrudService;
 
     public UserWorkerTaskBaseRestController(BaseRequestMapper<ENTITY, DTO, CREATE_REQ> requestDtoMapper, UserWorkerTaskBaseEntityService<ENTITY, DTO, PATCH_REQ> entityCrudService) {
@@ -24,7 +24,7 @@ public abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorker
 
     @PostMapping("/{id}/execute")
     @ResponseStatus(HttpStatus.OK)
-    protected void triggerExecution(@PathVariable UUID id) {
+    public void triggerExecution(@PathVariable UUID id) {
         entityCrudService.triggerExecution(id);
     }
 }

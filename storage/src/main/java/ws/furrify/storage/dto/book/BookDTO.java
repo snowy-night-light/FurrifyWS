@@ -1,5 +1,6 @@
 package ws.furrify.storage.dto.book;
 
+import jakarta.annotation.Nullable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,8 @@ import ws.furrify.storage.dto.tag.TagDTO;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -37,7 +40,9 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private Long totalWordCount;
 
     private Long views;
+    @Nullable
     private Integer likes;
+    @Nullable
     private Integer dislikes;
 
     private BookStatus status;
@@ -52,6 +57,11 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
 
     private LibraryDTO library;
 
+    private Map<String, UUID> formatReferenceIds;
+    private UUID activeWorkerTaskId;
+
+
     private ZonedDateTime publishDate;
     private ZonedDateTime externalUpdatedAt;
+    private Boolean needsBookFileGeneration;
 }

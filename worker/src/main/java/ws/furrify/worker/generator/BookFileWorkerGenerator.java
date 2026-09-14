@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.*;
 import org.springframework.web.multipart.MultipartFile;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.shared.StandardMultipartFile;
 import ws.furrify.core.utils.EntitySpecUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.BookChapterV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.BookChapterVersionV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.BookV1RestControllerApiClient;
+import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,47 +30,91 @@ public abstract class BookFileWorkerGenerator {
 
     abstract public String getExtension();
 
-    public UUID generate(UUID bookId) {
+    /**
+     * Orchestrates the book file generation process by fetching book metadata, 
+     * gathering chapter data, invoking the specific file generator, and uploading the result.
+     *
+     * @param task The worker task containing the book reference ID
+     * @return The UUID of the uploaded attachment file
+     * @throws RuntimeException if the book is not found or file upload fails
+     */
+    public UUID generate(BookFileUserWorkerTaskDTO task) {
+        UUID bookId = task.getSourceBookReferenceId();
+        
+        // Fetch the book metadata from the storage service
         BookDTO bookDto = bookV1RestControllerApiClient.bookV1RestControllerGetById(bookId).getBody();
         if (bookDto == null) {
             throw new RuntimeException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(bookId));
         }
 
+        // Fetch all chapters for this book
         String chapterSpec = "book.id = " + bookId;
         String encodedChapterSpec = EntitySpecUtils.encodeSpecToBase64(chapterSpec);
         Pageable pageable = new Pageable().page(0).size(1000);
 
         var chaptersResponse = bookChapterV1RestControllerApiClient.bookChapterV1RestControllerGetAllPaged(pageable, encodedChapterSpec).getBody();
-        List<BookChapterDTO> chapters = chaptersResponse != null && chaptersResponse.getContent() != null ? chaptersResponse.getContent() : Collections.emptyList();
 
+        List<BookChapterDTO> chapters;
+        if (chaptersResponse != null && chaptersResponse.getContent() != null) {
+            chapters = chaptersResponse.getContent();
+        } else {
+            chapters = Collections.emptyList();
+        }
+
+        // Collect the latest version data for each chapter
         List<ChapterData> chapterDataList = new ArrayList<>();
         for (BookChapterDTO chapter : chapters) {
             String versionSpec = "chapter.id = " + chapter.getId();
             String encodedVersionSpec = EntitySpecUtils.encodeSpecToBase64(versionSpec);
+
             var versionsResponse = bookChapterVersionV1RestControllerApiClient.bookChapterVersionV1RestControllerGetAllPaged(pageable, encodedVersionSpec).getBody();
-            List<BookChapterVersionDTO> versions = versionsResponse != null && versionsResponse.getContent() != null ? versionsResponse.getContent() : Collections.emptyList();
 
-            if (versions.isEmpty()) continue;
+            List<BookChapterVersionDTO> versions;
+            if (versionsResponse != null && versionsResponse.getContent() != null) {
+                versions = versionsResponse.getContent();
+            } else {
+                versions = Collections.emptyList();
+            }
 
+            // Skip chapters without any text content versions
+            if (versions.isEmpty()) {
+                continue;
+            }
+
+            // Find the most recently updated version of the chapter
             BookChapterVersionDTO latestVersion = versions.stream()
-                    .max(Comparator.comparing(v -> v.getContentUpdatedAt() != null ? v.getContentUpdatedAt() : (v.getCreatedAt() != null ? v.getCreatedAt() : java.time.ZonedDateTime.now().minusYears(100))))
+                    .max(Comparator.comparing(v -> {
+                        if (v.getContentUpdatedAt() != null) {
+                            return v.getContentUpdatedAt();
+                        } else {
+                            return v.getCreatedAt() != null ? v.getCreatedAt() : java.time.ZonedDateTime.now().minusYears(100);
+                        }
+                    }))
                     .orElse(null);
 
             chapterDataList.add(new ChapterData(chapter, latestVersion));
         }
 
-        File tmpFile = generateFile(bookDto, chapterDataList);
+        // Delegate to the child class impl
+        File tmpFile = generateFile(bookDto, chapterDataList, task);
 
+        // Upload the generated file to the storage service as an attachment
         try {
             byte[] fileContent = Files.readAllBytes(tmpFile.toPath());
-            MultipartFile multipartFile = new ws.furrify.core.shared.StandardMultipartFile("file", tmpFile.getName(), getContentType(), fileContent);
+            MultipartFile multipartFile = new StandardMultipartFile("file", tmpFile.getName(), getContentType(), fileContent);
 
             AttachmentFileDTO attachmentResponse = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerSave(tmpFile.getName(), multipartFile).getBody();
             if (attachmentResponse != null) {
                 return attachmentResponse.getId();
+            } else {
+                log.error("Failed to upload generated file, response body was null (possibly an API error)");
+
+                throw new RuntimeException("Failed to upload generated file, response body was null (possibly an API error)");
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to read and upload generated file", e);
+            log.error("Failed to read and upload generated file: {}", e.getMessage());
+
+            throw new RuntimeException("Failed to read and upload generated file");
         } finally {
             try {
                 Files.deleteIfExists(tmpFile.toPath());
@@ -76,7 +122,6 @@ public abstract class BookFileWorkerGenerator {
                 log.warn("Failed to delete temporary file {}: {}", tmpFile.getAbsolutePath(), e.getMessage());
             }
         }
-        return null;
     }
 
     /**
@@ -84,9 +129,10 @@ public abstract class BookFileWorkerGenerator {
      *
      * @param bookDto The book data
      * @param chapters List of chapters with their latest versions
+     * @param task The task entity to save errors and warns to
      * @return The generated file, which will be uploaded and then deleted
      */
-    protected abstract File generateFile(BookDTO bookDto, List<ChapterData> chapters);
+    protected abstract File generateFile(BookDTO bookDto, List<ChapterData> chapters, BookFileUserWorkerTaskDTO task);
 
     /**
      * Subclasses provide the appropriate content type (e.g., application/epub+zip)

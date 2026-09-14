@@ -17,9 +17,16 @@ import static ws.furrify.core.specification.EntitySpec.specEquals;
 public interface BaseEntityRepository<ENTITY extends BaseEntity> extends JpaRepository<ENTITY, UUID>, JpaSpecificationExecutor<ENTITY> {
 
     default Optional<ENTITY> findById(UUID id, EntitySpecResult<ENTITY> entitySpec) {
-        return findOne(
-                EntitySpec.<ENTITY>specBuilder().where("id", specEquals(id)).and(entitySpec).build().specification()
-        );
+        if (entitySpec == null || entitySpec.specString().isEmpty()) {
+            return findById(id);
+        }
+        
+        // Bypass Hibernate 6 Criteria API EAGER element collection inner-join bug
+        // by verifying security rules via exists(), then fetching normally via standard findById(id).
+        if (!existsById(id, entitySpec)) {
+            return Optional.empty();
+        }
+        return findById(id);
     }
 
     default long count(EntitySpecResult<ENTITY> entitySpec) {
@@ -31,6 +38,9 @@ public interface BaseEntityRepository<ENTITY extends BaseEntity> extends JpaRepo
     }
 
     default boolean existsById(UUID id, EntitySpecResult<ENTITY> entitySpec) {
+        if (entitySpec == null || entitySpec.specString().isEmpty()) {
+            return existsById(id);
+        }
         return exists(
                 EntitySpec.<ENTITY>specBuilder()
                         .where("id", EntitySpec.specEquals(id))

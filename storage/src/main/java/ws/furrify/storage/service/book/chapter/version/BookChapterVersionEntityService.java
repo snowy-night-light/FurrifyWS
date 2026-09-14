@@ -7,11 +7,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
+import ws.furrify.core.exception.Errors;
+import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
@@ -20,6 +21,7 @@ import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 import ws.furrify.storage.dto.book.chapter.version.request.PatchBookChapterVersionRequest;
+import ws.furrify.storage.service.book.BookFileGenerationService;
 import ws.furrify.storage.service.book.chapter.BookChapterEntityService;
 import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
@@ -33,12 +35,14 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
     private final BookChapterEntityService bookChapterEntityService;
     private final AsyncUtils asyncUtils;
+    private final BookFileGenerationService bookFileGenerationService;
 
     @Autowired
-    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService, AsyncUtils asyncUtils) {
+    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService, AsyncUtils asyncUtils, @Lazy BookFileGenerationService bookFileGenerationService) {
         super(entityRepository, dtoMapper);
         this.bookChapterEntityService = bookChapterEntityService;
         this.asyncUtils = asyncUtils;
+        this.bookFileGenerationService = bookFileGenerationService;
     }
 
     @Override
@@ -52,12 +56,25 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         }
 
         // If content is updated, update the contentUpdatedAt field unless passed directly in dto
-        if (!patchDto.getContentUpdatedAt().isPresent() && patchDto.getContentHtml().isPresent()) {
-            patchDto.setContentUpdatedAt(JsonNullable.of(ZonedDateTime.now()));
+        boolean contentChanged;
+        if (patchDto.getContentHtml().isPresent()) {
+            contentChanged = true;
+            if (!patchDto.getContentUpdatedAt().isPresent()) {
+                patchDto.setContentUpdatedAt(JsonNullable.of(ZonedDateTime.now()));
+            }
+        } else {
+            contentChanged = false;
         }
 
         BookChapterVersionDTO bookChapterVersionDTO = super.patchById(id, patchDto);
-        asyncUtils.runAsync(() -> this.countChapterWordsAsync(bookChapterVersionDTO));
+        asyncUtils.runAsyncAfterCommit(() -> {
+            this.countChapterWordsAsync(bookChapterVersionDTO);
+            if (contentChanged) {
+                bookFileGenerationService.scheduleGeneration(bookChapterVersionDTO.getChapter().getBook().getId());
+            }
+        });
+
+
 
         return bookChapterVersionDTO;
     }
@@ -82,29 +99,43 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         }
 
         BookChapterVersionDTO createdDto = super.create(dto);
-        asyncUtils.runAsync(() -> this.countChapterWordsAsync(createdDto));
+        asyncUtils.runAsyncAfterCommit(() -> {
+            this.countChapterWordsAsync(createdDto);
+
+            bookFileGenerationService.scheduleGeneration(createdDto.getChapter().getBook().getId());
+        });
 
         return createdDto;
     }
 
-    @Async
+    @Override
+    @Transactional
+    public void deleteById(UUID id) {
+        BookChapterVersionDTO version = this.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        UUID bookId = version.getChapter().getBook().getId();
+        super.deleteById(id);
+        bookFileGenerationService.scheduleGeneration(bookId);
+    }
+
     @Transactional
     protected void countChapterWordsAsync(BookChapterVersionDTO bookChapterVersionDTO) {
         String content = bookChapterVersionDTO.getContentHtml();
 
         long wordCount = 0;
 
-        boolean word = false;
-        int endOfLine = content.length() - 1;
+        if (content != null) {
+            boolean word = false;
+            int endOfLine = content.length() - 1;
 
-        for (int i = 0; i < content.length(); i++) {
-            if (Character.isLetter(content.charAt(i)) && i != endOfLine) {
-                word = true;
-            } else if (!Character.isLetter(content.charAt(i)) && word) {
-                wordCount++;
-                word = false;
-            } else if (Character.isLetter(content.charAt(i)) && i == endOfLine) {
-                wordCount++;
+            for (int i = 0; i < content.length(); i++) {
+                if (Character.isLetter(content.charAt(i)) && i != endOfLine) {
+                    word = true;
+                } else if (!Character.isLetter(content.charAt(i)) && word) {
+                    wordCount++;
+                    word = false;
+                } else if (Character.isLetter(content.charAt(i)) && i == endOfLine) {
+                    wordCount++;
+                }
             }
         }
 

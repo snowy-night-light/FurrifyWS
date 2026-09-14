@@ -17,6 +17,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import java.util.List;
+
+import org.springframework.security.access.AccessDeniedException;
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 
@@ -37,6 +41,24 @@ public class SecurityContextUtils {
 
     public static Optional<UUID> getOverrideSubject() {
         return Optional.ofNullable(OVERRIDE_SUBJECT.get());
+    }
+
+    public static void mockFeignClientSecurityContext(UUID ownerId) {
+        Jwt jwt = Jwt.withTokenValue("dummy")
+                .header("alg", "none")
+                .claim("sub", ownerId.toString())
+                .claim("realm_access", Map.of("roles", List.of("ADMIN")))
+                .claim("preferred_username", "service-account-worker")
+                .build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new JwtAuthenticationToken(jwt, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_admin"), new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_service_client")))
+        );
+        setOverrideSubject(ownerId);
+    }
+
+    public static void clearFeignClientSecurityContext() {
+        clearOverrideSubject();
+        SecurityContextHolder.clearContext();
     }
 
     public static Optional<Jwt> getCurrentUserPrincipal() {
@@ -60,10 +82,22 @@ public class SecurityContextUtils {
                 String ownerIdHeader = servletRequestAttributes.getRequest().getHeader("X-Furrify-User-Id");
                 if (ownerIdHeader != null) {
                     return Optional.of(UUID.fromString(ownerIdHeader));
+                } else {
+                    throw new AccessDeniedException("Missing X-Furrify-User-Id header for service client.");
                 }
             }
         }
         return SecurityContextUtils.getCurrentUserPrincipal().map(Jwt::getSubject).map(UUID::fromString);
+    }
+
+    public static boolean isAdminToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .anyMatch(auth -> Objects.requireNonNull(auth.getAuthority()).equalsIgnoreCase("ROLE_admin"));
     }
 
     public static boolean isServiceToken() {
@@ -97,7 +131,7 @@ public class SecurityContextUtils {
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> getUserScopedSecuritySpec() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || isServiceToken()) {
+        if (authentication == null || isServiceToken() || isAdminToken()) {
             return EntitySpec.unrestricted();
         }
 

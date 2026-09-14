@@ -1,14 +1,16 @@
 package ws.furrify.worker.controller;
 
-import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import tools.jackson.databind.json.JsonMapper;
 import org.springframework.http.HttpStatus;
-import ws.furrify.core.entity.request.EmptyPatchEntityRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
+import ws.furrify.openapi.gen.storage.api.LibraryV1RestControllerApiClient;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import ws.furrify.worker.WorkerApplication;
@@ -16,21 +18,33 @@ import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTaskRepository;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.plugin.request.CreatePluginImportUserWorkerTaskRequest;
+import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTaskRequest;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(
         classes = WorkerApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudControllerTest<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, CreatePluginImportUserWorkerTaskRequest, EmptyPatchEntityRequest<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO>> {
+public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudControllerTest<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, CreatePluginImportUserWorkerTaskRequest, PatchPluginImportUserWorkerTaskRequest> {
 
     @Autowired
     private PluginImportUserWorkerTaskRepository pluginImportUserWorkerTaskRepository;
+
+    @MockitoBean
+    private AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
+
+    @MockitoBean
+    private LibraryV1RestControllerApiClient libraryV1RestControllerApiClient;
+
+    @MockitoBean
+    private ws.furrify.core.service.ExternalPluginLoaderService externalPluginLoaderService;
 
     @Autowired
     protected PluginImportUserWorkerTaskV1RestControllerIT(JsonMapper jsonMapper) {
@@ -40,6 +54,15 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
     @Override
     protected String getControllerPath() {
         return "/v1/user/workers/plugin/import";
+    }
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new org.openapitools.model.AttachmentFileDTO()));
+        when(libraryV1RestControllerApiClient.libraryV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new org.openapitools.model.LibraryDTO()));
+        ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf mockPlugin = org.mockito.Mockito.mock(ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf.class);
+        when(mockPlugin.getProviderName()).thenReturn("dummy-provider");
+        when(externalPluginLoaderService.getPlugins(ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf.class)).thenReturn(java.util.List.of(mockPlugin));
     }
 
     @Override
@@ -69,6 +92,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
                         .provider("dummy-provider")
+                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
         );
@@ -90,6 +115,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
                         .provider("dummy-provider")
+                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
         );
@@ -98,6 +125,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
                         .provider("dummy-provider")
+                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
         );
@@ -110,8 +139,6 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         });
     }
 
-    record DummyPatch() implements EmptyPatchEntityRequest<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO> {}
-
     @Override
     @Test
     protected void testPatch() {
@@ -120,15 +147,15 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
                         .provider("dummy-provider")
+                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
         );
         
-        try {
-            super.patch(task.getId(), new DummyPatch());
-        } catch (Throwable e) {
-            // Ignored, might be a 405 Method Not Allowed or 400 Bad Request since it's unsupported
-        }
+        PatchPluginImportUserWorkerTaskRequest patch = new PatchPluginImportUserWorkerTaskRequest();
+        
+        assertDoesNotThrow(() -> super.patch(task.getId(), patch));
     }
 
     @Override
@@ -139,6 +166,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
                         .provider("dummy-provider")
+                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
         );
@@ -153,6 +182,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
                         .provider("dummy-provider")
+                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
         );

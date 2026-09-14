@@ -1,10 +1,11 @@
 package ws.furrify.storage.service.book;
 
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -15,6 +16,8 @@ import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
+import ws.furrify.core.utils.AsyncUtils;
+import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
 import ws.furrify.storage.dto.book.BookDTO;
@@ -30,11 +33,15 @@ import ws.furrify.storage.service.tag.TagEntityService;
 import ws.furrify.storage.shared.exception.StorageErrors;
 import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 
 @Service
+@Slf4j
 public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, PatchBookRequest> {
 
     private final MediaEntityService mediaEntityService;
@@ -43,9 +50,12 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     private final ArtistEntityService artistEntityService;
     private final LibraryEntityService libraryEntityService;
     private final SourceEntityService sourceEntityService;
+    private final BookFileGenerationService bookFileGenerationService;
+    private final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
+    private final AsyncUtils asyncUtils;
 
     @Autowired
-    public BookEntityService(BaseEntityRepository<Book> entityRepository, BaseDTOMapper<Book, BookDTO, PatchBookRequest> dtoMapper, MediaEntityService mediaEntityService, BookChapterEntityService bookChapterEntityService, TagEntityService tagEntityService, ArtistEntityService artistEntityService, LibraryEntityService libraryEntityService, SourceEntityService sourceEntityService) {
+    public BookEntityService(BaseEntityRepository<Book> entityRepository, BaseDTOMapper<Book, BookDTO, PatchBookRequest> dtoMapper, MediaEntityService mediaEntityService, BookChapterEntityService bookChapterEntityService, TagEntityService tagEntityService, ArtistEntityService artistEntityService, LibraryEntityService libraryEntityService, SourceEntityService sourceEntityService, @Lazy BookFileGenerationService bookFileGenerationService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, AsyncUtils asyncUtils) {
         super(entityRepository, dtoMapper);
         this.mediaEntityService = mediaEntityService;
         this.bookChapterEntityService = bookChapterEntityService;
@@ -53,6 +63,9 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         this.artistEntityService = artistEntityService;
         this.libraryEntityService = libraryEntityService;
         this.sourceEntityService = sourceEntityService;
+        this.bookFileGenerationService = bookFileGenerationService;
+        this.attachmentFileV1RestControllerApiClient = attachmentFileV1RestControllerApiClient;
+        this.asyncUtils = asyncUtils;
     }
 
     @Override
@@ -71,6 +84,8 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         // Sanitize html
         dto.setDescriptionHtml(sanitizeHtml(dto.getDescriptionHtml()));
         dto.setShortDescriptionHtml(sanitizeHtml(dto.getShortDescriptionHtml()));
+
+        dto.setNeedsBookFileGeneration(true);
 
         // Verify user can update likes and dislikes based on library setting
         LibraryDTO libraryDTO = dto.getLibrary();
@@ -101,14 +116,44 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         LibraryDTO libraryDTO = super.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id))).getLibrary();
         checkLikesEnabled(libraryDTO, patchDto.getLikes().orElse(null), patchDto.getDislikes().orElse(null));
 
-        return super.patchById(id, patchDto);
+        boolean needsRegeneration = patchDto.getTitle().isPresent() ||
+                patchDto.getDescriptionHtml().isPresent() ||
+                patchDto.getShortDescriptionHtml().isPresent() ||
+                patchDto.getArtists().isPresent() ||
+                patchDto.getTags().isPresent() ||
+                patchDto.getCover().isPresent();
+
+        BookDTO patchedBook = super.patchById(id, patchDto);
+
+        if (needsRegeneration) {
+            bookFileGenerationService.scheduleGeneration(id);
+        }
+
+        return patchedBook;
     }
 
     @Override
     public void deleteById(UUID id) {
+        BookDTO bookDTO = super.findById(id).orElse(null);
+        if (bookDTO != null && bookDTO.getFormatReferenceIds() != null && !bookDTO.getFormatReferenceIds().isEmpty()) {
+            bookDTO.getFormatReferenceIds().values().forEach(attachmentId -> {
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try {
+                        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(attachmentId);
+                    } catch (Exception e) {
+                        log.error("Failed to delete format reference attachment file {} during book {} deletion", attachmentId, id, e);
+                    }
+                });
+            });
+        }
+
         this.mediaEntityService.deleteById(id);
 
         super.deleteById(id);
+    }
+
+    private String sanitizeHtml(String html) {
+        return ContentHtmlSanitizerUtil.sanitize(html);
     }
 
     private void checkLikesEnabled(LibraryDTO libraryDTO, Integer likes, Integer dislikes) {
@@ -121,11 +166,6 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         }
     }
 
-    private String sanitizeHtml(String html) {
-        return ContentHtmlSanitizerUtil.sanitize(html);
-    }
-
-    @Async
     @Transactional
     public void updateBookTotalWordCountAsync(UUID bookId) {
         BookDTO bookDTO = this.findById(bookId).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(bookId)));
@@ -134,7 +174,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
         Page<BookChapterDTO> bookChapters = this.bookChapterEntityService.getAllPaged(entitySpecResult.specString(), PageRequest.of(0, 100));
         Long bookWordCount = bookChapters.get()
-                .map(BookChapterDTO::getCurrentNumberOfWords)
+                .map(c -> c.getCurrentNumberOfWords() != null ? c.getCurrentNumberOfWords() : 0L)
                 .reduce(0L, Long::sum);
 
         bookDTO.setTotalWordCount(bookWordCount);
@@ -142,4 +182,64 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         this.internalPutById(bookId, bookDTO);
     }
 
+    @Transactional
+    public void markNeedsGeneration(UUID bookId, boolean needsGeneration) {
+        BookDTO book = this.findById(bookId).orElse(null);
+        if (book != null) {
+            book.setNeedsBookFileGeneration(needsGeneration);
+            this.internalPutById(bookId, book);
+        }
+    }
+
+    @Transactional
+    public void updateBookFileWorkerTaskInfo(UUID bookId, Map<String, UUID> newFormatReferenceIds, UUID newActiveWorkerTaskId) {
+        BookDTO book = this.findById(bookId).orElse(null);
+        if (book != null) {
+            if (newFormatReferenceIds != null) {
+                if (book.getFormatReferenceIds() != null) {
+                    Set<UUID> oldAttachments = new HashSet<>(book.getFormatReferenceIds().values());
+                    Set<UUID> newAttachments = new HashSet<>(newFormatReferenceIds.values());
+                    
+                    oldAttachments.removeAll(newAttachments);
+                    
+                    deleteAttachmentFilesAsync(bookId, oldAttachments);
+                    book.getFormatReferenceIds().clear();
+                    book.getFormatReferenceIds().putAll(newFormatReferenceIds);
+                } else {
+                    book.setFormatReferenceIds(newFormatReferenceIds);
+                }
+            }
+            book.setActiveWorkerTaskId(newActiveWorkerTaskId);
+            this.internalPutById(bookId, book);
+        }
+    }
+
+    @Transactional
+    public void assignWorkerTask(UUID bookId, UUID workerTaskId) {
+        BookDTO book = this.findById(bookId).orElse(null);
+        if (book != null) {
+            book.setActiveWorkerTaskId(workerTaskId);
+            if (book.getFormatReferenceIds() != null) {
+                deleteAttachmentFilesAsync(bookId, new HashSet<>(book.getFormatReferenceIds().values()));
+                book.getFormatReferenceIds().clear();
+            }
+            book.setNeedsBookFileGeneration(false);
+            this.internalPutById(bookId, book);
+        }
+    }
+
+    /**
+     * Deletes attachment file AFTER the successful commit from the transaction it was called from.
+     */
+    private void deleteAttachmentFilesAsync(UUID bookId, Set<UUID> attachmentIds) {
+        attachmentIds.forEach(attachmentId -> {
+            asyncUtils.runAsyncAfterCommit(() -> {
+                try {
+                    attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(attachmentId);
+                } catch (Exception e) {
+                    log.error("Failed to delete format reference attachment file {} during book {}", attachmentId, bookId, e);
+                }
+            });
+        });
+    }
 }

@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.worker.domain.worker.UserWorkerTask;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -20,9 +21,10 @@ public class BookFileUserWorkerTask extends UserWorkerTask {
     @Column(nullable = false)
     UUID sourceBookReferenceId;
 
-    @ElementCollection
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "book_file_user_worker_task_format_id_map",
             joinColumns = {@JoinColumn(name = "book_file_user_work_task_id", referencedColumnName = "id")})
     @MapKeyColumn(name = "format")
-    HashMap<String, UUID> formatReferenceIds;
+    Map<String, UUID> formatReferenceIds = new HashMap<>();
 }
