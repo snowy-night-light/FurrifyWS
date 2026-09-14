@@ -25,6 +25,7 @@ public enum Errors implements ErrorMessageFormatterIntf {
     STRATEGY_NOT_FOUND("Strategy [strategy={0}] was not found."),
     REFERENCE_NOT_FOUND("Reference with [id={0}] has not been found in external service."),
     UNRECOGNIZED_PROVIDER("Plugin provider [provider={0}] is not found. Make sure to check your plugin installation directory."),
+    EXTENSION_NOT_ALLOWED("File extension [extension={0}] is not supported by plugin [provider={1}]. Allowed extensions: {2}."),
     DUPLICATE_STRATEGY_IN_APPLICATION("Strategy with name [strategy={0}] is duplicated within application."),
     BAD_REQUEST("Given request data is invalid."),
     SERVICE_TEMPORARILY_UNAVAILABLE("There was an issue contacting an external service. Please try again later."),
