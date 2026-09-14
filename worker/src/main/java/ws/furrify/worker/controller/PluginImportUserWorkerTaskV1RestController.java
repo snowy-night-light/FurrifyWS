@@ -13,7 +13,7 @@ import ws.furrify.worker.service.worker.plugin.PluginImportUserWorkerTaskEntityS
 
 @RestController
 @RequestMapping("/v1/user/workers/plugin/import")
-class PluginImportUserWorkerTaskV1RestController extends UserWorkerTaskBaseRestController<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, CreatePluginImportUserWorkerTaskRequest, PatchPluginImportUserWorkerTaskRequest> {
+public class PluginImportUserWorkerTaskV1RestController extends UserWorkerTaskBaseRestController<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, CreatePluginImportUserWorkerTaskRequest, PatchPluginImportUserWorkerTaskRequest> {
 
     @Autowired
     public PluginImportUserWorkerTaskV1RestController(BaseRequestMapper<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, CreatePluginImportUserWorkerTaskRequest> requestDtoMapper, PluginImportUserWorkerTaskEntityService entityCrudService) {

@@ -2,11 +2,9 @@ package ws.furrify.storage.domain.book;
 
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 class BookEntityListener {
 
     @PreUpdate

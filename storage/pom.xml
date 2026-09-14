@@ -143,6 +143,19 @@
 							<apiPackage>ws.furrify.openapi.gen.attachment.api</apiPackage>
 						</configuration>
 					</execution>
+					<execution>
+						<id>generate-worker-client</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<additionalProperties>
+								<additionalProperty>serviceName=furrify-worker-service</additionalProperty>
+							</additionalProperties>
+							<inputSpec>${project.baseUri}src/main/resources/api/worker.json</inputSpec>
+							<apiPackage>ws.furrify.openapi.gen.worker.api</apiPackage>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>

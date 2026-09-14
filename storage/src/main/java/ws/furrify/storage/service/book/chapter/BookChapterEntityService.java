@@ -23,6 +23,7 @@ import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
 import ws.furrify.storage.dto.book.chapter.request.PatchBookChapterRequest;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 import ws.furrify.storage.service.book.BookEntityService;
+import ws.furrify.storage.service.book.BookFileGenerationService;
 import ws.furrify.storage.service.book.chapter.version.BookChapterVersionEntityService;
 import ws.furrify.storage.service.source.SourceEntityService;
 import ws.furrify.storage.shared.exception.StorageErrors;
@@ -39,14 +40,16 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
     private final BookChapterVersionEntityService bookChapterVersionEntityService;
     private final SourceEntityService sourceEntityService;
     private final AsyncUtils asyncUtils;
+    private final BookFileGenerationService bookFileGenerationService;
 
     @Autowired
-    public BookChapterEntityService(BaseEntityRepository<BookChapter> entityRepository, BaseDTOMapper<BookChapter, BookChapterDTO, PatchBookChapterRequest> dtoMapper, @Lazy BookEntityService bookEntityService, BookChapterVersionEntityService bookChapterVersionEntityService, SourceEntityService sourceEntityService, AsyncUtils asyncUtils) {
+    public BookChapterEntityService(BaseEntityRepository<BookChapter> entityRepository, BaseDTOMapper<BookChapter, BookChapterDTO, PatchBookChapterRequest> dtoMapper, @Lazy BookEntityService bookEntityService, BookChapterVersionEntityService bookChapterVersionEntityService, SourceEntityService sourceEntityService, AsyncUtils asyncUtils, @Lazy BookFileGenerationService bookFileGenerationService) {
         super(entityRepository, dtoMapper);
         this.bookEntityService = bookEntityService;
         this.bookChapterVersionEntityService = bookChapterVersionEntityService;
         this.sourceEntityService = sourceEntityService;
         this.asyncUtils = asyncUtils;
+        this.bookFileGenerationService = bookFileGenerationService;
     }
 
     @Override
@@ -75,7 +78,25 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
             this.checkChapterNumberForDuplicates(dto.getBook().getId(), dto.getId(), patchDto.getChapterNumber().get());
         }
 
-        return super.patchById(id, patchDto);
+        BookChapterDTO patchedChapter = super.patchById(id, patchDto);
+
+        boolean needsRegeneration = patchDto.getTitle().isPresent() || patchDto.getChapterNumber().isPresent();
+        if (needsRegeneration) {
+            bookFileGenerationService.scheduleGeneration(patchedChapter.getBook().getId());
+        }
+
+        return patchedChapter;
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(UUID id) {
+        BookChapterDTO chapter = this.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+
+        super.deleteById(id);
+
+        UUID bookId = chapter.getBook().getId();
+        bookFileGenerationService.scheduleGeneration(bookId);
     }
 
 
@@ -95,7 +116,6 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
         }
     }
 
-    @Async
     @Transactional
     public void updateChapterCurrentWordCountAsync(UUID chapterId) {
         BookChapterDTO bookChapterDTO = this.findById(chapterId).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(chapterId)));
@@ -105,14 +125,14 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
         Page<BookChapterVersionDTO> bookChapterVersionDTOList = this.bookChapterVersionEntityService.getAllPaged(entitySpecResult.specString(), PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "chapterVersion")));
         long wordCount = bookChapterVersionDTOList.get()
                 .findFirst()
-                .map(BookChapterVersionDTO::getWordCount)
+                .map(v -> v.getWordCount() != null ? v.getWordCount() : 0L)
                 .orElse(0L);
 
         bookChapterDTO.setCurrentNumberOfWords(wordCount);
 
         this.internalPutById(chapterId, bookChapterDTO);
 
-        asyncUtils.runAsync(() -> this.bookEntityService.updateBookTotalWordCountAsync(bookChapterDTO.getBook().getId()));
+        asyncUtils.runAsyncAfterCommit(() -> this.bookEntityService.updateBookTotalWordCountAsync(bookChapterDTO.getBook().getId()));
     }
 
 }

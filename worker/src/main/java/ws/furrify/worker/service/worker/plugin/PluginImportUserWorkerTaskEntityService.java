@@ -9,9 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -43,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -104,22 +102,12 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     public PluginImportUserWorkerTaskDTO patchById(UUID id, PatchPluginImportUserWorkerTaskRequest patchDto) {
         PluginImportUserWorkerTaskDTO pluginImportUserWorkerTaskDTO = getById(id);
         if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS) {
-            throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS.getErrorMessage(id, pluginImportUserWorkerTaskDTO.getStatus()));
+            throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS.getErrorMessage(id, pluginImportUserWorkerTaskDTO.getStatus().name()));
         }
 
         return super.patchById(id, patchDto);
     }
 
-    @Override
-    @Transactional
-    public void deleteById(UUID id) {
-        PluginImportUserWorkerTaskDTO pluginImportUserWorkerTaskDTO = getById(id);
-        if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS) {
-            throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_REMOVAL_WITH_STATUS.getErrorMessage(id, pluginImportUserWorkerTaskDTO.getStatus()));
-        }
-
-        super.deleteById(id);
-    }
 
     private List<String> getPluginProviders() {
         List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
@@ -129,7 +117,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
     @Transactional
-    protected void processImportWorkerTasks() {
+    public void processImportWorkerTasks() {
         EntitySpecResult<PluginImportUserWorkerTask> spec = EntitySpec.<PluginImportUserWorkerTask>specBuilder()
                 .where("status", specEquals(NOT_STARTED))
                 .and()
@@ -144,15 +132,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
     @Transactional
     protected void processTask(PluginImportUserWorkerTaskDTO task) {
-        // Mock owenrId for feign client requests with service token
-        Jwt jwt = Jwt.withTokenValue("dummy")
-                .header("alg", "none")
-                .claim("sub", task.getOwnerId().toString())
-                .build();
-        SecurityContextHolder.getContext().setAuthentication(
-                new JwtAuthenticationToken(jwt)
-        );
-        SecurityContextUtils.setOverrideSubject(task.getOwnerId());
+        SecurityContextUtils.mockFeignClientSecurityContext(task.getOwnerId());
 
         try {
             List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
@@ -199,8 +179,18 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
             if (cdnUrl != null && !cdnUrl.isBlank()) {
                 urlString = cdnUrl + (urlString.startsWith("/") ? "" : "/") + urlString;
             }
+            if (Thread.currentThread().isInterrupted()) {
+                log.warn("Task thread interrupted for task {}", task.getId());
+                return;
+            }
+
             try (InputStream in = URI.create(urlString).toURL().openStream()) {
                 Files.copy(in, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+
+                if (Thread.currentThread().isInterrupted()) {
+                    log.warn("Task thread interrupted for task {}", task.getId());
+                    return;
+                }
 
                 if (!plugin.validateSchema(tempFile)) {
                     failTask(task, "File reference [id=" + task.getFileReferenceId() + "] failed pre plugin validation.");
@@ -209,14 +199,25 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
                 plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId());
 
-                PluginImportUserWorkerTaskDTO latestTask = this.findById(task.getId()).orElse(task);
-                latestTask.setStatus(WorkStatus.COMPLETED);
-                latestTask.setFinishedAt(ZonedDateTime.now());
-                this.internalPutById(latestTask.getId(), latestTask);
+                Optional<PluginImportUserWorkerTaskDTO> optionalTask = this.findById(task.getId());
+                if (optionalTask.isEmpty()) {
+                    return;
+                }
+                PluginImportUserWorkerTaskDTO latestTask = optionalTask.get();
+                succeedTask(latestTask);
 
-            } catch (IOException e) {
-                log.error(e.getMessage());
-                failTask(task, "Error processing file: " + e.getMessage());
+            } catch (Exception e) {
+                Throwable cause = e.getCause();
+                while (cause != null && !(cause instanceof InterruptedException)) {
+                    cause = cause.getCause();
+                }
+                
+                if (Thread.currentThread().isInterrupted() || cause != null) {
+                    log.warn("Task thread interrupted during file processing for task {}", task.getId());
+                } else {
+                    log.error("Plugin execution failed: {}", e.getMessage(), e);
+                    failTask(task, "Error processing file: " + e.getMessage());
+                }
             } finally {
                 try {
                     Files.deleteIfExists(tempFilePath);
@@ -224,18 +225,9 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                 }
             }
         } finally {
-            SecurityContextUtils.clearOverrideSubject();
-            SecurityContextHolder.clearContext();
+            SecurityContextUtils.clearFeignClientSecurityContext();
         }
     }
 
-    @Transactional
-    protected void failTask(PluginImportUserWorkerTaskDTO task, String errorMessage) {
-        PluginImportUserWorkerTaskDTO latestTask = this.findById(task.getId()).orElse(task);
-        latestTask.setStatus(WorkStatus.FAILED);
-        latestTask.setErrors(List.of(errorMessage));
-        latestTask.setFinishedAt(ZonedDateTime.now());
-        this.internalPutById(latestTask.getId(), latestTask);
-    }
 
 }

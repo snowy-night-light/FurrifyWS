@@ -16,6 +16,40 @@
     }
   ],
   "paths": {
+    "/v1/books/{id}/files/worker-task": {
+      "put": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_updateWorkerTaskInfo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutBookWorkerTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/tags": {
       "get": {
         "tags": [
@@ -1945,6 +1979,22 @@
   },
   "components": {
     "schemas": {
+      "PutBookWorkerTaskRequest": {
+        "type": "object",
+        "properties": {
+          "formatReferenceIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "activeWorkerTaskId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "CreateTagRequest": {
         "required": [
           "category"
@@ -2114,6 +2164,10 @@
               "$ref": "#/components/schemas/BookChapterVersionDTO"
             }
           },
+          "versionsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "publishDate": {
             "type": "string",
             "format": "date-time"
@@ -2238,11 +2292,13 @@
           },
           "likes": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "dislikes": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/BookStatus"
@@ -2255,6 +2311,10 @@
             "items": {
               "$ref": "#/components/schemas/BookChapterDTO"
             }
+          },
+          "chaptersCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "tags": {
             "type": "array",
@@ -2277,6 +2337,17 @@
           "library": {
             "$ref": "#/components/schemas/LibraryDTO"
           },
+          "formatReferenceIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "activeWorkerTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "publishDate": {
             "type": "string",
             "format": "date-time"
@@ -2284,6 +2355,9 @@
           "externalUpdatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "needsBookFileGeneration": {
+            "type": "boolean"
           }
         }
       },
@@ -2909,12 +2983,16 @@
             "format": "int64"
           },
           "likes": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "dislikes": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "library": {
             "$ref": "#/components/schemas/EntityIdRequest"
@@ -3379,6 +3457,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "newBooksCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "newPostsCount": {
             "type": "integer",
             "format": "int64"
@@ -3401,6 +3483,10 @@
         "type": "object",
         "properties": {
           "postsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "booksCount": {
             "type": "integer",
             "format": "int64"
           },

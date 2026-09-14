@@ -15,7 +15,10 @@ import ws.furrify.storage.domain.source.Source;
 import ws.furrify.storage.domain.tag.Tag;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Entity
 @EntityListeners(BookEntityListener.class)
@@ -97,4 +100,18 @@ public class Book extends UserScopedEntity {
 
     @Column(nullable = true)
     ZonedDateTime externalUpdatedAt;
+
+    @Column(nullable = true)
+    UUID activeWorkerTaskId;
+
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "book_format_id_map",
+            joinColumns = {@JoinColumn(name = "book_id", referencedColumnName = "id")})
+    @MapKeyColumn(name = "format")
+    Map<String, UUID> formatReferenceIds = new HashMap<>();
+
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean needsBookFileGeneration = false;
 }

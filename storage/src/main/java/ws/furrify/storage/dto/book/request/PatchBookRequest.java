@@ -2,6 +2,7 @@ package ws.furrify.storage.dto.book.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -29,8 +30,8 @@ public class PatchBookRequest implements BasePatchEntityRequest<Book, BookDTO> {
     private JsonNullable<@NotNull BookStatus> status = JsonNullable.undefined();
     private JsonNullable<@NotNull BookRating> rating = JsonNullable.undefined();
     private JsonNullable<@NotNull EntityIdRequest> library = JsonNullable.undefined();
-    private JsonNullable<@NotNull Integer> likes = JsonNullable.undefined();
-    private JsonNullable<@NotNull Integer> dislikes = JsonNullable.undefined();
+    private JsonNullable<@NotNull @PositiveOrZero Integer> likes = JsonNullable.undefined();
+    private JsonNullable<@NotNull @PositiveOrZero Integer> dislikes = JsonNullable.undefined();
     private JsonNullable<@NotNull Long> views = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> tags = JsonNullable.undefined();
     private JsonNullable<List<@NotNull EntityIdRequest>> artists = JsonNullable.undefined();
