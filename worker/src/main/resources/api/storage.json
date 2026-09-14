@@ -2524,6 +2524,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "sources": {
             "type": "array",
             "items": {
@@ -2898,6 +2902,10 @@
             "items": {
               "$ref": "#/components/schemas/EntityIdRequest"
             }
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -3250,6 +3258,10 @@
             "items": {
               "$ref": "#/components/schemas/EntityIdRequest"
             }
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

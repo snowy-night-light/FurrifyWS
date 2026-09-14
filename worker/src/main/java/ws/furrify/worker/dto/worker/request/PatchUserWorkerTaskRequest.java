@@ -11,5 +11,5 @@ import java.time.ZonedDateTime;
 public class PatchUserWorkerTaskRequest<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>> implements BasePatchEntityRequest<ENTITY, DTO> {
 
     @NotNull
-    private JsonNullable<ZonedDateTime> startAt;
+    private JsonNullable<ZonedDateTime> startAt = JsonNullable.undefined();
 }

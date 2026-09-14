@@ -8,6 +8,7 @@ import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.dto.source.SourceDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,8 @@ public class MediaDTO extends UserScopedEntityDTO<Media> {
     private Integer priority;
 
     private UUID fileReferenceId;
+
+    private ZonedDateTime externalUpdatedAt;
 
     private List<SourceDTO> sources;
 }
