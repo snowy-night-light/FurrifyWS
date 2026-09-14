@@ -1,6 +1,8 @@
 package ws.furrify.worker.controller;
 
 import org.junit.jupiter.api.Test;
+import org.openapitools.model.AttachmentFileDTO;
+import org.openapitools.model.BookDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
+import ws.furrify.openapi.gen.storage.api.BookV1RestControllerApiClient;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import ws.furrify.worker.WorkerApplication;
@@ -39,6 +42,9 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
     @MockitoBean
     private AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
 
+    @MockitoBean
+    private BookV1RestControllerApiClient bookV1RestControllerApiClient;
+
     @Autowired
     protected BookFileUserWorkerTaskV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
@@ -51,7 +57,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new org.openapitools.model.AttachmentFileDTO()));
+        when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new AttachmentFileDTO()));
     }
 
     @Override
@@ -60,6 +66,8 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
         CreateBookFileUserWorkerTaskRequest request = new CreateBookFileUserWorkerTaskRequest();
         request.setSourceBookReferenceId(UUID.randomUUID());
         request.setStartAt(ZonedDateTime.now());
+        
+        when(bookV1RestControllerApiClient.bookV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new BookDTO()));
 
         BookFileUserWorkerTaskDTO createdTask = super.create(request);
 

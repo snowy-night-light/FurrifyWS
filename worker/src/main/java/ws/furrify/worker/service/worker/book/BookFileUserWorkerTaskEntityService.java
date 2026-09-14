@@ -2,7 +2,7 @@ package ws.furrify.worker.service.worker.book;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.openapitools.model.PatchBookWorkerTaskRequest;
+import org.openapitools.model.PutBookWorkerTaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,11 +101,11 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
             }
 
             try {
-                PatchBookWorkerTaskRequest patchRequest = getPatchBookWorkerTaskRequest(formatReferenceIds);
+                PutBookWorkerTaskRequest putRequest = getPutBookWorkerTaskRequest(formatReferenceIds);
 
                 org.springframework.http.ResponseEntity<Void> response = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
                     task.getSourceBookReferenceId(),
-                    patchRequest
+                    putRequest
                 );
                 
                 if (!response.getStatusCode().is2xxSuccessful()) {
@@ -126,11 +126,11 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
         }
     }
 
-    private static @NonNull PatchBookWorkerTaskRequest getPatchBookWorkerTaskRequest(Map<String, UUID> formatReferenceIds) {
-        PatchBookWorkerTaskRequest patchRequest = new PatchBookWorkerTaskRequest();
-        patchRequest.setFormatReferenceIds(new HashMap<>(formatReferenceIds));
-        patchRequest.setActiveWorkerTaskId(null);
+    private static @NonNull PutBookWorkerTaskRequest getPutBookWorkerTaskRequest(Map<String, UUID> formatReferenceIds) {
+        PutBookWorkerTaskRequest putRequest = new PutBookWorkerTaskRequest();
+        putRequest.setFormatReferenceIds(new HashMap<>(formatReferenceIds));
+        putRequest.setActiveWorkerTaskId(null);
 
-        return patchRequest;
+        return putRequest;
     }
 }

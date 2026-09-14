@@ -13,7 +13,9 @@ import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.artist.ArtistRepository;
 import ws.furrify.storage.domain.artist.vo.ArtistNickname;
 import ws.furrify.storage.domain.book.Book;
+import ws.furrify.storage.domain.book.BookRating;
 import ws.furrify.storage.domain.book.BookRepository;
+import ws.furrify.storage.domain.book.BookStatus;
 import ws.furrify.storage.domain.library.Library;
 import ws.furrify.storage.domain.library.LibraryRepository;
 import ws.furrify.storage.domain.tag.Tag;
@@ -23,8 +25,7 @@ import ws.furrify.storage.domain.tag.category.TagCategoryRepository;
 import ws.furrify.storage.dto.book.BookDTO;
 import ws.furrify.storage.dto.book.request.CreateBookRequest;
 import ws.furrify.storage.dto.book.request.PatchBookRequest;
-import ws.furrify.storage.domain.book.BookStatus;
-import ws.furrify.storage.domain.book.BookRating;
+import ws.furrify.storage.dto.book.request.PutBookWorkerTaskRequest;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 
@@ -200,5 +201,29 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(book.getId()));
+    }
+
+    @Test
+    void testUpdateWorkerTaskInfo() {
+        setupData();
+        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        PutBookWorkerTaskRequest request = new PutBookWorkerTaskRequest();
+        request.setFormatReferenceIds(java.util.Map.of("html", UUID.randomUUID()));
+        request.setActiveWorkerTaskId(UUID.randomUUID());
+
+        io.restassured.RestAssured.given()
+                .header("Content-Type", "application/json")
+                .pathParam("id", book.getId())
+                .body(request)
+                .when()
+                .put(super.basePath + "/{id}/files/worker-task")
+                .then()
+                .log().all()
+                .statusCode(org.springframework.http.HttpStatus.OK.value());
+
+        Book updatedBook = bookRepository.findById(book.getId()).orElseThrow();
+        assertEquals(request.getActiveWorkerTaskId(), updatedBook.getActiveWorkerTaskId());
+        assertEquals(request.getFormatReferenceIds(), updatedBook.getFormatReferenceIds());
     }
 }
