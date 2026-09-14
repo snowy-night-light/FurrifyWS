@@ -53,7 +53,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
 
     @Override
     protected String getControllerPath() {
-        return "/v1/user/workers/plugin/import";
+        return "/v1/workers/user/plugin/import";
     }
 
     @org.junit.jupiter.api.BeforeEach
@@ -193,6 +193,17 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 .pathParam("id", task.getId())
                 .when()
                 .post(this.basePath + "/{id}/execute")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value());
+    }
+
+    @Test
+    void testGetInstalledPlugins() {
+        given()
+                .header("Content-Type", "application/json")
+                .when()
+                .get(this.basePath + "/list")
                 .then()
                 .log().all()
                 .statusCode(HttpStatus.OK.value());

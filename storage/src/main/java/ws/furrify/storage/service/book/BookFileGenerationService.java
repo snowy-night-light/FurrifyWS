@@ -113,10 +113,13 @@ public class BookFileGenerationService {
             try {
                 if (book.getActiveWorkerTaskId() != null) {
                     try {
-                        log.debug("Cancelling previous active worker task {} for bookId: {}", book.getActiveWorkerTaskId(), bookId);
-                        feignClient.bookFileUserWorkerTaskV1RestControllerDelete(book.getActiveWorkerTaskId());
+                        var taskResponse = feignClient.bookFileUserWorkerTaskV1RestControllerGetById(book.getActiveWorkerTaskId()).getBody();
+                        if (taskResponse != null && org.openapitools.model.WorkStatus.NOT_STARTED.equals(taskResponse.getStatus())) {
+                            log.debug("Cancelling previous active worker task {} for bookId: {}", book.getActiveWorkerTaskId(), bookId);
+                            feignClient.bookFileUserWorkerTaskV1RestControllerDelete(book.getActiveWorkerTaskId());
+                        }
                     } catch (Exception e) {
-                        log.warn("Failed to cancel old worker task {}: {}", book.getActiveWorkerTaskId(), e.getMessage());
+                        log.warn("Failed to check or cancel old worker task {}: {}", book.getActiveWorkerTaskId(), e.getMessage());
                     }
                 }
 
