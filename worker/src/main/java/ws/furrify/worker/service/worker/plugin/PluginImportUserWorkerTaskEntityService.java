@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 import static org.openapitools.model.FileUploadStatus.UPLOADED;
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 import static ws.furrify.core.specification.EntitySpec.specLessThan;
+import static ws.furrify.worker.domain.worker.WorkStatus.COMPLETED;
 import static ws.furrify.worker.domain.worker.WorkStatus.IN_PROGRESS;
 import static ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED;
 
@@ -124,7 +125,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     @Transactional
     public PluginImportUserWorkerTaskDTO patchById(UUID id, PatchPluginImportUserWorkerTaskRequest patchDto) {
         PluginImportUserWorkerTaskDTO pluginImportUserWorkerTaskDTO = getById(id);
-        if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS) {
+        if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS || pluginImportUserWorkerTaskDTO.getStatus() == COMPLETED) {
             throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS.getErrorMessage(id, pluginImportUserWorkerTaskDTO.getStatus().name()));
         }
 
@@ -226,6 +227,14 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     latestTask.setLog(results.getLog());
                 }
                 succeedTask(latestTask);
+
+                asyncUtils.runAsyncAfterCommit(() -> {
+                    try {
+                        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(latestTask.getFileReferenceId());
+                    } catch (Exception e) {
+                        log.error("Failed to delete attachment file after task completion: {}", e.getMessage());
+                    }
+                });
 
             } catch (Exception e) {
                 Throwable cause = e.getCause();

@@ -8,6 +8,7 @@ import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.domain.media.Media;
 import ws.furrify.storage.dto.media.MediaDTO;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,4 +22,6 @@ public class CreateMediaRequest implements BaseCreateEntityRequest<Media, MediaD
     private UUID fileReferenceId;
 
     private List<@NotNull EntityIdRequest> sources;
+
+    private ZonedDateTime externalUpdatedAt;
 }

@@ -22,6 +22,16 @@ import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTa
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.io.File;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.openapitools.model.AttachmentFileDTO;
+import org.openapitools.model.LibraryDTO;
+import ws.furrify.core.service.ExternalPluginLoaderService;
+import ws.furrify.worker.domain.worker.WorkStatus;
+import ws.furrify.worker.model.WorkerPluginResults;
+import ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf;
+
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,7 +54,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
     private LibraryV1RestControllerApiClient libraryV1RestControllerApiClient;
 
     @MockitoBean
-    private ws.furrify.core.service.ExternalPluginLoaderService externalPluginLoaderService;
+    private ExternalPluginLoaderService externalPluginLoaderService;
 
     @Autowired
     protected PluginImportUserWorkerTaskV1RestControllerIT(JsonMapper jsonMapper) {
@@ -56,13 +66,25 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         return "/v1/workers/user/plugin/import";
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    public static class DummyPlugin implements ImportV1WorkerPluginIntf {
+        @Override
+        public boolean validateSchema(File file) { return true; }
+        @Override
+        public WorkerPluginResults loadSchemaDataIntoLibrary(File file, UUID libraryId) { return null; }
+        @Override
+        public String[] getAllowedExtensions() { return new String[]{}; }
+        @Override
+        public String getProviderName() { return "dummy-provider"; }
+        @Override
+        public WorkerPluginResults trackCurrentStatus() { return null; }
+    }
+
+    @BeforeEach
     void setUp() {
-        when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new org.openapitools.model.AttachmentFileDTO()));
-        when(libraryV1RestControllerApiClient.libraryV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new org.openapitools.model.LibraryDTO()));
-        ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf mockPlugin = org.mockito.Mockito.mock(ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf.class);
-        when(mockPlugin.getProviderName()).thenReturn("dummy-provider");
-        when(externalPluginLoaderService.getPlugins(ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf.class)).thenReturn(java.util.List.of(mockPlugin));
+        when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new AttachmentFileDTO()));
+        when(libraryV1RestControllerApiClient.libraryV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new LibraryDTO()));
+        ImportV1WorkerPluginIntf mockPlugin = new DummyPlugin();
+        when(externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class)).thenReturn(List.of(mockPlugin));
     }
 
     @Override
@@ -71,7 +93,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         CreatePluginImportUserWorkerTaskRequest request = new CreatePluginImportUserWorkerTaskRequest();
         request.setFileReferenceId(UUID.randomUUID());
         request.setDestinationLibraryReferenceId(UUID.randomUUID());
-        request.setProvider("dummy-provider");
+        request.setProvider("DummyPlugin");
         request.setStartAt(ZonedDateTime.now());
 
         PluginImportUserWorkerTaskDTO createdTask = super.create(request);
@@ -91,8 +113,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 PluginImportUserWorkerTask.builder()
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
-                        .provider("dummy-provider")
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -114,8 +136,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 PluginImportUserWorkerTask.builder()
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
-                        .provider("dummy-provider")
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -124,8 +146,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 PluginImportUserWorkerTask.builder()
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
-                        .provider("dummy-provider")
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -146,8 +168,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 PluginImportUserWorkerTask.builder()
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
-                        .provider("dummy-provider")
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -165,8 +187,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 PluginImportUserWorkerTask.builder()
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
-                        .provider("dummy-provider")
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -181,8 +203,8 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 PluginImportUserWorkerTask.builder()
                         .fileReferenceId(UUID.randomUUID())
                         .destinationLibraryReferenceId(UUID.randomUUID())
-                        .provider("dummy-provider")
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
