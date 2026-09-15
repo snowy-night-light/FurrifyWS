@@ -169,7 +169,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
     void handleInternalReference(JsonNullable<EntityIdRequest> entityIdRequest, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
-        if (entityIdRequest.isPresent()) {
+        if (entityIdRequest.isPresent() && entityIdRequest.get() != null) {
             if (!referenceEntityService.existsById(entityIdRequest.get().getId())) {
                 throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.get().getId()));
             }
@@ -178,13 +178,12 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     public <REF_ENTITY extends BaseEntity, REF_DTO extends BaseEntityDTO<REF_ENTITY>, REF_PATCH_REQ extends BasePatchEntityRequest<REF_ENTITY, REF_DTO>>
     void handleCollectionInternalReferences(JsonNullable<List<EntityIdRequest>> entityIdRequests, BaseEntityCrudService<REF_ENTITY, REF_DTO, REF_PATCH_REQ> referenceEntityService) {
-        if (entityIdRequests.isPresent()) {
+        if (entityIdRequests.isPresent() && entityIdRequests.get() != null) {
             for (EntityIdRequest entityIdRequest : entityIdRequests.get().stream().distinct().toList()) {
                 if (!referenceEntityService.existsById(entityIdRequest.getId())) {
                     throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(entityIdRequest.getId()));
                 }
             }
-
         }
     }
 

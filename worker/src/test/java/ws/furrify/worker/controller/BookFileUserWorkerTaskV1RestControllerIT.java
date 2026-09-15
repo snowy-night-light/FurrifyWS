@@ -52,7 +52,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
 
     @Override
     protected String getControllerPath() {
-        return "/v1/user/workers/books/files/generator";
+        return "/v1/workers/user/books/files/generator";
     }
 
     @org.junit.jupiter.api.BeforeEach

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.openapitools.model.PutBookWorkerTaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -103,7 +104,7 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
             try {
                 PutBookWorkerTaskRequest putRequest = getPutBookWorkerTaskRequest(formatReferenceIds);
 
-                org.springframework.http.ResponseEntity<Void> response = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
+                ResponseEntity<Void> response = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
                     task.getSourceBookReferenceId(),
                     putRequest
                 );

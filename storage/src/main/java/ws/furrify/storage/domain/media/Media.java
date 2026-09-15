@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.source.Source;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,4 +33,7 @@ public class Media extends UserScopedEntity {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     List<Source> sources;
+
+    @Column(nullable = true)
+    ZonedDateTime externalUpdatedAt;
 }
