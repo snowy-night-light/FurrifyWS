@@ -19,7 +19,7 @@ import java.util.UUID;
 // All of the methods need to be overridden for roles security to work here
 @RestController
 @ServiceClientOnlySecured
-@RequestMapping("/v1/user/workers/books/files/generator")
+@RequestMapping("/v1/workers/user/books/files/generator")
 public class BookFileUserWorkerTaskV1RestController extends UserWorkerTaskBaseRestController<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, CreateBookFileUserWorkerTaskRequest, PatchBookFileUserWorkerTaskRequest> {
 
     @Autowired

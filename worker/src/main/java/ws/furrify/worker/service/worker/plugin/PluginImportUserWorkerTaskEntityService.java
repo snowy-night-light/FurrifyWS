@@ -23,8 +23,8 @@ import ws.furrify.core.utils.AsyncUtils;
 import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.LibraryV1RestControllerApiClient;
-import ws.furrify.worker.domain.worker.WorkStatus;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
+import ws.furrify.worker.dto.worker.plugin.ImportWorkerPluginDTO;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTaskRequest;
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
@@ -39,14 +39,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.openapitools.model.FileUploadStatus.UPLOADED;
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 import static ws.furrify.core.specification.EntitySpec.specLessThan;
+import static ws.furrify.worker.domain.worker.WorkStatus.COMPLETED;
 import static ws.furrify.worker.domain.worker.WorkStatus.IN_PROGRESS;
 import static ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED;
 
@@ -72,16 +75,37 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     @Override
     @Transactional
     public PluginImportUserWorkerTaskDTO create(PluginImportUserWorkerTaskDTO dto) {
-        if (!getPluginProviders().contains(dto.getProvider())) {
-            throw new ServiceLogicException(Errors.UNRECOGNIZED_PROVIDER.getErrorMessage(dto.getProvider()));
-        }
+        List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
 
+        // Find the plugin matching the requested provider class
+        ImportV1WorkerPluginIntf selectedPlugin = plugins.stream()
+                .filter(p -> p.getClass().getSimpleName().equals(dto.getProvider()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceLogicException(Errors.UNRECOGNIZED_PROVIDER.getErrorMessage(dto.getProvider())));
+
+        AttachmentFileDTO attachmentFile;
         try {
-            if (attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(dto.getFileReferenceId()).getBody() == null) {
+            attachmentFile = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(dto.getFileReferenceId()).getBody();
+            if (attachmentFile == null) {
                 throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
             }
         } catch (feign.FeignException.NotFound e) {
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
+        }
+
+        // Validate the attachment file extension against the plugin's allowed extensions
+        String[] allowedExtensions = selectedPlugin.getAllowedExtensions();
+        if (allowedExtensions != null && allowedExtensions.length > 0) {
+            String fileExtension = attachmentFile.getFileExtension();
+            boolean extensionAllowed = Arrays.stream(allowedExtensions)
+                    .anyMatch(ext -> ext.equalsIgnoreCase(fileExtension));
+            if (!extensionAllowed) {
+                throw new ServiceLogicException(Errors.EXTENSION_NOT_ALLOWED.getErrorMessage(
+                        fileExtension,
+                        dto.getProvider(),
+                        String.join(", ", allowedExtensions)
+                ));
+            }
         }
 
         try {
@@ -101,18 +125,11 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     @Transactional
     public PluginImportUserWorkerTaskDTO patchById(UUID id, PatchPluginImportUserWorkerTaskRequest patchDto) {
         PluginImportUserWorkerTaskDTO pluginImportUserWorkerTaskDTO = getById(id);
-        if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS) {
+        if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS || pluginImportUserWorkerTaskDTO.getStatus() == COMPLETED) {
             throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS.getErrorMessage(id, pluginImportUserWorkerTaskDTO.getStatus().name()));
         }
 
         return super.patchById(id, patchDto);
-    }
-
-
-    private List<String> getPluginProviders() {
-        List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
-
-        return plugins.stream().map(ImportV1WorkerPluginIntf::getProviderName).toList();
     }
 
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
@@ -138,7 +155,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
             List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
 
             ImportV1WorkerPluginIntf plugin = plugins.stream()
-                    .filter(p -> p.getProviderName().equals(task.getProvider()))
+                    .filter(p -> p.getClass().getSimpleName().equals(task.getProvider()))
                     .findFirst()
                     .orElse(null);
 
@@ -197,14 +214,27 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     return;
                 }
 
-                plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId());
+                var results = plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId());
 
                 Optional<PluginImportUserWorkerTaskDTO> optionalTask = this.findById(task.getId());
                 if (optionalTask.isEmpty()) {
                     return;
                 }
                 PluginImportUserWorkerTaskDTO latestTask = optionalTask.get();
+                if (results != null) {
+                    latestTask.setErrors(results.getErrors());
+                    latestTask.setWarnings(results.getWarnings());
+                    latestTask.setLog(results.getLog());
+                }
                 succeedTask(latestTask);
+
+                asyncUtils.runAsyncAfterCommit(() -> {
+                    try {
+                        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(latestTask.getFileReferenceId());
+                    } catch (Exception e) {
+                        log.error("Failed to delete attachment file after task completion: {}", e.getMessage());
+                    }
+                });
 
             } catch (Exception e) {
                 Throwable cause = e.getCause();
@@ -230,4 +260,13 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     }
 
 
+    public List<ImportWorkerPluginDTO> getAllPlugins() {
+        return externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class).stream()
+                .map(plugin -> ImportWorkerPluginDTO.builder()
+                        .provider(plugin.getClass().getSimpleName())
+                        .name(plugin.getProviderName())
+                        .allowedExtensions(plugin.getAllowedExtensions())
+                        .build())
+                .collect(Collectors.toUnmodifiableList());
+    }
 }

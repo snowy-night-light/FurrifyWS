@@ -32,7 +32,7 @@ import static ws.furrify.worker.domain.worker.WorkStatus.*;
 
 @Slf4j
 public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerTask, DTO extends UserWorkerTaskDTO<ENTITY>, PATCH_REQ extends BasePatchEntityRequest<ENTITY, DTO>> extends BaseEntityCrudService<ENTITY, DTO, PATCH_REQ> {
-    private final AsyncUtils asyncUtils;
+    protected final AsyncUtils asyncUtils;
 
     public UserWorkerTaskBaseEntityService(BaseEntityRepository<ENTITY> entityRepository, BaseDTOMapper<ENTITY, DTO, PATCH_REQ> dtoMapper, AsyncUtils asyncUtils) {
         super(entityRepository, dtoMapper);
