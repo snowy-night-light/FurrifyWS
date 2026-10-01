@@ -35,7 +35,7 @@ public class Book extends UserScopedEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false, length = 10240)
     @NotNull
-    @Length(max = 10240)
+    @Length(max = 40240)
     String descriptionHtml;
 
     @Column()
@@ -46,11 +46,11 @@ public class Book extends UserScopedEntity {
     @Length(max = 1024)
     String shortDescriptionHtml;
 
-    @OneToOne(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
-    Book sequel;
+    @ElementCollection(fetch = FetchType.EAGER)
+    List<UUID> sequels;
 
-    @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-    Book prequel;
+    @ElementCollection(fetch = FetchType.EAGER)
+    List<UUID> prequels;
 
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     Media cover;
@@ -114,4 +114,12 @@ public class Book extends UserScopedEntity {
     @Column(nullable = false)
     @Builder.Default
     Boolean needsBookFileGeneration = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    Integer generationRetryCount = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean fileGenerationFailed = false;
 }

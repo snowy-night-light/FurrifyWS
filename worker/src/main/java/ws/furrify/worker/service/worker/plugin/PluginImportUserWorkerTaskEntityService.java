@@ -4,10 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.AttachmentFileDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +14,6 @@ import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.ExternalPluginLoaderService;
-import ws.furrify.core.specification.EntitySpec;
-import ws.furrify.core.specification.EntitySpecResult;
 import ws.furrify.core.utils.AsyncUtils;
 import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
@@ -27,6 +22,7 @@ import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
 import ws.furrify.worker.dto.worker.plugin.ImportWorkerPluginDTO;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTaskRequest;
+import ws.furrify.worker.model.WorkerPluginResults;
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 import ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf;
 import ws.furrify.worker.shared.plugin.exception.WorkerErrors;
@@ -38,20 +34,18 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.openapitools.model.FileUploadStatus.UPLOADED;
-import static ws.furrify.core.specification.EntitySpec.specEquals;
-import static ws.furrify.core.specification.EntitySpec.specLessThan;
 import static ws.furrify.worker.domain.worker.WorkStatus.COMPLETED;
 import static ws.furrify.worker.domain.worker.WorkStatus.IN_PROGRESS;
-import static ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED;
 
 @Service
 @Slf4j
@@ -60,6 +54,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     private final ExternalPluginLoaderService externalPluginLoaderService;
     private final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
     private final LibraryV1RestControllerApiClient libraryV1RestControllerApiClient;
+    private final ConcurrentHashMap<UUID, ImportV1WorkerPluginIntf> activePlugins = new ConcurrentHashMap<>();
 
     @Value("${FURRIFY_CDN_URL:}")
     private String cdnUrl;
@@ -132,22 +127,8 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
         return super.patchById(id, patchDto);
     }
 
-    @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
     @Transactional
-    public void processImportWorkerTasks() {
-        EntitySpecResult<PluginImportUserWorkerTask> spec = EntitySpec.<PluginImportUserWorkerTask>specBuilder()
-                .where("status", specEquals(NOT_STARTED))
-                .and()
-                .where("startAt", specLessThan(ZonedDateTime.now()))
-                .build();
-
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "createdAt"));
-
-        Page<PluginImportUserWorkerTaskDTO> tasks = this.getAllPaged(spec.specString(), pageable);
-        tasks.forEach(this::triggerExecution);
-    }
-
-    @Transactional
+    @Override
     protected void processTask(PluginImportUserWorkerTaskDTO task) {
         SecurityContextUtils.mockFeignClientSecurityContext(task.getOwnerId());
 
@@ -193,15 +174,15 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
             URI fileUri = attachmentFileDTO.getFileUri();
             String urlString = fileUri.toString();
-            if (cdnUrl != null && !cdnUrl.isBlank()) {
+            if (cdnUrl != null && !cdnUrl.isBlank() && !fileUri.isAbsolute()) {
                 urlString = cdnUrl + (urlString.startsWith("/") ? "" : "/") + urlString;
             }
-            if (Thread.currentThread().isInterrupted()) {
-                log.warn("Task thread interrupted for task {}", task.getId());
-                return;
-            }
-
             try (InputStream in = URI.create(urlString).toURL().openStream()) {
+                if (Thread.currentThread().isInterrupted()) {
+                    log.warn("Task thread interrupted for task {}", task.getId());
+                    return;
+                }
+
                 Files.copy(in, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
 
                 if (Thread.currentThread().isInterrupted()) {
@@ -214,9 +195,15 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     return;
                 }
 
-                var results = plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId());
+                WorkerPluginResults results;
+                activePlugins.put(task.getId(), plugin);
+                try {
+                    results = plugin.loadSchemaDataIntoLibrary(tempFile, task.getDestinationLibraryReferenceId(), task.getDownloadExternalMedia());
+                } finally {
+                    activePlugins.remove(task.getId());
+                }
 
-                Optional<PluginImportUserWorkerTaskDTO> optionalTask = this.findById(task.getId());
+                Optional<PluginImportUserWorkerTaskDTO> optionalTask = this.internalFindById(task.getId());
                 if (optionalTask.isEmpty()) {
                     return;
                 }
@@ -237,6 +224,15 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                 });
 
             } catch (Exception e) {
+                PluginImportUserWorkerTaskDTO latestTask = this.internalFindById(task.getId()).orElse(task);
+                
+                WorkerPluginResults finalResults = plugin.trackCurrentStatus();
+                if (finalResults != null) {
+                    latestTask.setErrors(finalResults.getErrors());
+                    latestTask.setWarnings(finalResults.getWarnings());
+                    latestTask.setLog(finalResults.getLog());
+                }
+                
                 Throwable cause = e.getCause();
                 while (cause != null && !(cause instanceof InterruptedException)) {
                     cause = cause.getCause();
@@ -246,7 +242,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     log.warn("Task thread interrupted during file processing for task {}", task.getId());
                 } else {
                     log.error("Plugin execution failed: {}", e.getMessage(), e);
-                    failTask(task, "Error processing file: " + e.getMessage());
+                    failTask(latestTask, "Error processing file: " + e.getMessage());
                 }
             } finally {
                 try {
@@ -259,6 +255,29 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
         }
     }
 
+    @Scheduled(fixedRate = 30, timeUnit = TimeUnit.SECONDS)
+    @Transactional
+    public void trackActivePluginStatuses() {
+        activePlugins.forEach((taskId, plugin) -> {
+            try {
+                var results = plugin.trackCurrentStatus();
+                if (results != null) {
+                    PluginImportUserWorkerTaskDTO latestTask = this.internalFindById(taskId).orElse(null);
+                    if (latestTask != null && latestTask.getStatus() == IN_PROGRESS) {
+                        latestTask.setErrors(results.getErrors());
+                        latestTask.setWarnings(results.getWarnings());
+                        latestTask.setLog(results.getLog());
+                        truncateTaskData(latestTask);
+                        this.internalPutById(taskId, latestTask);
+                    }
+                }
+            } catch (OptimisticLockingFailureException e) {
+                log.debug("Optimistic lock failure while tracking status for task {}. Ignoring.", taskId);
+            } catch (Exception e) {
+                log.error("Failed to track status for task {}: {}", taskId, e.getMessage());
+            }
+        });
+    }
 
     public List<ImportWorkerPluginDTO> getAllPlugins() {
         return externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class).stream()
@@ -268,5 +287,38 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                         .allowedExtensions(plugin.getAllowedExtensions())
                         .build())
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    protected long getTaskTimeoutSeconds() {
+        return 24 * 60 * 60 * 7; // 7 days
+    }
+
+    @Override
+    protected void onTaskCancelledOnShutdown(PluginImportUserWorkerTaskDTO task) {
+        ImportV1WorkerPluginIntf plugin = activePlugins.get(task.getId());
+        if (plugin != null) {
+            try {
+                WorkerPluginResults results = plugin.trackCurrentStatus();
+                if (results != null) {
+                    if (results.getErrors() != null && !results.getErrors().isEmpty()) {
+                        if (task.getErrors() == null) {
+                            task.setErrors(new ArrayList<>(results.getErrors()));
+                        } else {
+                            task.getErrors().addAll(results.getErrors());
+                        }
+                    }
+                    if (results.getWarnings() != null && !results.getWarnings().isEmpty()) {
+                        task.setWarnings(results.getWarnings());
+                    }
+                    if (results.getLog() != null) {
+                        task.setLog(results.getLog());
+                    }
+                    truncateTaskData(task);
+                }
+            } catch (Exception e) {
+                log.error("Failed to track status for task {} on shutdown: {}", task.getId(), e.getMessage());
+            }
+        }
     }
 }

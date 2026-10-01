@@ -1,5 +1,6 @@
 package ws.furrify.storage.dto.library;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,10 +21,15 @@ import java.util.List;
 @NoArgsConstructor
 public class LibraryDTO extends UserScopedEntityDTO<Library> {
     private String title;
+    @JsonIgnore
     private List<PostDTO> posts;
+    @JsonIgnore
     private List<TagDTO> tags;
+    @JsonIgnore
     private List<ArtistDTO> artists;
+    @JsonIgnore
     private List<CollectionDTO> collections;
+    @JsonIgnore
     private List<BookDTO> books;
     private Boolean likesEnabled;
     private Boolean dislikesEnabled;

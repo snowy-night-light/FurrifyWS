@@ -10,11 +10,14 @@ import ws.furrify.core.service.ExternalPluginLoaderService;
 import ws.furrify.worker.shared.plugin.WorkerPluginIntf;
 
 import java.util.List;
+import java.util.UUID;
 
 @SpringBootApplication(scanBasePackages = {"ws.furrify.worker", "ws.furrify.core"})
 @EnableJpaRepositories(basePackages = "ws.furrify.worker.domain")
 @RequiredArgsConstructor
 public class WorkerApplication extends ApplicationCore implements CommandLineRunner{
+
+    public static final UUID LAUNCH_ID = UUID.randomUUID();
 
     private final ExternalPluginLoaderService externalPluginLoaderService;
 

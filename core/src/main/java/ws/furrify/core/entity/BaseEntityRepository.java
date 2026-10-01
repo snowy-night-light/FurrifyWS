@@ -8,13 +8,20 @@ import org.springframework.data.repository.NoRepositoryBean;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.Optional;
 import java.util.UUID;
 
-import static ws.furrify.core.specification.EntitySpec.specEquals;
-
 @NoRepositoryBean
 public interface BaseEntityRepository<ENTITY extends BaseEntity> extends JpaRepository<ENTITY, UUID>, JpaSpecificationExecutor<ENTITY> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM #{#entityName} e WHERE e.id = :id")
+    Optional<ENTITY> findByIdWithPessimisticLock(@Param("id") UUID id);
 
     default Optional<ENTITY> findById(UUID id, EntitySpecResult<ENTITY> entitySpec) {
         if (entitySpec == null || entitySpec.specString().isEmpty()) {

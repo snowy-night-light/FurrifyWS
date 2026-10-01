@@ -154,11 +154,14 @@ public class ExternalPluginLoaderService
                                 className,
                                 pluginClassLoader
                         );
-                    } catch (ClassNotFoundException e) {
-                        throw new IllegalStateException(
-                                "Cannot load plugin bean class: " + className,
-                                e
+                    } catch (ClassNotFoundException | LinkageError e) {
+                        log.warn(
+                                "Skipping plugin bean '{}' ({}): missing dependencies in this microservice ({})",
+                                beanName,
+                                className,
+                                e.getMessage()
                         );
+                        registry.removeBeanDefinition(beanName);
                     }
                 }
             }

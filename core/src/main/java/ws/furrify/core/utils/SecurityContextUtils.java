@@ -2,25 +2,22 @@ package ws.furrify.core.utils;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
 
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.Map;
-import java.util.List;
-
-import org.springframework.security.access.AccessDeniedException;
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 
@@ -29,7 +26,10 @@ public class SecurityContextUtils {
 
     private final static String USER_SCOPE_OWNER_VARIABLE_NAME = "ownerId";
     private final static String SERVICE_CLIENT_CLAIM = "service_client";
+    private final static String SERVICE_ACCOUNT_CLAIM = "service_account";
+    private final static String SERVICE_ACCOUNT_DASH_CLAIM = "service-account";
     private static final InheritableThreadLocal<UUID> OVERRIDE_SUBJECT = new InheritableThreadLocal<>();
+    public static final Map<UUID, UUID> FEIGN_FALLBACK_OWNER_MAP = new ConcurrentHashMap<>();
 
     public static void setOverrideSubject(UUID subject) {
         OVERRIDE_SUBJECT.set(subject);
@@ -51,7 +51,7 @@ public class SecurityContextUtils {
                 .claim("preferred_username", "service-account-worker")
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
-                new JwtAuthenticationToken(jwt, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_admin"), new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_service_client")))
+                new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_admin"), new SimpleGrantedAuthority("ROLE_service_client")))
         );
         setOverrideSubject(ownerId);
     }
@@ -106,26 +106,13 @@ public class SecurityContextUtils {
             return false;
         }
 
-        boolean hasRole = authentication.getAuthorities().stream()
-                .anyMatch(auth -> Objects.requireNonNull(auth.getAuthority()).equalsIgnoreCase("ROLE_" + SERVICE_CLIENT_CLAIM));
-
-        if (hasRole) {
-            return true;
-        }
-
-        if (authentication instanceof JwtAuthenticationToken jwtToken) {
-            Jwt jwt = jwtToken.getToken();
-            String preferredUsername = jwt.getClaimAsString("preferred_username");
-            if (preferredUsername != null && preferredUsername.startsWith("service-account-")) {
-                return true;
-            }
-            String azp = jwt.getClaimAsString("azp");
-            if (azp != null && azp.equals("keycloak-internal")) {
-                return true;
-            }
-        }
-
-        return false;
+        return authentication.getAuthorities().stream()
+                .anyMatch(auth -> {
+                    String authority = Objects.requireNonNull(auth.getAuthority());
+                    return authority.equalsIgnoreCase("ROLE_" + SERVICE_CLIENT_CLAIM) ||
+                           authority.equalsIgnoreCase("ROLE_" + SERVICE_ACCOUNT_CLAIM) ||
+                           authority.equalsIgnoreCase("ROLE_" + SERVICE_ACCOUNT_DASH_CLAIM);
+                });
     }
 
     public static <ENTITY extends BaseEntity> EntitySpecResult<ENTITY> getUserScopedSecuritySpec() {

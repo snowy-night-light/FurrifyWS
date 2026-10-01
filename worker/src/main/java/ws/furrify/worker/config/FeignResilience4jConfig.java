@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class FeignResilience4jConfig {
 
     @Bean
-    public Customizer<Resilience4JCircuitBreakerFactory> resilience4jCircuitBreakerFactoryCustomizer(SecurityContextPropagator propagator) {
+    public Customizer<Resilience4JCircuitBreakerFactory> resilience4jCircuitBreakerFactoryCustomizer(SecurityContextPropagatorImpl propagator) {
         return factory -> factory.configureExecutorService(
                 ContextAwareScheduledThreadPoolExecutor.newScheduledThreadPool()
                         .corePoolSize(10)

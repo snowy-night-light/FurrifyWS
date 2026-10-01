@@ -15,11 +15,6 @@
     <dependencies>
         <dependency>
             <groupId>ws.furrify</groupId>
-            <artifactId>storage</artifactId>
-            <version>${version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ws.furrify</groupId>
             <artifactId>core</artifactId>
             <version>${version}</version>
         </dependency>

@@ -1,6 +1,10 @@
 package ws.furrify.worker.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
+import org.openapitools.model.AttachmentFileDTO;
+import org.openapitools.model.LibraryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -9,29 +13,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.json.JsonMapper;
+import ws.furrify.core.service.ExternalPluginLoaderService;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.LibraryV1RestControllerApiClient;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import ws.furrify.worker.WorkerApplication;
+import ws.furrify.worker.domain.worker.WorkStatus;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTaskRepository;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.plugin.request.CreatePluginImportUserWorkerTaskRequest;
 import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTaskRequest;
-
-import java.time.ZonedDateTime;
-import java.util.UUID;
-import java.io.File;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.openapitools.model.AttachmentFileDTO;
-import org.openapitools.model.LibraryDTO;
-import ws.furrify.core.service.ExternalPluginLoaderService;
-import ws.furrify.worker.domain.worker.WorkStatus;
 import ws.furrify.worker.model.WorkerPluginResults;
 import ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf;
 
+import java.io.File;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,8 +69,12 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
     public static class DummyPlugin implements ImportV1WorkerPluginIntf {
         @Override
         public boolean validateSchema(File file) { return true; }
+
         @Override
-        public WorkerPluginResults loadSchemaDataIntoLibrary(File file, UUID libraryId) { return null; }
+        public WorkerPluginResults loadSchemaDataIntoLibrary(File file, UUID libraryId, boolean downloadExternalMedia) {
+            return null;
+        }
+
         @Override
         public String[] getAllowedExtensions() { return new String[]{}; }
         @Override
@@ -95,6 +99,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         request.setDestinationLibraryReferenceId(UUID.randomUUID());
         request.setProvider("DummyPlugin");
         request.setStartAt(ZonedDateTime.now());
+        request.setDownloadExternalMedia(true);
 
         PluginImportUserWorkerTaskDTO createdTask = super.create(request);
 
@@ -117,6 +122,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
                         .build()
         );
 
@@ -140,6 +146,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
                         .build()
         );
         pluginImportUserWorkerTaskRepository.save(
@@ -150,6 +157,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
                         .build()
         );
 
@@ -172,11 +180,13 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
                         .build()
         );
         
         PatchPluginImportUserWorkerTaskRequest patch = new PatchPluginImportUserWorkerTaskRequest();
         
+        patch.setStartAt(JsonNullable.of(ZonedDateTime.now()));
         assertDoesNotThrow(() -> super.patch(task.getId(), patch));
     }
 
@@ -191,6 +201,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
                         .build()
         );
 
@@ -207,6 +218,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                         .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
                         .build()
         );
 
@@ -218,6 +230,33 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 .then()
                 .log().all()
                 .statusCode(HttpStatus.OK.value());
+    }
+
+    @Test
+    void testCancel() {
+        PluginImportUserWorkerTask task = pluginImportUserWorkerTaskRepository.save(
+                PluginImportUserWorkerTask.builder()
+                        .fileReferenceId(UUID.randomUUID())
+                        .destinationLibraryReferenceId(UUID.randomUUID())
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
+                        .build()
+        );
+
+        given()
+                .header("Content-Type", "application/json")
+                .pathParam("id", task.getId())
+                .when()
+                .post(this.basePath + "/{id}/cancel")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value());
+
+        PluginImportUserWorkerTask updatedTask = pluginImportUserWorkerTaskRepository.findById(task.getId()).get();
+        assertEquals(WorkStatus.CANCELLED, updatedTask.getStatus());
     }
 
     @Test

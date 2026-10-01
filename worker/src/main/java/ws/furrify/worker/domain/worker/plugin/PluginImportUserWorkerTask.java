@@ -27,5 +27,8 @@ public class PluginImportUserWorkerTask extends UserWorkerTask {
     String provider;
 
     @Column(nullable = false)
+    Boolean downloadExternalMedia;
+
+    @Column(nullable = false)
     UUID destinationLibraryReferenceId;
 }

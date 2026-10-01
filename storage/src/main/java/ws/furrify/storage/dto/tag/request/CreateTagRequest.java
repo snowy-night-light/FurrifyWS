@@ -14,7 +14,7 @@ public class CreateTagRequest implements BaseCreateEntityRequest<Tag, TagDTO> {
     @NotNull
     private EntityIdRequest category;
 
-    @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$")
+    @Pattern(regexp = "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$")
     private String name;
 
     private EntityIdRequest library;

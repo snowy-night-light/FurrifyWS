@@ -1,0 +1,93 @@
+x-common-env: &common-env
+  FURRIFY_CDN_URL: ${FURRIFY_CDN_URL}
+  EUREKA_URL: http://eureka:8761/eureka/
+  JAVA_TOOL_OPTIONS: "-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true"
+
+services:
+  eureka:
+    image: furrify-eureka:latest
+    environment:
+      <<: *common-env
+      EUREKA_INSTANCE_HOSTNAME: eureka
+
+  gateway:
+    image: furrify-gateway:latest
+    environment:
+      <<: *common-env
+      EUREKA_INSTANCE_HOSTNAME: gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka
+
+  attachment:
+    image: furrify-attachment:latest
+    environment:
+      <<: *common-env
+      EUREKA_INSTANCE_HOSTNAME: attachment
+      KEYCLOAK_SERVER_URL: ${ATTACHMENT_KEYCLOAK_SERVER_URL}
+      KEYCLOAK_CLIENT_ID: ${ATTACHMENT_KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_REALM: ${ATTACHMENT_KEYCLOAK_REALM}
+      KEYCLOAK_SERVICE_CLIENT_ID: ${ATTACHMENT_KEYCLOAK_SERVICE_CLIENT_ID}
+      KEYCLOAK_SERVICE_CLIENT_SECRET: ${ATTACHMENT_KEYCLOAK_SERVICE_CLIENT_SECRET}
+      DB_URL: ${ATTACHMENT_DB_URL:-jdbc:postgresql://db:5432/furrify}
+      DB_USERNAME: ${ATTACHMENT_DB_USERNAME:-postgres}
+      DB_PASSWORD: ${ATTACHMENT_DB_PASSWORD:-postgres}
+    volumes:
+      - ./data:/furrify/data
+      - ./plugins:/furrify/plugins
+      - ./tmp:/tmp
+    depends_on:
+      - eureka
+
+  storage:
+    image: furrify-storage:latest
+    environment:
+      <<: *common-env
+      EUREKA_INSTANCE_HOSTNAME: storage
+      KEYCLOAK_SERVER_URL: ${STORAGE_KEYCLOAK_SERVER_URL}
+      KEYCLOAK_CLIENT_ID: ${STORAGE_KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_REALM: ${STORAGE_KEYCLOAK_REALM}
+      KEYCLOAK_SERVICE_CLIENT_ID: ${STORAGE_KEYCLOAK_SERVICE_CLIENT_ID}
+      KEYCLOAK_SERVICE_CLIENT_SECRET: ${STORAGE_KEYCLOAK_SERVICE_CLIENT_SECRET}
+      DB_URL: ${STORAGE_DB_URL:-jdbc:postgresql://db:5432/furrify}
+      DB_USERNAME: ${STORAGE_DB_USERNAME:-postgres}
+      DB_PASSWORD: ${STORAGE_DB_PASSWORD:-postgres}
+    volumes:
+      - ./plugins:/furrify/plugins
+      - ./tmp:/tmp
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    depends_on:
+      - eureka
+
+  worker:
+    image: furrify-worker:latest
+    environment:
+      <<: *common-env
+      EUREKA_INSTANCE_HOSTNAME: worker
+      KEYCLOAK_SERVER_URL: ${WORKER_KEYCLOAK_SERVER_URL}
+      KEYCLOAK_CLIENT_ID: ${WORKER_KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_REALM: ${WORKER_KEYCLOAK_REALM}
+      KEYCLOAK_SERVICE_CLIENT_ID: ${WORKER_KEYCLOAK_SERVICE_CLIENT_ID}
+      KEYCLOAK_SERVICE_CLIENT_SECRET: ${WORKER_KEYCLOAK_SERVICE_CLIENT_SECRET}
+      FURRIFY_WORKER_TASKS_BOOK_MAX_CONCURRENT: ${WORKER_TASKS_BOOK_MAX_CONCURRENT}
+      FURRIFY_WORKER_TASKS_BOOK_RENDERER_LIMIT: ${WORKER_TASKS_BOOK_RENDERER_LIMIT}
+      DB_URL: ${WORKER_DB_URL:-jdbc:postgresql://db:5432/furrify}
+      DB_USERNAME: ${WORKER_DB_USERNAME:-postgres}
+      DB_PASSWORD: ${WORKER_DB_PASSWORD:-postgres}
+    volumes:
+      - ./plugins:/furrify/plugins
+      - ./tmp:/tmp
+    stop_grace_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+    depends_on:
+      - eureka
+
+volumes:
+  attachment_data:

@@ -1,6 +1,7 @@
 package ws.furrify.core.specification;
 
 import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
@@ -8,6 +9,9 @@ import org.springframework.data.core.PropertyPath;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.exception.BadRequestException;
 import ws.furrify.core.exception.Errors;
+
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -114,7 +118,7 @@ public class EntitySpec {
         Path<?> path = root;
         while (propertyPath != null) {
             if (propertyPath.isCollection()) {
-                path = ((From<?, ?>) path).join(propertyPath.getSegment(), JoinType.LEFT);
+                path = getOrCreateJoin((From<?, ?>) path, propertyPath.getSegment(), JoinType.LEFT);
             } else {
                 path = path.get(propertyPath.getSegment());
             }
@@ -123,14 +127,23 @@ public class EntitySpec {
         return path;
     }
 
+    private static Join<?, ?> getOrCreateJoin(From<?, ?> from, String attributeName, JoinType joinType) {
+        for (Join<?, ?> join : from.getJoins()) {
+            if (join.getAttribute().getName().equals(attributeName) && join.getJoinType() == joinType) {
+                return join;
+            }
+        }
+        return from.join(attributeName, joinType);
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Object coerceValue(Path<?> path, Object value) {
         if (value instanceof String strValue) {
             Class<?> type = path.getJavaType();
             try {
                 if (type.isEnum()) return Enum.valueOf((Class<Enum>) type, strValue);
-                if (type == java.time.ZonedDateTime.class) return java.time.ZonedDateTime.parse(strValue);
-                if (type == java.time.LocalDate.class) return java.time.LocalDate.parse(strValue);
+                if (type == ZonedDateTime.class) return ZonedDateTime.parse(strValue);
+                if (type == LocalDate.class) return LocalDate.parse(strValue);
                 if (type == Long.class || type == long.class) return Long.valueOf(strValue);
                 if (type == Integer.class || type == int.class) return Integer.valueOf(strValue);
                 if (type == Boolean.class || type == boolean.class) return Boolean.valueOf(strValue);

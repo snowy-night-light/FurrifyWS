@@ -24,7 +24,7 @@ import java.util.List;
 public class Tag extends UserScopedEntity {
     @Column(unique = true, length = 64)
     @Size(max = 64)
-    @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$")
+    @Pattern(regexp = "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$")
     @NotBlank
     String name;
 

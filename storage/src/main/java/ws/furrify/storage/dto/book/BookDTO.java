@@ -1,6 +1,8 @@
 package ws.furrify.storage.dto.book;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.annotation.Nullable;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -34,8 +36,8 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private String shortDescriptionHtml;
 
     private MediaDTO cover;
-    private BookDTO prequel;
-    private BookDTO sequel;
+    private List<UUID> prequels;
+    private List<UUID> sequels;
 
     private Long totalWordCount;
 
@@ -48,6 +50,7 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
     private BookStatus status;
     private BookRating rating;
 
+    @JsonIgnoreProperties("book")
     private List<BookChapterDTO> chapters;
     private Integer chaptersCount;
 
@@ -63,5 +66,10 @@ public class BookDTO extends UserScopedEntityDTO<Book> {
 
     private ZonedDateTime publishDate;
     private ZonedDateTime externalUpdatedAt;
-    private Boolean needsBookFileGeneration;
+    @Builder.Default
+    private Boolean needsBookFileGeneration = false;
+    @Builder.Default
+    private Integer generationRetryCount = 0;
+    @Builder.Default
+    private Boolean fileGenerationFailed = false;
 }

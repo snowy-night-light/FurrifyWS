@@ -13,6 +13,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
-@PreAuthorize("hasAnyRole('service_client', 'admin')")
+@PreAuthorize("hasRole('admin') or T(ws.furrify.core.utils.SecurityContextUtils).isServiceToken()")
 public @interface ServiceClientOnlySecured {
 }

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.domain.artist.Artist;
@@ -23,9 +24,11 @@ public class CreateArtistRequest implements BaseCreateEntityRequest<Artist, Arti
 
     private List<@NotNull EntityIdRequest> sources;
 
+    @NotNull
     @PositiveOrZero
     private Integer followersCount;
 
+    @Length(min = 0, max = 2048)
     private String bioHtml;
     private EntityIdRequest avatar;
 

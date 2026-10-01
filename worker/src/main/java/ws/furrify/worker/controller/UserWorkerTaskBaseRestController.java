@@ -14,7 +14,7 @@ import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 
 import java.util.UUID;
 
-abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorkerTask, DTO extends UserWorkerTaskDTO<ENTITY>, CREATE_REQ extends CreateUserWorkerTaskRequest<ENTITY, DTO>, PATCH_REQ extends PatchUserWorkerTaskRequest<ENTITY, DTO>> extends BaseEntityRestController<ENTITY, DTO, CREATE_REQ, PATCH_REQ> {
+public abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorkerTask, DTO extends UserWorkerTaskDTO<ENTITY>, CREATE_REQ extends CreateUserWorkerTaskRequest<ENTITY, DTO>, PATCH_REQ extends PatchUserWorkerTaskRequest<ENTITY, DTO>> extends BaseEntityRestController<ENTITY, DTO, CREATE_REQ, PATCH_REQ> {
     private final UserWorkerTaskBaseEntityService<ENTITY, DTO, PATCH_REQ> entityCrudService;
 
     public UserWorkerTaskBaseRestController(BaseRequestMapper<ENTITY, DTO, CREATE_REQ> requestDtoMapper, UserWorkerTaskBaseEntityService<ENTITY, DTO, PATCH_REQ> entityCrudService) {
@@ -26,5 +26,11 @@ abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorkerTask, D
     @ResponseStatus(HttpStatus.OK)
     public void triggerExecution(@PathVariable UUID id) {
         entityCrudService.triggerExecution(id);
+    }
+
+    @PostMapping("/{id}/cancel")
+    @ResponseStatus(HttpStatus.OK)
+    public void cancel(@PathVariable UUID id) {
+        entityCrudService.cancelById(id);
     }
 }

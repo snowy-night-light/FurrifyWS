@@ -97,7 +97,13 @@ class EntitySpecBuilder<ENTITY extends BaseEntity> implements EntitySpecWhereSte
 
     @Override
     public EntitySpecResult<ENTITY> build() {
-        Specification<ENTITY> finalSpec = (combinedSpec == null) ? (root, query, cb) -> cb.conjunction() : combinedSpec;
+        Specification<ENTITY> finalSpec = (root, query, cb) -> {
+            query.distinct(true);
+            if (combinedSpec == null) {
+                return cb.conjunction();
+            }
+            return combinedSpec.toPredicate(root, query, cb);
+        };
         return new EntitySpecResult<>(queryStr.toString(), finalSpec);
     }
 }
