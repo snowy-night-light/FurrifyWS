@@ -19,6 +19,9 @@ public class CreatePluginImportUserWorkerTaskRequest extends CreateUserWorkerTas
     @NotNull
     private UUID destinationLibraryReferenceId;
 
+    @NotNull
+    private Boolean downloadExternalMedia;
+
     @NotBlank
     private String provider;
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.UniqueConstraintViolationException;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.core.specification.EntitySpec;
@@ -50,7 +51,8 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
             dto.setFollowersCount(0);
         }
 
-        checkNicknameUniqueness(dto.getNicknames(), null, dto.getLibrary().getId());
+        UUID libraryId = dto.getLibrary() != null ? dto.getLibrary().getId() : null;
+        checkNicknameUniqueness(dto.getNicknames(), null, libraryId);
 
         return super.create(dto);
     }
@@ -67,8 +69,8 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         }
 
         if (patchDto.getNicknames() != null && patchDto.getNicknames().isPresent()) {
-            Artist artist = entityRepository.findById(id).orElseThrow(() -> new ws.furrify.core.exception.ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id.toString())));
-            UUID libraryId = (patchDto.getLibrary() != null && patchDto.getLibrary().isPresent() && patchDto.getLibrary().get() != null) ? patchDto.getLibrary().get().getId() : artist.getLibrary().getId();
+            Artist artist = entityRepository.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id.toString())));
+            UUID libraryId = (patchDto.getLibrary() != null && patchDto.getLibrary().isPresent() && patchDto.getLibrary().get() != null) ? patchDto.getLibrary().get().getId() : (artist.getLibrary() != null ? artist.getLibrary().getId() : null);
             checkNicknameUniqueness(patchDto.getNicknames().get(), id, libraryId);
         }
 

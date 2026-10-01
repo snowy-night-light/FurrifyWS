@@ -15,6 +15,7 @@ import ws.furrify.worker.dto.worker.book.request.PatchBookFileUserWorkerTaskRequ
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 
 import java.util.UUID;
+import org.springframework.web.bind.annotation.PathVariable;
 
 // All of the methods need to be overridden for roles security to work here
 @RestController
@@ -28,8 +29,13 @@ public class BookFileUserWorkerTaskV1RestController extends UserWorkerTaskBaseRe
     }
 
     @Override
-    public void triggerExecution(@org.springframework.web.bind.annotation.PathVariable java.util.UUID id) {
+    public void triggerExecution(@PathVariable UUID id) {
         super.triggerExecution(id);
+    }
+
+    @Override
+    public void cancel(@PathVariable UUID id) {
+        super.cancel(id);
     }
 
     @Override

@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.entity.request.EntityIdRequest;
 
+import java.util.List;
+import java.util.UUID;
+
 @Component
 public class EntityReferenceMapper {
 
@@ -32,5 +35,23 @@ public class EntityReferenceMapper {
         T proxy = entityManager.getReference(type, request.getId());
         proxy.setId(request.getId());
         return proxy;
+    }
+
+    public UUID mapEntityIdRequestToUuid(EntityIdRequest request) {
+        return request == null ? null : request.getId();
+    }
+
+    public List<UUID> mapJsonNullableIdListToUuidList(JsonNullable<List<EntityIdRequest>> value) {
+        if (value == null || !value.isPresent() || value.get() == null) {
+            return null;
+        }
+        return value.get().stream().map(this::mapEntityIdRequestToUuid).toList();
+    }
+
+    public List<UUID> mapEntityIdRequestListToUuidList(List<EntityIdRequest> value) {
+        if (value == null) {
+            return null;
+        }
+        return value.stream().map(this::mapEntityIdRequestToUuid).toList();
     }
 }

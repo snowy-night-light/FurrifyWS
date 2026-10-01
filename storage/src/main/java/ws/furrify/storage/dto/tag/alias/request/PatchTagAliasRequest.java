@@ -15,5 +15,5 @@ public class PatchTagAliasRequest implements BasePatchEntityRequest<TagAlias, Ta
 
     private JsonNullable<@NotNull EntityIdRequest> targetTag = JsonNullable.undefined();
 
-    private JsonNullable<@NotBlank @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$") String> alias = JsonNullable.undefined();
+    private JsonNullable<@NotBlank @Pattern(regexp = "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$") String> alias = JsonNullable.undefined();
 }

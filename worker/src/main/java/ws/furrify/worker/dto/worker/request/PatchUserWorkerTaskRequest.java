@@ -8,6 +8,9 @@ import ws.furrify.core.entity.request.BasePatchEntityRequest;
 
 import java.time.ZonedDateTime;
 
+import lombok.Data;
+
+@Data
 public class PatchUserWorkerTaskRequest<ENTITY extends BaseEntity, DTO extends BaseEntityDTO<ENTITY>> implements BasePatchEntityRequest<ENTITY, DTO> {
 
     @NotNull

@@ -10,6 +10,7 @@ import ws.furrify.worker.domain.worker.WorkStatus;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -26,4 +27,6 @@ public class UserWorkerTaskDTO<ENTITY extends UserScopedEntity> extends UserScop
     private ZonedDateTime startAt;
     private ZonedDateTime startedAt;
     private ZonedDateTime finishedAt;
+
+    private UUID launchId;
 }

@@ -93,6 +93,10 @@ public class ThumbnailGenerator {
 
             return tempFile;
         } catch (Exception e) {
+            try {
+                Files.deleteIfExists(tempFile.toPath());
+            } catch (IOException ignored) {
+            }
             throw new ServiceLogicException(AttachmentErrors.VIDEO_FRAME_EXTRACTION_FAILED.getErrorMessage(file.getName()));
         }
     }
@@ -100,13 +104,35 @@ public class ThumbnailGenerator {
     private File generateImageThumbnail(File file) throws IOException {
         File tempFile = File.createTempFile(THUMBNAIL_FILE_PREFIX, "." + THUMBNAIL_FORMAT);
 
-        Thumbnails.of(file)
-                .size(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
-                .outputQuality(THUMBNAIL_QUALITY)
-                .outputFormat(THUMBNAIL_FORMAT)
-                .toFile(tempFile);
+        try {
+            Thumbnails.of(file)
+                    .size(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+                    .outputQuality(THUMBNAIL_QUALITY)
+                    .outputFormat(THUMBNAIL_FORMAT)
+                    .toFile(tempFile);
 
-        return tempFile;
+            return tempFile;
+        } catch (Exception e) {
+            try {
+                BufferedImage image = ImageIO.read(file);
+                if (image != null) {
+                    Thumbnails.of(image)
+                            .size(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+                            .outputQuality(THUMBNAIL_QUALITY)
+                            .outputFormat(THUMBNAIL_FORMAT)
+                            .toFile(tempFile);
+                    return tempFile;
+                }
+            } catch (Exception fallbackEx) {
+                // Ignore fallback exception, will throw original exception below
+            }
+
+            try {
+                Files.deleteIfExists(tempFile.toPath());
+            } catch (IOException ignored) {
+            }
+            throw e;
+        }
     }
 
 }

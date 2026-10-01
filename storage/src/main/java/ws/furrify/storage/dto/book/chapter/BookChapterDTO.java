@@ -1,5 +1,6 @@
 package ws.furrify.storage.dto.book.chapter;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,12 +24,14 @@ public class BookChapterDTO extends UserScopedEntityDTO<BookChapter> {
     private String externalId;
     private Integer chapterNumber;
 
+    @JsonIgnoreProperties("chapters")
     private BookDTO book;
 
     private Long views;
     private Long currentNumberOfWords;
 
     private List<SourceDTO> sources;
+    @JsonIgnoreProperties("chapter")
     private List<BookChapterVersionDTO> versions;
     private Integer versionsCount;
 

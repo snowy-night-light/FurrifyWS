@@ -8,6 +8,7 @@ import ws.furrify.core.entity.UserScopedEntity;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @MappedSuperclass
 @Getter
@@ -17,12 +18,12 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserWorkerTask extends UserScopedEntity {
-    @Column
+    @Column(length = 10485760)
     List<String> errors;
-    @Column
+    @Column(length = 10485760)
     List<String> warnings;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     String log;
 
     @Column(nullable = false)
@@ -34,4 +35,7 @@ public class UserWorkerTask extends UserScopedEntity {
     ZonedDateTime startedAt;
     @Column
     ZonedDateTime finishedAt;
+
+    @Column
+    UUID launchId;
 }

@@ -96,9 +96,8 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
         super.deleteById(id);
 
         UUID bookId = chapter.getBook().getId();
-        bookFileGenerationService.scheduleGeneration(bookId);
+        asyncUtils.runAsyncAfterCommit(() -> this.bookEntityService.updateBookTotalWordCountAsync(bookId));
     }
-
 
     @Transactional
     protected void checkChapterNumberForDuplicates(UUID bookId, UUID existingChapterId, int chapterNumber) {
@@ -118,7 +117,7 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
     @Transactional
     public void updateChapterCurrentWordCountAsync(UUID chapterId) {
-        BookChapterDTO bookChapterDTO = this.findById(chapterId).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(chapterId)));
+        BookChapterDTO bookChapterDTO = this.internalGetById(chapterId);
 
         EntitySpecResult<BookChapterVersion> entitySpecResult = EntitySpec.<BookChapterVersion>specBuilder().where("chapter.id", specEquals(chapterId)).build();
 

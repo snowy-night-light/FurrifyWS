@@ -69,9 +69,6 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         BookChapterVersionDTO bookChapterVersionDTO = super.patchById(id, patchDto);
         asyncUtils.runAsyncAfterCommit(() -> {
             this.countChapterWordsAsync(bookChapterVersionDTO);
-            if (contentChanged) {
-                bookFileGenerationService.scheduleGeneration(bookChapterVersionDTO.getChapter().getBook().getId());
-            }
         });
 
 
@@ -101,8 +98,6 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         BookChapterVersionDTO createdDto = super.create(dto);
         asyncUtils.runAsyncAfterCommit(() -> {
             this.countChapterWordsAsync(createdDto);
-
-            bookFileGenerationService.scheduleGeneration(createdDto.getChapter().getBook().getId());
         });
 
         return createdDto;
@@ -112,9 +107,9 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     @Transactional
     public void deleteById(UUID id) {
         BookChapterVersionDTO version = this.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
-        UUID bookId = version.getChapter().getBook().getId();
+        UUID chapterId = version.getChapter().getId();
         super.deleteById(id);
-        bookFileGenerationService.scheduleGeneration(bookId);
+        asyncUtils.runAsyncAfterCommit(() -> this.bookChapterEntityService.updateChapterCurrentWordCountAsync(chapterId));
     }
 
     @Transactional

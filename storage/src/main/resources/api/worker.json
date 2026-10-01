@@ -106,6 +106,30 @@
         }
       }
     },
+    "/v1/workers/user/books/files/generator/{id}/cancel": {
+      "post": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/workers/user/plugin/import": {
       "get": {
         "tags": [
@@ -178,6 +202,30 @@
           "plugin-import-user-worker-task-v-1-rest-controller"
         ],
         "operationId": "PluginImportUserWorkerTaskV1RestController_triggerExecution",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/{id}/cancel": {
+      "post": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_cancel",
         "parameters": [
           {
             "name": "id",
@@ -501,7 +549,8 @@
           "NOT_STARTED",
           "IN_PROGRESS",
           "COMPLETED",
-          "FAILED"
+          "FAILED",
+          "CANCELLED"
         ]
       },
       "CreatePluginImportUserWorkerTaskRequest": {
@@ -604,10 +653,22 @@
         }
       },
       "PatchBookFileUserWorkerTaskRequest": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "PatchPluginImportUserWorkerTaskRequest": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "Pageable": {
         "type": "object",

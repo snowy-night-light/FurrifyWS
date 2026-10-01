@@ -54,8 +54,6 @@ public interface BaseDTOMapper<ENTITY extends BaseEntity, DTO extends BaseEntity
         return toDtoList(entityList, new CycleAvoidingMappingContext());
     }
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
-            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
     void putEntity(@MappingTarget ENTITY source, DTO putDto, @Context CycleAvoidingMappingContext context);
 
     void patchEntity(@MappingTarget ENTITY source, PATCH_DTO patchDto, @Context CycleAvoidingMappingContext context);

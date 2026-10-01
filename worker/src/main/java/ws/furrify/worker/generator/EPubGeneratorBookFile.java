@@ -1,38 +1,31 @@
 package ws.furrify.worker.generator;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
-import ws.furrify.openapi.gen.storage.api.BookChapterV1RestControllerApiClient;
-import ws.furrify.openapi.gen.storage.api.BookChapterVersionV1RestControllerApiClient;
-import ws.furrify.openapi.gen.storage.api.BookV1RestControllerApiClient;
-import org.openapitools.model.BookDTO;
-import org.openapitools.model.ArtistDTO;
-import org.openapitools.model.ArtistNickname;
-import io.documentnode.epub4j.domain.Book;
 import io.documentnode.epub4j.domain.Author;
+import io.documentnode.epub4j.domain.Book;
 import io.documentnode.epub4j.domain.Resource;
 import io.documentnode.epub4j.epub.EpubWriter;
+import lombok.extern.slf4j.Slf4j;
+import org.openapitools.model.ArtistDTO;
+import org.openapitools.model.ArtistNickname;
+import org.openapitools.model.BookDTO;
+import org.openapitools.model.TagDTO;
+import org.springframework.stereotype.Component;
+import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
+import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 class EPubGeneratorBookFile extends BookFileWorkerGenerator {
 
     public EPubGeneratorBookFile(
-            BookV1RestControllerApiClient bookV1RestControllerApiClient,
-            BookChapterV1RestControllerApiClient bookChapterV1RestControllerApiClient,
-            BookChapterVersionV1RestControllerApiClient bookChapterVersionV1RestControllerApiClient,
-            AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient) {
-        super(bookV1RestControllerApiClient, bookChapterV1RestControllerApiClient, bookChapterVersionV1RestControllerApiClient, attachmentFileV1RestControllerApiClient);
+            ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient) {
+        super(attachmentFileV1RestControllerApiClient);
     }
 
     @Override
@@ -55,7 +48,7 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
      * @return A temporary File containing the generated EPUB package
      */
     @Override
-    protected File generateFile(BookDTO bookDto, List<ChapterData> chapters, ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO task) {
+    protected File generateFile(BookDTO bookDto, List<ChapterData> chapters, BookFileUserWorkerTaskDTO task) {
         log.debug("Generating EPUB for book '{}' with {} chapters.", bookDto.getTitle(), chapters.size());
         
         // 1. Initialize EPUB Book and add basic metadata
@@ -76,7 +69,7 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
 
         // 2. Generate Overview HTML page containing book statistics and metadata
         StringBuilder overviewHtml = new StringBuilder();
-        overviewHtml.append("<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<title>Overview</title>\n</head>\n<body>\n");
+        overviewHtml.append("<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"UTF-8\" />\n<title>Overview</title>\n</head>\n<body>\n");
         overviewHtml.append("<h1>").append(bookDto.getTitle() != null ? bookDto.getTitle() : "Overview").append("</h1>\n");
         
         if (bookDto.getDescriptionHtml() != null) {
@@ -85,7 +78,7 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
         
         overviewHtml.append("<ul>\n");
         if (bookDto.getArtists() != null && !bookDto.getArtists().isEmpty()) {
-            java.util.List<String> authorNames = new java.util.ArrayList<>();
+            List<String> authorNames = new ArrayList<>();
             for (ArtistDTO artist : bookDto.getArtists()) {
                 if (artist.getNicknames() != null && !artist.getNicknames().isEmpty()) {
                     ArtistNickname nickname = artist.getNicknames().stream()
@@ -100,7 +93,7 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
         }
         
         if (bookDto.getTags() != null && !bookDto.getTags().isEmpty()) {
-            java.util.List<String> tagNames = bookDto.getTags().stream().map(org.openapitools.model.TagDTO::getName).toList();
+            List<String> tagNames = bookDto.getTags().stream().map(TagDTO::getName).toList();
             overviewHtml.append("<li><strong>Tags:</strong> ").append(String.join(", ", tagNames)).append("</li>\n");
         }
         
@@ -111,15 +104,15 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
         overviewHtml.append("<li><strong>Chapters:</strong> ").append(chapters.size()).append("</li>\n");
         
         if (bookDto.getStatus() != null) {
-            String formattedStatus = java.util.Arrays.stream(bookDto.getStatus().name().split("_"))
+            String formattedStatus = Arrays.stream(bookDto.getStatus().name().split("_"))
                     .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
-                    .collect(java.util.stream.Collectors.joining(" "));
+                    .collect(Collectors.joining(" "));
             overviewHtml.append("<li><strong>Status:</strong> ").append(formattedStatus).append("</li>\n");
         }
         if (bookDto.getRating() != null) {
-            String formattedRating = java.util.Arrays.stream(bookDto.getRating().name().split("_"))
+            String formattedRating = Arrays.stream(bookDto.getRating().name().split("_"))
                     .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
-                    .collect(java.util.stream.Collectors.joining(" "));
+                    .collect(Collectors.joining(" "));
             overviewHtml.append("<li><strong>Rating:</strong> ").append(formattedRating).append("</li>\n");
         }
         if (bookDto.getViews() != null) {
@@ -163,7 +156,7 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
 
             // Build the individual chapter HTML file
             StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<title>").append(chapter.getTitle() != null ? chapter.getTitle() : "Chapter").append("</title>\n");
+            html.append("<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"UTF-8\" />\n<title>").append(chapter.getTitle() != null ? chapter.getTitle() : "Chapter").append("</title>\n");
             
             // Link the chapter's specific stylesheet
             if (cssFilename != null) {
@@ -195,9 +188,10 @@ class EPubGeneratorBookFile extends BookFileWorkerGenerator {
 
         // 4. Package everything into a temporary EPUB file
         File tmpFile = new File("/tmp/" + UUID.randomUUID() + ".epub");
-        try {
+        tmpFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
             EpubWriter epubWriter = new EpubWriter();
-            epubWriter.write(epubBook, new FileOutputStream(tmpFile));
+            epubWriter.write(epubBook, fos);
         } catch (Exception e) {
             throw new RuntimeException("Failed to write epub file", e);
         }

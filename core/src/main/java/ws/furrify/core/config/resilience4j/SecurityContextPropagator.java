@@ -1,9 +1,8 @@
-package ws.furrify.worker.config;
+package ws.furrify.core.config.resilience4j;
 
 import io.github.resilience4j.core.ContextPropagator;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import ws.furrify.core.utils.SecurityContextUtils;
 
 import java.util.Optional;
@@ -11,7 +10,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-@Component
 public class SecurityContextPropagator implements ContextPropagator<Object[]> {
 
     @Override

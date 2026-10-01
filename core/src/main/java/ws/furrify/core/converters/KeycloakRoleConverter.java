@@ -43,49 +43,48 @@ public class KeycloakRoleConverter implements GrantedAuthoritiesMapper, Converte
 
         final List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
 
-        // Map realm roles
+        final Object rootRolesObj = claims.get("roles");
+        if (rootRolesObj instanceof List<?> rootRoles) {
+            for (Object roleObj : rootRoles) {
+                if (roleObj instanceof String role) {
+                    grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                }
+            }
+        }
 
         final Object realmAccessObj = claims.get("realm_access");
-        if (!(realmAccessObj instanceof Map<?, ?>)) {
-            return grantedAuthorities;
+        if (realmAccessObj instanceof Map<?, ?> realmAccess) {
+            final Object realmRolesObj = realmAccess.get("roles");
+            if (realmRolesObj instanceof List<?> realmRoles) {
+                for (Object roleObj : realmRoles) {
+                    if (roleObj instanceof String role) {
+                        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    }
+                }
+            }
         }
-        final Map<String, Object> realmAccess = (Map<String, Object>) realmAccessObj;
-
-        final Object realmRolesObj = realmAccess.get("roles");
-        if (!(realmRolesObj instanceof List<?>)) {
-            return grantedAuthorities;
-        }
-        final List<String> realmRoles = (List<String>) realmRolesObj;
-
-        for (String role : realmRoles) {
-            grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-        }
-
-        // Map resource roles
 
         final Object resourceAccessObj = claims.get("resource_access");
-        if (!(resourceAccessObj instanceof Map<?, ?>)) {
-            return grantedAuthorities;
-        }
-        final Map<String, Object> resourceAccess = (Map<String, Object>) resourceAccessObj;
+        if (resourceAccessObj instanceof Map<?, ?> resourceAccess) {
+            for (Map.Entry<?, ?> resource : resourceAccess.entrySet()) {
+                final String resourceName = String.valueOf(resource.getKey());
 
-        for (Map.Entry<String, Object> resource : resourceAccess.entrySet()) {
-            final String resourceName = resource.getKey();
+                final Object resourceDetailsObj = resource.getValue();
+                if (!(resourceDetailsObj instanceof Map<?, ?> resourceDetails)) {
+                    continue;
+                }
 
-            final Object resourceDetailsObj = resource.getValue();
-            if (!(resourceDetailsObj instanceof Map<?, ?>)) {
-                continue;
-            }
-            final Map<String, Object> resourceDetails = (Map<String, Object>) resourceDetailsObj;
+                final Object rolesObj = resourceDetails.get("roles");
+                if (!(rolesObj instanceof List<?> resourceRole)) {
+                    continue;
+                }
 
-            final Object rolesObj = resourceDetails.get("roles");
-            if (!(rolesObj instanceof List<?>)) {
-                continue;
-            }
-            final List<String> resourceRole = (List<String>) rolesObj;
-
-            for (String role : resourceRole) {
-                grantedAuthorities.add(new SimpleGrantedAuthority(resourceName + "_" + role));
+                for (Object roleObj : resourceRole) {
+                    if (roleObj instanceof String role) {
+                        grantedAuthorities.add(new SimpleGrantedAuthority(resourceName + "_" + role));
+                        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    }
+                }
             }
         }
 

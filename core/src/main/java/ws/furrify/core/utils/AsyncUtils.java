@@ -25,6 +25,10 @@ public class AsyncUtils {
         this.taskExecutor = taskExecutor != null ? taskExecutor : new SimpleAsyncTaskExecutor();
     }
 
+    public void runInTransaction(Runnable task) {
+        executeInTransaction(task);
+    }
+
     public void runAsync(Runnable task) {
         taskExecutor.execute(() -> executeInTransaction(task));
     }
@@ -57,7 +61,7 @@ public class AsyncUtils {
 
     private void executeInTransaction(Runnable task) {
         if (transactionTemplate != null) {
-            int maxRetries = 3;
+            int maxRetries = 15;
             for (int i = 0; i < maxRetries; i++) {
                 try {
                     transactionTemplate.executeWithoutResult(status -> task.run());
@@ -67,7 +71,9 @@ public class AsyncUtils {
                         throw e;
                     }
                     try {
-                        Thread.sleep(50 * (i + 1));
+                        long baseSleep = 50L * (i + 1);
+                        long jitter = (long) (Math.random() * 50);
+                        Thread.sleep(baseSleep + jitter);
                     } catch (InterruptedException ignored) {
                         Thread.currentThread().interrupt();
                         throw e;

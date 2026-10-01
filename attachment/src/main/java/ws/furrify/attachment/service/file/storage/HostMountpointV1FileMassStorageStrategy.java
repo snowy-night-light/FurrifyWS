@@ -14,6 +14,9 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.createLink;
+
 @Slf4j
 public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageStrategy {
 
@@ -28,52 +31,60 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
             Path destinationThumbnailFilePath = getDestinationThumbnailFilePath(id, file);
 
             // Ensure parent directory exists
-            java.nio.file.Files.createDirectories(destinationFilePath.getParent());
+            createDirectories(destinationFilePath.getParent());
 
             // Thumbnail
-            File thumbnailFile = thumbnailGenerator.generateThumbnail(mimeType, file);
-            if (thumbnailFile != null) {
-                Files.move(thumbnailFile, destinationThumbnailFilePath.toFile());
+            URI destinationThumbnailUri = null;
+            try {
+                File thumbnailFile = thumbnailGenerator.generateThumbnail(mimeType, file);
+                if (thumbnailFile != null) {
+                    Files.move(thumbnailFile, destinationThumbnailFilePath.toFile());
+                    destinationThumbnailUri = URI.create("/" + id + "/thumbnail.jpg");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to generate thumbnail for attachment {} ({}): {}", id, file.getName(), e.getMessage());
             }
 
             // Main file
             Files.move(file, destinationFilePath.toFile());
 
             String ext = Files.getFileExtension(file.getName());
-            return UploadedFileReference.of(URI.create("/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext)), URI.create("/" + id + "/thumbnail.jpg"), getStorageServiceId());
+            return UploadedFileReference.of(URI.create("/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext)), destinationThumbnailUri, getStorageServiceId());
         } catch (IOException e) {
             log.error("Failed to process attachment file.", e);
 
-            throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage());
+            throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(file.getName()));
         }
     }
 
     @Override
-    public UploadedFileReference linkFile(UUID id, String mimeType, java.net.URI existingFileUri, java.net.URI existingThumbnailUri) {
+    public UploadedFileReference linkFile(UUID id, String mimeType, URI existingFileUri, URI existingThumbnailUri) {
         try {
-            Path existingFilePath = Path.of(existingFileUri);
+            Path existingFilePath = Path.of(MOUNT_POINT_PATH + existingFileUri.getPath());
             
             String ext = Files.getFileExtension(existingFilePath.toFile().getName());
             Path destinationFilePath = Path.of(MOUNT_POINT_PATH + "/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext));
             Path destinationThumbnailFilePath = Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail.jpg");
 
             // Ensure parent directory exists
-            java.nio.file.Files.createDirectories(destinationFilePath.getParent());
+            createDirectories(destinationFilePath.getParent());
 
             // Thumbnail
+            URI destinationThumbnailUri = null;
             if (existingThumbnailUri != null) {
-                Path existingThumbnailPath = Path.of(existingThumbnailUri);
+                Path existingThumbnailPath = Path.of(MOUNT_POINT_PATH + existingThumbnailUri.getPath());
                 if (existingThumbnailPath.toFile().exists()) {
-                    java.nio.file.Files.createLink(destinationThumbnailFilePath, existingThumbnailPath);
+                    createLink(destinationThumbnailFilePath, existingThumbnailPath);
+                    destinationThumbnailUri = URI.create("/" + id + "/thumbnail.jpg");
                 }
             }
 
             // Main file
-           java.nio.file.Files.createLink(destinationFilePath, existingFilePath);
+            createLink(destinationFilePath, existingFilePath);
 
-            return UploadedFileReference.of(URI.create("/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext)), URI.create("/" + id + "/thumbnail.jpg"), getStorageServiceId());
+            return UploadedFileReference.of(URI.create("/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext)), destinationThumbnailUri, getStorageServiceId());
         } catch (IOException e) {
-            log.error("Failed to link attachment file.", e);
+            log.error("Failed to link attachment file. Reason: {}", e.getMessage());
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage());
         }

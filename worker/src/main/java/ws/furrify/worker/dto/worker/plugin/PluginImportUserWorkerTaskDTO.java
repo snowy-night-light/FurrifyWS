@@ -17,4 +17,5 @@ public class PluginImportUserWorkerTaskDTO extends UserWorkerTaskDTO<PluginImpor
     private String provider;
     private UUID fileReferenceId;
     private UUID destinationLibraryReferenceId;
+    private Boolean downloadExternalMedia;
 }

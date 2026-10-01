@@ -34,8 +34,8 @@ public class Artist extends UserScopedEntity {
     @Column()
     String externalId;
 
-    @Column(length = 1024)
-    @Length(max = 1024)
+    @Column(length = 2048)
+    @Length(max = 2048)
     String bioHtml;
 
     @Builder.Default

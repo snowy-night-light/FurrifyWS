@@ -1,8 +1,12 @@
 package ws.furrify.storage.service.book;
 
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.BookFileUserWorkerTaskDTO;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.openapitools.model.CreateBookFileUserWorkerTaskRequest;
+import ws.furrify.storage.dto.book.BookDTO;
+import org.openapitools.model.WorkStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
@@ -82,19 +86,21 @@ public class BookFileGenerationService {
                 SecurityContextUtils.mockFeignClientSecurityContext(book.getOwnerId());
                 try {
                     ResponseEntity<BookFileUserWorkerTaskDTO> response = feignClient.bookFileUserWorkerTaskV1RestControllerGetById(book.getActiveWorkerTaskId());
-                    org.openapitools.model.BookFileUserWorkerTaskDTO task = response.getBody();
+                    BookFileUserWorkerTaskDTO task = response.getBody();
                     
-                    if (task == null || org.openapitools.model.WorkStatus.FAILED.equals(task.getStatus())) {
+                    if (task == null || WorkStatus.FAILED.equals(task.getStatus())) {
                         log.warn("Found book {} with FAILED or missing worker task {}. Rescheduling...", book.getId(), book.getActiveWorkerTaskId());
                         scheduleGeneration(book.getId());
                     }
-                } catch (feign.FeignException e) {
+                } catch (FeignException e) {
                     if (e.status() == 404) {
                         log.warn("Found book {} with missing worker task {} (404). Rescheduling...", book.getId(), book.getActiveWorkerTaskId());
                         scheduleGeneration(book.getId());
                     } else {
                         log.error("Failed to fetch worker task status for book {}: HTTP {} - {}", book.getId(), e.status(), e.contentUTF8());
                     }
+                } catch (CallNotPermittedException e) {
+                    log.warn("Circuit breaker is OPEN. Cannot check worker task status for book {}. Will retry later.", book.getId());
                 } catch (Exception e) {
                     log.error("Failed to check worker task status for book {}: {}", book.getId(), e.getMessage());
                 } finally {
@@ -108,48 +114,62 @@ public class BookFileGenerationService {
         log.debug("Triggering worker execution for bookId: {}", bookId);
         scheduledTasks.remove(bookId);
         
-        bookEntityService.findById(bookId).ifPresent(book -> {
-            SecurityContextUtils.mockFeignClientSecurityContext(book.getOwnerId());
-            try {
-                if (book.getActiveWorkerTaskId() != null) {
-                    try {
-                        var taskResponse = feignClient.bookFileUserWorkerTaskV1RestControllerGetById(book.getActiveWorkerTaskId()).getBody();
-                        if (taskResponse != null && org.openapitools.model.WorkStatus.NOT_STARTED.equals(taskResponse.getStatus())) {
-                            log.debug("Cancelling previous active worker task {} for bookId: {}", book.getActiveWorkerTaskId(), bookId);
-                            feignClient.bookFileUserWorkerTaskV1RestControllerDelete(book.getActiveWorkerTaskId());
-                        }
-                    } catch (Exception e) {
-                        log.warn("Failed to check or cancel old worker task {}: {}", book.getActiveWorkerTaskId(), e.getMessage());
-                    }
-                }
+        BookDTO book = bookEntityService.claimBookForGeneration(bookId);
+        if (book == null) {
+            log.debug("Book {} was already claimed for generation or does not need it. Skipping.", bookId);
+            return;
+        }
 
+        SecurityContextUtils.mockFeignClientSecurityContext(book.getOwnerId());
+        try {
+            if (book.getActiveWorkerTaskId() != null) {
                 try {
-                    CreateBookFileUserWorkerTaskRequest request = new CreateBookFileUserWorkerTaskRequest();
-                    request.setSourceBookReferenceId(book.getId());
-                    request.setStartAt(ZonedDateTime.now());
-                    
-                    log.debug("Sending CreateBookFileUserWorkerTaskRequest to worker service for bookId: {}", bookId);
-                    var response = feignClient.bookFileUserWorkerTaskV1RestControllerSave(request).getBody();
-                    if (response != null && response.getId() != null) {
-                        log.debug("Successfully created worker task {} for bookId: {}", response.getId(), bookId);
-                        bookEntityService.assignWorkerTask(book.getId(), response.getId());
+                    var taskResponse = feignClient.bookFileUserWorkerTaskV1RestControllerGetById(book.getActiveWorkerTaskId()).getBody();
+                    if (taskResponse != null) {
+                        if (WorkStatus.NOT_STARTED.equals(taskResponse.getStatus())) {
+                            log.debug("Cancelling previous active worker task {} for bookId: {}", book.getActiveWorkerTaskId(), bookId);
+                            feignClient.bookFileUserWorkerTaskV1RestControllerCancel(book.getActiveWorkerTaskId());
+                        } else if (WorkStatus.IN_PROGRESS.equals(taskResponse.getStatus())) {
+                            log.debug("Previous worker task {} for bookId: {} is still IN_PROGRESS. Leaving it to finish and reverting claim.", book.getActiveWorkerTaskId(), bookId);
+                            bookEntityService.markNeedsGeneration(book.getId(), true);
+                            return;
+                        }
                     }
+                } catch (CallNotPermittedException e) {
+                    log.warn("Circuit breaker is OPEN. Cannot check or cancel old worker task {}. Will retry later.", book.getActiveWorkerTaskId());
                 } catch (Exception e) {
-                    Throwable cause = e.getCause();
-                    while (cause != null && !(cause instanceof feign.FeignException)) {
-                        cause = cause.getCause();
-                    }
-                    if (cause instanceof feign.FeignException feignException) {
-                        log.error("Failed to create new worker task for book {}: HTTP {} - {}", book.getId(), feignException.status(), feignException.contentUTF8());
-                    } else {
-                        log.error("Failed to create new worker task for book {}: {}", book.getId(), e.getMessage());
-                    }
-                    bookEntityService.markNeedsGeneration(book.getId(), true);
+                    log.warn("Failed to check or cancel old worker task {}: {}", book.getActiveWorkerTaskId(), e.getMessage());
                 }
-            } finally {
-                SecurityContextUtils.clearFeignClientSecurityContext();
             }
-        });
+
+            try {
+                CreateBookFileUserWorkerTaskRequest request = new CreateBookFileUserWorkerTaskRequest();
+                request.setSourceBookReferenceId(book.getId());
+                request.setStartAt(ZonedDateTime.now());
+                
+                log.debug("Sending CreateBookFileUserWorkerTaskRequest to worker service for bookId: {}", bookId);
+                var response = feignClient.bookFileUserWorkerTaskV1RestControllerSave(request).getBody();
+                if (response != null && response.getId() != null) {
+                    log.debug("Successfully created worker task {} for bookId: {}", response.getId(), bookId);
+                    bookEntityService.assignWorkerTask(book.getId(), response.getId());
+                }
+            } catch (Exception e) {
+                Throwable cause = e.getCause();
+                while (cause != null && !(cause instanceof FeignException)) {
+                    cause = cause.getCause();
+                }
+                if (cause instanceof FeignException feignException) {
+                    log.error("Failed to create new worker task for book {}: HTTP {} - {}", book.getId(), feignException.status(), feignException.contentUTF8());
+                } else if (e instanceof CallNotPermittedException) {
+                    log.warn("Circuit breaker is OPEN. Cannot create new worker task for book {}. Will retry later.", book.getId());
+                } else {
+                    log.error("Failed to create new worker task for book {}: {}", book.getId(), e.getMessage());
+                }
+                bookEntityService.markNeedsGeneration(book.getId(), true);
+            }
+        } finally {
+            SecurityContextUtils.clearFeignClientSecurityContext();
+        }
     }
 
     @Transactional

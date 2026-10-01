@@ -33,6 +33,8 @@ import ws.furrify.storage.service.tag.TagEntityService;
 import ws.furrify.storage.shared.exception.StorageErrors;
 import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
+import java.util.concurrent.CompletableFuture;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -69,11 +71,20 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     }
 
     @Override
+    @Transactional
     public BookDTO create(BookDTO dto) {
         this.handleInternalReference(dto, BookDTO::getCover, BookDTO::setCover, mediaEntityService);
         this.handleInternalReference(dto, BookDTO::getLibrary, BookDTO::setLibrary, libraryEntityService);
-        this.handleInternalReference(dto, BookDTO::getSequel, BookDTO::setSequel, this);
-        this.handleInternalReference(dto, BookDTO::getPrequel, BookDTO::setPrequel, this);
+        if (dto.getSequels() != null) {
+            dto.getSequels().forEach(seqId -> {
+                if (!this.existsById(seqId)) throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(seqId));
+            });
+        }
+        if (dto.getPrequels() != null) {
+            dto.getPrequels().forEach(preId -> {
+                if (!this.existsById(preId)) throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(preId));
+            });
+        }
         this.handleInternalCollectionReferences(dto, BookDTO::getTags, BookDTO::setTags, tagEntityService);
         this.handleInternalCollectionReferences(dto, BookDTO::getArtists, BookDTO::setArtists, artistEntityService);
         this.handleInternalCollectionReferences(dto, BookDTO::getSources, BookDTO::setSources, sourceEntityService);
@@ -95,10 +106,23 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     }
 
     @Override
+    @Transactional
     public BookDTO patchById(UUID id, PatchBookRequest patchDto) {
         this.handleInternalReference(patchDto.getCover(), mediaEntityService);
-        this.handleInternalReference(patchDto.getSequel(), this);
-        this.handleInternalReference(patchDto.getPrequel(), this);
+        if (patchDto.getSequels() != null && patchDto.getSequels().isPresent() && patchDto.getSequels().get() != null) {
+            patchDto.getSequels().get().forEach(req -> {
+                if (req != null && !this.existsById(req.getId())) {
+                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(req.getId()));
+                }
+            });
+        }
+        if (patchDto.getPrequels() != null && patchDto.getPrequels().isPresent() && patchDto.getPrequels().get() != null) {
+            patchDto.getPrequels().get().forEach(req -> {
+                if (req != null && !this.existsById(req.getId())) {
+                    throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(req.getId()));
+                }
+            });
+        }
         this.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
         this.handleCollectionInternalReferences(patchDto.getTags(), tagEntityService);
         this.handleCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
@@ -137,7 +161,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         BookDTO bookDTO = super.findById(id).orElse(null);
         if (bookDTO != null && bookDTO.getFormatReferenceIds() != null && !bookDTO.getFormatReferenceIds().isEmpty()) {
             bookDTO.getFormatReferenceIds().values().forEach(attachmentId -> {
-                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                CompletableFuture.runAsync(() -> {
                     try {
                         attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(attachmentId);
                     } catch (Exception e) {
@@ -168,7 +192,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
     @Transactional
     public void updateBookTotalWordCountAsync(UUID bookId) {
-        BookDTO bookDTO = this.findById(bookId).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(bookId)));
+        BookDTO bookDTO = this.internalFindById(bookId).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(bookId)));
 
         EntitySpecResult<BookChapter> entitySpecResult = EntitySpec.<BookChapter>specBuilder().where("book.id", specEquals(bookId)).build();
 
@@ -180,11 +204,13 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         bookDTO.setTotalWordCount(bookWordCount);
 
         this.internalPutById(bookId, bookDTO);
+
+        asyncUtils.runAsyncAfterCommit(() -> this.bookFileGenerationService.scheduleGeneration(bookId));
     }
 
     @Transactional
     public void markNeedsGeneration(UUID bookId, boolean needsGeneration) {
-        BookDTO book = this.findById(bookId).orElse(null);
+        BookDTO book = this.internalFindById(bookId).orElse(null);
         if (book != null) {
             book.setNeedsBookFileGeneration(needsGeneration);
             this.internalPutById(bookId, book);
@@ -192,8 +218,18 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     }
 
     @Transactional
+    public BookDTO claimBookForGeneration(UUID bookId) {
+        BookDTO book = this.internalFindById(bookId).orElse(null);
+        if (book != null && Boolean.TRUE.equals(book.getNeedsBookFileGeneration())) {
+            book.setNeedsBookFileGeneration(false);
+            return this.internalPutById(bookId, book);
+        }
+        return null;
+    }
+
+    @Transactional
     public void updateBookFileWorkerTaskInfo(UUID bookId, Map<String, UUID> newFormatReferenceIds, UUID newActiveWorkerTaskId) {
-        BookDTO book = this.findById(bookId).orElse(null);
+        BookDTO book = this.internalFindById(bookId).orElse(null);
         if (book != null) {
             if (newFormatReferenceIds != null) {
                 if (book.getFormatReferenceIds() != null) {
@@ -216,7 +252,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
     @Transactional
     public void assignWorkerTask(UUID bookId, UUID workerTaskId) {
-        BookDTO book = this.findById(bookId).orElse(null);
+        BookDTO book = this.internalFindById(bookId).orElse(null);
         if (book != null) {
             book.setActiveWorkerTaskId(workerTaskId);
             if (book.getFormatReferenceIds() != null) {

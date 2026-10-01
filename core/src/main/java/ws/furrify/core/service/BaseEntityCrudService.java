@@ -56,6 +56,13 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     @Transactional
+    public List<DTO> getAllInternal(String spec) {
+        return entityRepository.findAll(getCombinedSpecs(
+                EntitySpec.fromSpecString(spec)
+        ).specification()).stream().map(dtoMapper::toDto).toList();
+    }
+
+    @Transactional
     public void deleteById(UUID id) {
         entityRepository.deleteById(id, getCombinedSpecs());
     }
@@ -72,8 +79,18 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     }
 
     @Transactional
+    protected Optional<DTO> internalFindById(UUID id) {
+        return entityRepository.findByIdWithPessimisticLock(id).map(dtoMapper::toDto);
+    }
+
+    @Transactional
+    protected DTO internalGetById(UUID id) {
+        return internalFindById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+    }
+
+    @Transactional
     protected DTO internalPutById(UUID id, DTO dto) {
-        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        ENTITY source = entityRepository.findByIdWithPessimisticLock(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
         dtoMapper.putEntity(source, dto);
 

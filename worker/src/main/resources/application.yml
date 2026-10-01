@@ -4,6 +4,11 @@ scalar:
 spring:
   cloud:
     openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 10000
+            readTimeout: 60000
       httpclient:
         hc5:
           enabled: true
@@ -17,10 +22,69 @@ spring:
     open-in-view: false
   profiles:
     active: prod
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            scope: openid
+            authorization-grant-type: authorization_code
+            client-id: ${KEYCLOAK_CLIENT_ID}
+          keycloak-internal:
+            provider: keycloak
+            client-id: ${KEYCLOAK_SERVICE_CLIENT_ID}
+            client-secret: ${KEYCLOAK_SERVICE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 60
+        ignoreExceptions:
+          - feign.FeignException.FeignClientException
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 60s
+
+eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
 server:
   port: 8051
-
 
 springdoc:
   api-docs:
     version: openapi_3_0
+
+logging:
+  level:
+    org.hibernate.validator.internal.metadata.aggregated.CascadingMetaDataBuilder: ERROR
+    io.documentnode.epub4j: ERROR
+
+furrify:
+  worker:
+    tasks:
+      book:
+        max-concurrent: ${FURRIFY_WORKER_TASKS_BOOK_MAX_CONCURRENT:1}
+        renderer-process-limit: ${FURRIFY_WORKER_TASKS_BOOK_RENDERER_LIMIT:1}

@@ -18,7 +18,7 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 public class TagDTO extends UserScopedEntityDTO<Tag> {
-    @Pattern(regexp = "^[a-z0-9]+(?: [a-z0-9]+)*$")
+    @Pattern(regexp = "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$")
     private String name;
 
     private List<TagAliasDTO> aliases;

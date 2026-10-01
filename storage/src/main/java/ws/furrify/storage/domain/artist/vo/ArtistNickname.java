@@ -3,6 +3,7 @@ package ws.furrify.storage.domain.artist.vo;
 
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
 
@@ -21,7 +22,7 @@ public class ArtistNickname {
     @NonNull
     @NotBlank
     @Length(max = MAX_LENGTH)
-    @jakarta.validation.constraints.Pattern(regexp = PATTERN)
+    @Pattern(regexp = PATTERN)
     private String nickname;
 
     @NonNull

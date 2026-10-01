@@ -1,6 +1,7 @@
 package ws.furrify.storage.service.stats;
 
 import lombok.RequiredArgsConstructor;
+import org.openapitools.model.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.specification.EntitySpec;
@@ -49,7 +50,7 @@ public class UserStatisticsService {
                 .and().where("mimeType", EntitySpec.specLike(mimeTypePattern))
                 .build().specString();
 
-        org.openapitools.model.Pageable pageable = new org.openapitools.model.Pageable();
+        Pageable pageable = new Pageable();
         pageable.setSize(1);
 
         var response = attachmentClient.attachmentFileV1RestControllerGetAllPaged(pageable, EntitySpecUtils.encodeSpecToBase64(spec));

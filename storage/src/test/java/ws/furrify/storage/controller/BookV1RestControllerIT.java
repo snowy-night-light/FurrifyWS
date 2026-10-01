@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import tools.jackson.databind.json.JsonMapper;
 import ws.furrify.core.entity.request.EntityIdRequest;
 import ws.furrify.storage.StorageApplication;
@@ -28,8 +29,10 @@ import ws.furrify.storage.dto.book.request.PatchBookRequest;
 import ws.furrify.storage.dto.book.request.PutBookWorkerTaskRequest;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
+import io.restassured.RestAssured;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,12 +84,17 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
+        Book seqBook = bookRepository.save(Book.builder().title("Sequel").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book preBook = bookRepository.save(Book.builder().title("Prequel").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
         CreateBookRequest request = new CreateBookRequest();
         request.setTitle("Test book");
         request.setDescriptionHtml("Test descriptionHtml");
         request.setLibrary(EntityIdRequest.builder().id(defaultLibrary.getId()).build());
         request.setTags(List.of(EntityIdRequest.builder().id(tag.getId()).build()));
         request.setArtists(List.of(EntityIdRequest.builder().id(artist.getId()).build()));
+        request.setSequels(List.of(EntityIdRequest.builder().id(seqBook.getId()).build()));
+        request.setPrequels(List.of(EntityIdRequest.builder().id(preBook.getId()).build()));
         request.setShortDescriptionHtml("Short desc");
         request.setStatus(BookStatus.COMPLETED);
         request.setRating(BookRating.SAFE);
@@ -108,6 +116,12 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertNotNull(createdBook.getArtists());
             assertEquals(1, createdBook.getArtists().size());
             assertEquals(artist.getId(), createdBook.getArtists().getFirst().getId());
+            assertNotNull(createdBook.getSequels());
+            assertEquals(1, createdBook.getSequels().size());
+            assertEquals(seqBook.getId(), createdBook.getSequels().getFirst());
+            assertNotNull(createdBook.getPrequels());
+            assertEquals(1, createdBook.getPrequels().size());
+            assertEquals(preBook.getId(), createdBook.getPrequels().getFirst());
         });
     }
 
@@ -166,10 +180,15 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
+        Book seqBook2 = bookRepository.save(Book.builder().title("Sequel2").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book preBook2 = bookRepository.save(Book.builder().title("Prequel2").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
         PatchBookRequest request = new PatchBookRequest();
         request.setTitle(JsonNullable.of("Patched title"));
         request.setTags(JsonNullable.of(List.of(EntityIdRequest.builder().id(tag2.getId()).build())));
         request.setArtists(JsonNullable.of(List.of(EntityIdRequest.builder().id(artist2.getId()).build())));
+        request.setSequels(JsonNullable.of(List.of(EntityIdRequest.builder().id(seqBook2.getId()).build())));
+        request.setPrequels(JsonNullable.of(List.of(EntityIdRequest.builder().id(preBook2.getId()).build())));
         request.setShortDescriptionHtml(JsonNullable.of("Patched short desc"));
         request.setStatus(JsonNullable.of(BookStatus.IN_PROGRESS));
         request.setRating(JsonNullable.of(BookRating.TEEN));
@@ -191,6 +210,12 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
             assertNotNull(updatedBook.getArtists());
             assertEquals(1, updatedBook.getArtists().size());
             assertEquals(artist2.getId(), updatedBook.getArtists().getFirst().getId());
+            assertNotNull(updatedBook.getSequels());
+            assertEquals(1, updatedBook.getSequels().size());
+            assertEquals(seqBook2.getId(), updatedBook.getSequels().getFirst());
+            assertNotNull(updatedBook.getPrequels());
+            assertEquals(1, updatedBook.getPrequels().size());
+            assertEquals(preBook2.getId(), updatedBook.getPrequels().getFirst());
         });
     }
 
@@ -209,10 +234,10 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         PutBookWorkerTaskRequest request = new PutBookWorkerTaskRequest();
-        request.setFormatReferenceIds(java.util.Map.of("html", UUID.randomUUID()));
+        request.setFormatReferenceIds(Map.of("html", UUID.randomUUID()));
         request.setActiveWorkerTaskId(UUID.randomUUID());
 
-        io.restassured.RestAssured.given()
+        RestAssured.given()
                 .header("Content-Type", "application/json")
                 .pathParam("id", book.getId())
                 .body(request)
@@ -220,7 +245,7 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
                 .put(super.basePath + "/{id}/files/worker-task")
                 .then()
                 .log().all()
-                .statusCode(org.springframework.http.HttpStatus.OK.value());
+                .statusCode(HttpStatus.OK.value());
 
         Book updatedBook = bookRepository.findById(book.getId()).orElseThrow();
         assertEquals(request.getActiveWorkerTaskId(), updatedBook.getActiveWorkerTaskId());

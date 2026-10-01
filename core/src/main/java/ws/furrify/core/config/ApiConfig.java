@@ -1,11 +1,14 @@
 package ws.furrify.core.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import feign.Retryer;
+import feign.codec.ErrorDecoder;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
-import ws.furrify.core.config.interceptor.SmartOAuth2FeignRequestInterceptor;
-import feign.Retryer;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import ws.furrify.core.config.feign.OAuth2FeignErrorDecoder;
+import ws.furrify.core.config.feign.SmartOAuth2FeignRequestInterceptor;
 
 public abstract class ApiConfig {
     @Bean
@@ -14,6 +17,14 @@ public abstract class ApiConfig {
             @Value("${spring.application.name}") String appName) {
 
         return new SmartOAuth2FeignRequestInterceptor(authorizedClientManager, appName);
+    }
+
+    @Bean
+    public ErrorDecoder oauth2FeignErrorDecoder(
+            OAuth2AuthorizedClientService authorizedClientService,
+            @Value("${spring.application.name}") String appName) {
+
+        return new OAuth2FeignErrorDecoder(authorizedClientService, appName);
     }
 
     @Bean

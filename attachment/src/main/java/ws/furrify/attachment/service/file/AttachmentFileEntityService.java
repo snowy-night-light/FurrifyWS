@@ -63,8 +63,9 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
 
         dto.setUploadStatus(FileUploadStatus.NOT_UPLOADED);
 
+        File tempFile = null;
         try {
-            File tempFile = Files.createTempFile("upload-", multipartFile.getOriginalFilename()).toFile();
+            tempFile = Files.createTempFile("upload-", multipartFile.getOriginalFilename()).toFile();
             multipartFile.transferTo(tempFile);
 
             extractFileMetadataToDto(dto, tempFile);
@@ -78,6 +79,10 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
             log.warn("Failed to process attachment file uploaded data.", e);
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(dto.getFileName()));
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
@@ -85,8 +90,9 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
     public AttachmentFileDTO patchWithFileUpload(UUID id, PatchAttachmentFileRequest patchDto, @NotNull MultipartFile multipartFile) {
         AttachmentFileDTO patchedDto = super.patchById(id, patchDto);
 
+        File tempFile = null;
         try {
-            File tempFile = Files.createTempFile("upload-", multipartFile.getOriginalFilename()).toFile();
+            tempFile = Files.createTempFile("upload-", multipartFile.getOriginalFilename()).toFile();
             multipartFile.transferTo(tempFile);
 
             extractFileMetadataToDto(patchedDto, tempFile);
@@ -99,12 +105,16 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
             log.warn("Failed to process attachment file uploaded data.", e);
 
             throw new ServiceLogicException(AttachmentErrors.FILE_PROCESSING_FAILURE.getErrorMessage(patchedDto.getFileName()));
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected void markFileAsCorrupted(UUID id) {
-        AttachmentFileDTO dto = findById(id).orElse(null);
+        AttachmentFileDTO dto = internalFindById(id).orElse(null);
         if (dto == null) {
             return;
         }
@@ -136,8 +146,14 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
             }
 
             if (existingFile != null && existingFile.getFileUri() != null) {
-                uploadedFileRef = fileMassStorageStrategy.linkFile(dto.getId(), dto.getMimeType(), existingFile.getFileUri(), existingFile.getThumbnailUri());
-                file.delete();
+                try {
+                    uploadedFileRef = fileMassStorageStrategy.linkFile(dto.getId(), dto.getMimeType(), existingFile.getFileUri(), existingFile.getThumbnailUri());
+                    file.delete();
+                } catch (Exception linkException) {
+                    log.warn("Failed to link existing file {}. Falling back to normal upload. Reason: {}", existingFile.getId(), linkException.getMessage());
+                    fileMassStorageStrategy.removeFileDirectory(dto.getId());
+                    uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getId(), dto.getMimeType(), file, replaceExisting);
+                }
             } else {
                 uploadedFileRef = fileMassStorageStrategy.uploadFile(dto.getId(), dto.getMimeType(), file, replaceExisting);
             }
@@ -154,6 +170,9 @@ public class AttachmentFileEntityService extends BaseEntityCrudService<Attachmen
         } catch (Exception e) {
             log.warn("Failed to upload attachment file.", e);
 
+            if (file.exists()) {
+                file.delete();
+            }
             fileMassStorageStrategy.removeFileDirectory(dto.getId());
             markFileAsCorrupted(dto.getId());
 

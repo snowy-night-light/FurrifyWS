@@ -12,7 +12,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import tools.jackson.databind.DatabindException;
 import ws.furrify.core.exception.RestException;
+import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.specification.EntitySpec;
 
 import java.time.ZonedDateTime;
@@ -70,9 +72,9 @@ public class GlobalRestExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Object> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         Throwable cause = ex.getCause();
-        if (cause instanceof tools.jackson.databind.DatabindException) {
+        if (cause instanceof DatabindException) {
             Throwable mappingCause = cause.getCause();
-            if (mappingCause instanceof ws.furrify.core.exception.ServiceLogicException) {
+            if (mappingCause instanceof ServiceLogicException) {
                 return createErrorResponse(HttpStatus.BAD_REQUEST, mappingCause.getMessage());
             }
         }

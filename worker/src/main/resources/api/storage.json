@@ -2005,7 +2005,7 @@
             "$ref": "#/components/schemas/EntityIdRequest"
           },
           "name": {
-            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$",
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
             "type": "string"
           },
           "library": {
@@ -2019,6 +2019,315 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "LibraryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TagAliasDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetTag": {
+            "$ref": "#/components/schemas/TagDTO"
+          },
+          "alias": {
+            "type": "string"
+          }
+        }
+      },
+      "TagCategoryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
+          "hexColor": {
+            "type": "string"
+          }
+        }
+      },
+      "TagDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagAliasDTO"
+            }
+          },
+          "category": {
+            "$ref": "#/components/schemas/TagCategoryDTO"
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          }
+        }
+      },
+      "CreateTagCategoryRequest": {
+        "required": [
+          "hexColor",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "hexColor": {
+            "maxLength": 7,
+            "minLength": 0,
+            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$",
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "CreateTagAliasRequest": {
+        "required": [
+          "targetTag"
+        ],
+        "type": "object",
+        "properties": {
+          "targetTag": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "alias": {
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          }
+        }
+      },
+      "CreateSourceRequest": {
+        "required": [
+          "strategy"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "strategy": {
+            "type": "string"
+          }
+        }
+      },
+      "SourceDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "strategy": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePostRequest": {
+        "required": [
+          "library",
+          "tags",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tags": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "displayMediaList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
           }
         }
       },
@@ -2102,322 +2411,7 @@
           }
         }
       },
-      "BookChapterDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "chapterNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "book": {
-            "$ref": "#/components/schemas/BookDTO"
-          },
-          "views": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "currentNumberOfWords": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SourceDTO"
-            }
-          },
-          "versions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BookChapterVersionDTO"
-            }
-          },
-          "versionsCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "publishDate": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BookChapterVersionDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "chapterVersion": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "contentHtml": {
-            "type": "string"
-          },
-          "authorNotesEnd": {
-            "type": "string"
-          },
-          "authorNotesStart": {
-            "type": "string"
-          },
-          "contentStylesheet": {
-            "type": "string"
-          },
-          "wordCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "chapter": {
-            "$ref": "#/components/schemas/BookChapterDTO"
-          },
-          "contentUpdatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BookDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "descriptionHtml": {
-            "type": "string"
-          },
-          "shortDescriptionHtml": {
-            "type": "string"
-          },
-          "cover": {
-            "$ref": "#/components/schemas/MediaDTO"
-          },
-          "prequel": {
-            "$ref": "#/components/schemas/BookDTO"
-          },
-          "sequel": {
-            "$ref": "#/components/schemas/BookDTO"
-          },
-          "totalWordCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "views": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "likes": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "dislikes": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/BookStatus"
-          },
-          "rating": {
-            "$ref": "#/components/schemas/BookRating"
-          },
-          "chapters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BookChapterDTO"
-            }
-          },
-          "chaptersCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TagDTO"
-            }
-          },
-          "artists": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArtistDTO"
-            }
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SourceDTO"
-            }
-          },
-          "library": {
-            "$ref": "#/components/schemas/LibraryDTO"
-          },
-          "formatReferenceIds": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          "activeWorkerTaskId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "publishDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "externalUpdatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "needsBookFileGeneration": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BookRating": {
-        "type": "string",
-        "enum": [
-          "UNRATED",
-          "SAFE",
-          "TEEN",
-          "MATURE",
-          "EXPLICIT"
-        ]
-      },
-      "BookStatus": {
-        "type": "string",
-        "enum": [
-          "COMPLETED",
-          "ON_HOLD",
-          "IN_PROGRESS",
-          "CANCELED"
-        ]
-      },
       "CollectionDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "library": {
-            "$ref": "#/components/schemas/LibraryDTO"
-          }
-        }
-      },
-      "LibraryDTO": {
         "type": "object",
         "properties": {
           "id": {
@@ -2455,35 +2449,8 @@
               "$ref": "#/components/schemas/PostDTO"
             }
           },
-          "tags": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TagDTO"
-            }
-          },
-          "artists": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArtistDTO"
-            }
-          },
-          "collections": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionDTO"
-            }
-          },
-          "books": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BookDTO"
-            }
-          },
-          "likesEnabled": {
-            "type": "boolean"
-          },
-          "dislikesEnabled": {
-            "type": "boolean"
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
           }
         }
       },
@@ -2612,275 +2579,6 @@
           }
         }
       },
-      "SourceDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "data": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "strategy": {
-            "type": "string"
-          }
-        }
-      },
-      "TagAliasDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "targetTag": {
-            "$ref": "#/components/schemas/TagDTO"
-          },
-          "alias": {
-            "type": "string"
-          }
-        }
-      },
-      "TagCategoryDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "library": {
-            "$ref": "#/components/schemas/LibraryDTO"
-          },
-          "hexColor": {
-            "type": "string"
-          }
-        }
-      },
-      "TagDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "modifiedBy": {
-            "type": "string"
-          },
-          "modifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$",
-            "type": "string"
-          },
-          "aliases": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TagAliasDTO"
-            }
-          },
-          "category": {
-            "$ref": "#/components/schemas/TagCategoryDTO"
-          },
-          "library": {
-            "$ref": "#/components/schemas/LibraryDTO"
-          }
-        }
-      },
-      "CreateTagCategoryRequest": {
-        "required": [
-          "hexColor",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "hexColor": {
-            "maxLength": 7,
-            "minLength": 0,
-            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$",
-            "type": "string"
-          },
-          "library": {
-            "$ref": "#/components/schemas/EntityIdRequest"
-          }
-        }
-      },
-      "CreateTagAliasRequest": {
-        "required": [
-          "targetTag"
-        ],
-        "type": "object",
-        "properties": {
-          "targetTag": {
-            "$ref": "#/components/schemas/EntityIdRequest"
-          },
-          "alias": {
-            "pattern": "^[a-z0-9]+(?: [a-z0-9]+)*$",
-            "type": "string"
-          }
-        }
-      },
-      "CreateSourceRequest": {
-        "required": [
-          "strategy"
-        ],
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "strategy": {
-            "type": "string"
-          }
-        }
-      },
-      "CreatePostRequest": {
-        "required": [
-          "library",
-          "tags",
-          "title"
-        ],
-        "type": "object",
-        "properties": {
-          "title": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "tags": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityIdRequest"
-            }
-          },
-          "artists": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityIdRequest"
-            }
-          },
-          "displayMediaList": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityIdRequest"
-            }
-          },
-          "attachments": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityIdRequest"
-            }
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityIdRequest"
-            }
-          },
-          "library": {
-            "$ref": "#/components/schemas/EntityIdRequest"
-          }
-        }
-      },
       "CreateMediaRequest": {
         "required": [
           "fileReferenceId",
@@ -2946,6 +2644,25 @@
           }
         }
       },
+      "BookRating": {
+        "type": "string",
+        "enum": [
+          "UNRATED",
+          "SAFE",
+          "TEEN",
+          "MATURE",
+          "EXPLICIT"
+        ]
+      },
+      "BookStatus": {
+        "type": "string",
+        "enum": [
+          "COMPLETED",
+          "ON_HOLD",
+          "IN_PROGRESS",
+          "CANCELED"
+        ]
+      },
       "CreateBookRequest": {
         "required": [
           "descriptionHtml",
@@ -2974,11 +2691,17 @@
           "cover": {
             "$ref": "#/components/schemas/EntityIdRequest"
           },
-          "sequel": {
-            "$ref": "#/components/schemas/EntityIdRequest"
+          "sequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
           },
-          "prequel": {
-            "$ref": "#/components/schemas/EntityIdRequest"
+          "prequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
           },
           "status": {
             "$ref": "#/components/schemas/BookStatus"
@@ -3030,6 +2753,274 @@
           "externalUpdatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BookChapterDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "chapterNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currentNumberOfWords": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookChapterVersionDTO"
+            }
+          },
+          "versionsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookChapterVersionDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chapterVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contentHtml": {
+            "type": "string"
+          },
+          "authorNotesEnd": {
+            "type": "string"
+          },
+          "authorNotesStart": {
+            "type": "string"
+          },
+          "contentStylesheet": {
+            "type": "string"
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
+            "type": "string"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/MediaDTO"
+          },
+          "prequels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "sequels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "totalWordCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "dislikes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookChapterDTO"
+            }
+          },
+          "chaptersCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDTO"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistDTO"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
+          "formatReferenceIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "activeWorkerTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "needsBookFileGeneration": {
+            "type": "boolean"
+          },
+          "generationRetryCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileGenerationFailed": {
+            "type": "boolean"
           }
         }
       },
@@ -3152,6 +3143,8 @@
             "$ref": "#/components/schemas/EntityIdRequest"
           },
           "name": {
+            "minLength": 1,
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
             "type": "string"
           },
           "library": {
@@ -3163,9 +3156,13 @@
         "type": "object",
         "properties": {
           "name": {
+            "minLength": 1,
             "type": "string"
           },
           "hexColor": {
+            "maxLength": 7,
+            "minLength": 0,
+            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$",
             "type": "string"
           },
           "library": {
@@ -3180,6 +3177,8 @@
             "$ref": "#/components/schemas/EntityIdRequest"
           },
           "alias": {
+            "minLength": 1,
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
             "type": "string"
           }
         }
@@ -3202,6 +3201,7 @@
         "type": "object",
         "properties": {
           "title": {
+            "minLength": 1,
             "type": "string"
           },
           "description": {
@@ -3246,6 +3246,7 @@
         "type": "object",
         "properties": {
           "priority": {
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           },
@@ -3269,6 +3270,7 @@
         "type": "object",
         "properties": {
           "title": {
+            "minLength": 1,
             "type": "string"
           },
           "likesEnabled": {
@@ -3283,6 +3285,7 @@
         "type": "object",
         "properties": {
           "title": {
+            "minLength": 1,
             "type": "string"
           },
           "posts": {
@@ -3300,6 +3303,7 @@
         "type": "object",
         "properties": {
           "title": {
+            "minLength": 1,
             "type": "string"
           },
           "externalId": {
@@ -3314,11 +3318,17 @@
           "cover": {
             "$ref": "#/components/schemas/EntityIdRequest"
           },
-          "sequel": {
-            "$ref": "#/components/schemas/EntityIdRequest"
+          "sequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
           },
-          "prequel": {
-            "$ref": "#/components/schemas/EntityIdRequest"
+          "prequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
           },
           "status": {
             "$ref": "#/components/schemas/BookStatus"
@@ -3330,10 +3340,12 @@
             "$ref": "#/components/schemas/EntityIdRequest"
           },
           "likes": {
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           },
           "dislikes": {
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           },
@@ -3373,16 +3385,20 @@
         "type": "object",
         "properties": {
           "title": {
+            "minLength": 1,
             "type": "string"
           },
           "externalId": {
             "type": "string"
           },
           "chapterNumber": {
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "type": "integer",
             "format": "int32"
           },
           "views": {
+            "minimum": 0,
             "type": "integer",
             "format": "int64"
           },
@@ -3447,8 +3463,10 @@
             "type": "string"
           },
           "followersCount": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "avatar": {
             "$ref": "#/components/schemas/EntityIdRequest"

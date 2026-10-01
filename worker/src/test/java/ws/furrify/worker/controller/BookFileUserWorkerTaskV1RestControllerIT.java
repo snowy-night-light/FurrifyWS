@@ -1,8 +1,11 @@
 package ws.furrify.worker.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.openapitools.model.AttachmentFileDTO;
 import org.openapitools.model.BookDTO;
+import ws.furrify.worker.domain.worker.WorkStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -55,7 +58,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
         return "/v1/workers/user/books/files/generator";
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new AttachmentFileDTO()));
     }
@@ -84,7 +87,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
                 BookFileUserWorkerTask.builder()
                         .sourceBookReferenceId(UUID.randomUUID())
 
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -106,7 +109,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
                 BookFileUserWorkerTask.builder()
                         .sourceBookReferenceId(UUID.randomUUID())
 
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -115,7 +118,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
                 BookFileUserWorkerTask.builder()
                         .sourceBookReferenceId(UUID.randomUUID())
 
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -136,7 +139,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
                 BookFileUserWorkerTask.builder()
                         .sourceBookReferenceId(UUID.randomUUID())
 
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -144,6 +147,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
         
         PatchBookFileUserWorkerTaskRequest patch = new PatchBookFileUserWorkerTaskRequest();
         
+        patch.setStartAt(JsonNullable.of(ZonedDateTime.now()));
         assertDoesNotThrow(() -> super.patch(task.getId(), patch));
     }
 
@@ -154,7 +158,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
                 BookFileUserWorkerTask.builder()
                         .sourceBookReferenceId(UUID.randomUUID())
 
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -168,7 +172,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
         BookFileUserWorkerTask task = bookFileUserWorkerTaskRepository.save(
                 BookFileUserWorkerTask.builder()
                         .sourceBookReferenceId(UUID.randomUUID())
-                        .status(ws.furrify.worker.domain.worker.WorkStatus.NOT_STARTED)
+                        .status(WorkStatus.NOT_STARTED)
                         .startAt(ZonedDateTime.now())
                         .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
                         .build()
@@ -182,5 +186,29 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
                 .then()
                 .log().all()
                 .statusCode(HttpStatus.OK.value());
+    }
+
+    @Test
+    void testCancel() {
+        BookFileUserWorkerTask task = bookFileUserWorkerTaskRepository.save(
+                BookFileUserWorkerTask.builder()
+                        .sourceBookReferenceId(UUID.randomUUID())
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .build()
+        );
+
+        given()
+                .header("Content-Type", "application/json")
+                .pathParam("id", task.getId())
+                .when()
+                .post(this.basePath + "/{id}/cancel")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value());
+
+        BookFileUserWorkerTask updatedTask = bookFileUserWorkerTaskRepository.findById(task.getId()).get();
+        assertEquals(WorkStatus.CANCELLED, updatedTask.getStatus());
     }
 }
