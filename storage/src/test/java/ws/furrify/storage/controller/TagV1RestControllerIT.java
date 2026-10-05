@@ -1,5 +1,23 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -129,5 +147,64 @@ public class TagV1RestControllerIT extends BaseCrudControllerTest<Tag, TagDTO, C
         Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(tag.getId()));
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        CreateTagRequest request1 = new CreateTagRequest();
+        request1.setName(UUID.randomUUID().toString().replace("-", ""));
+        request1.setCategory(EntityIdRequest.builder().id(tagCategory.getId()).build());
+        request1.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
+
+        CreateTagRequest request2 = new CreateTagRequest();
+        request2.setName(UUID.randomUUID().toString().replace("-", ""));
+        request2.setCategory(EntityIdRequest.builder().id(tagCategory.getId()).build());
+        request2.setLibrary(EntityIdRequest.builder().id(library.getId()).build());
+
+        List<TagDTO> createdTags = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdTags);
+            assertEquals(2, createdTags.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory1 = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory2 = tagCategoryRepository.save(TagCategory.builder().hexColor("#c3c").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag1 = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory1).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory1).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        PatchTagRequest request1 = new PatchTagRequest();
+        request1.setCategory(JsonNullable.of(EntityIdRequest.builder().id(tagCategory2.getId()).build()));
+
+        PatchTagRequest request2 = new PatchTagRequest();
+        request2.setCategory(JsonNullable.of(EntityIdRequest.builder().id(tagCategory2.getId()).build()));
+
+        List<TagDTO> updatedTags = super.patchBulk(java.util.Map.of(tag1.getId(), request1, tag2.getId(), request2));
+
+        assertAll(() -> {
+            assertNotNull(updatedTags);
+            assertEquals(2, updatedTags.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        Library library = libraryRepository.save(Library.builder().title("Test library").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).library(library).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(tag.getId(), tag2.getId())));
     }
 }

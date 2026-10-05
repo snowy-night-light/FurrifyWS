@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.controller;
 
 import org.junit.jupiter.api.Test;
@@ -250,5 +267,96 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         Book updatedBook = bookRepository.findById(book.getId()).orElseThrow();
         assertEquals(request.getActiveWorkerTaskId(), updatedBook.getActiveWorkerTaskId());
         assertEquals(request.getFormatReferenceIds(), updatedBook.getFormatReferenceIds());
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        setupData();
+        TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        Book seqBook = bookRepository.save(Book.builder().title("Sequel").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book preBook = bookRepository.save(Book.builder().title("Prequel").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        CreateBookRequest request1 = new CreateBookRequest();
+        request1.setTitle("Test book 1");
+        request1.setDescriptionHtml("Test descriptionHtml 1");
+        request1.setLibrary(EntityIdRequest.builder().id(defaultLibrary.getId()).build());
+        request1.setTags(List.of(EntityIdRequest.builder().id(tag.getId()).build()));
+        request1.setArtists(List.of(EntityIdRequest.builder().id(artist.getId()).build()));
+        request1.setSequels(List.of(EntityIdRequest.builder().id(seqBook.getId()).build()));
+        request1.setPrequels(List.of(EntityIdRequest.builder().id(preBook.getId()).build()));
+        request1.setShortDescriptionHtml("Short desc 1");
+        request1.setStatus(BookStatus.COMPLETED);
+        request1.setRating(BookRating.SAFE);
+        request1.setViews(10L);
+
+        CreateBookRequest request2 = new CreateBookRequest();
+        request2.setTitle("Test book 2");
+        request2.setDescriptionHtml("Test descriptionHtml 2");
+        request2.setLibrary(EntityIdRequest.builder().id(defaultLibrary.getId()).build());
+        request2.setShortDescriptionHtml("Short desc 2");
+        request2.setStatus(BookStatus.IN_PROGRESS);
+        request2.setRating(BookRating.SAFE);
+        request2.setViews(5L);
+
+        List<BookDTO> createdBooks = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdBooks);
+            assertEquals(2, createdBooks.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        setupData();
+        TagCategory category = tagCategoryRepository.save(TagCategory.builder().name(randomName()).hexColor("#FFFFFF").ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().name(randomName()).category(category).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Artist artist2 = artistRepository.save(Artist.builder().nicknames(List.of(ArtistNickname.of(UUID.randomUUID().toString().replace("-", ""), 1))).library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book book1 = bookRepository.save(Book.builder().title("Test book 1").descriptionHtml("Desc 1").shortDescriptionHtml("short 1").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book book2 = bookRepository.save(Book.builder().title("Test book 2").descriptionHtml("Desc 2").shortDescriptionHtml("short 2").library(defaultLibrary).tags(List.of(tag)).artists(List.of(artist)).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        Book seqBook2 = bookRepository.save(Book.builder().title("Sequel2").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book preBook2 = bookRepository.save(Book.builder().title("Prequel2").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        PatchBookRequest request1 = new PatchBookRequest();
+        request1.setTitle(JsonNullable.of("Patched title 1"));
+        request1.setTags(JsonNullable.of(List.of(EntityIdRequest.builder().id(tag2.getId()).build())));
+        request1.setArtists(JsonNullable.of(List.of(EntityIdRequest.builder().id(artist2.getId()).build())));
+        request1.setSequels(JsonNullable.of(List.of(EntityIdRequest.builder().id(seqBook2.getId()).build())));
+        request1.setPrequels(JsonNullable.of(List.of(EntityIdRequest.builder().id(preBook2.getId()).build())));
+        request1.setShortDescriptionHtml(JsonNullable.of("Patched short desc 1"));
+        request1.setStatus(JsonNullable.of(BookStatus.IN_PROGRESS));
+        request1.setRating(JsonNullable.of(BookRating.TEEN));
+        request1.setViews(JsonNullable.of(20L));
+
+        PatchBookRequest request2 = new PatchBookRequest();
+        request2.setTitle(JsonNullable.of("Patched title 2"));
+        request2.setShortDescriptionHtml(JsonNullable.of("Patched short desc 2"));
+        request2.setViews(JsonNullable.of(30L));
+
+        List<BookDTO> updatedBooks = super.patchBulk(java.util.Map.of(book1.getId(), request1, book2.getId(), request2));
+
+        assertAll(() -> {
+            assertNotNull(updatedBooks);
+            assertEquals(2, updatedBooks.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        setupData();
+        Book book = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Book book2 = bookRepository.save(Book.builder().title("Test book").descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(book.getId(), book2.getId())));
     }
 }

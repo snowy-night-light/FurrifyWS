@@ -1,3 +1,20 @@
+/*
+ * furrify-attachment-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.attachment.controller;
 
 import lombok.SneakyThrows;
@@ -224,5 +241,42 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
         );
 
         assertDoesNotThrow(() -> super.delete(attachmentFile.getId()));
+    }
+
+
+
+    @Override
+    @Test
+    protected void testCreateBulk() throws Exception {}
+
+    @Override
+    @Test
+    protected void testPatchBulk() throws Exception {}
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        AttachmentFile attachmentFile = attachmentFileRepository.save(
+                AttachmentFile.builder().fileExtension("png")
+                        .fileUri(URI.create("https://example.com/test.png"))
+                        .thumbnailUri(URI.create("https://example.com/test.png"))
+                        .uploadStatus(FileUploadStatus.UPLOADED)
+                        .fileName("test.png")
+                        .fileHashes(List.of(new AttachmentFileHash("test", AttachmentFileHashType.SHA256)))
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build()
+        );
+
+    AttachmentFile attachmentFile2 = attachmentFileRepository.save(
+            AttachmentFile.builder().fileExtension("png")
+                    .fileUri(URI.create("https://example.com/test.png"))
+                    .thumbnailUri(URI.create("https://example.com/test.png"))
+                    .uploadStatus(FileUploadStatus.UPLOADED)
+                    .fileName("test.png")
+                    .fileHashes(List.of(new AttachmentFileHash("test", AttachmentFileHashType.SHA256)))
+                    .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build()
+    );
+
+
+    assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(attachmentFile.getId(), attachmentFile2.getId())));
     }
 }

@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.service.artist;
 
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -39,7 +56,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
     }
 
     @Override
-    public ArtistDTO create(ArtistDTO dto) {
+    protected ArtistDTO handleCreate(ArtistDTO dto) {
         super.handleInternalReference(dto, ArtistDTO::getAvatar, ArtistDTO::setAvatar, mediaEntityService);
         super.handleInternalReference(dto, ArtistDTO::getLibrary, ArtistDTO::setLibrary, libraryEntityService);
         super.handleInternalCollectionReferences(dto, ArtistDTO::getSources, ArtistDTO::setSources, sourceEntityService);
@@ -54,11 +71,11 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         UUID libraryId = dto.getLibrary() != null ? dto.getLibrary().getId() : null;
         checkNicknameUniqueness(dto.getNicknames(), null, libraryId);
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 
     @Override
-    public ArtistDTO patchById(UUID id, PatchArtistRequest patchDto) {
+    protected ArtistDTO handlePatch(UUID id, PatchArtistRequest patchDto) {
         super.handleInternalReference(patchDto.getAvatar(), mediaEntityService);
         super.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
         super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
@@ -74,7 +91,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
             checkNicknameUniqueness(patchDto.getNicknames().get(), id, libraryId);
         }
 
-        return super.patchById(id, patchDto);
+        return super.handlePatch(id, patchDto);
     }
 
     private String sanitizeHtml(String html) {

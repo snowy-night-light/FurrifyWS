@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>ws</groupId>
+        <artifactId>furrify</artifactId>
+        <version>0.0.1</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <groupId>ws.furrify</groupId>
+    <artifactId>shared-api</artifactId>
+    <name>furrify-shared-api</name>
+    <properties>
+        <license.url>https://www.apache.org/licenses/LICENSE-2.0.txt</license.url>
+        <license.header.path>com/mycila/maven/plugin/license/templates/APACHE-2-noemail.txt</license.header.path>
+    </properties>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>${license.url}</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <dependencies>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.pf4j</groupId>
+            <artifactId>pf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-storage-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <additionalProperties>
+                                <additionalProperty>serviceName=furrify-storage-service</additionalProperty>
+                            </additionalProperties>
+                            <inputSpec>${project.baseUri}src/main/resources/api/storage.json</inputSpec>
+                            <apiPackage>ws.furrify.openapi.gen.storage.api</apiPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-attachment-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <additionalProperties>
+                                <additionalProperty>serviceName=furrify-attachment-service</additionalProperty>
+                            </additionalProperties>
+                            <inputSpec>${project.baseUri}src/main/resources/api/attachment.json</inputSpec>
+                            <apiPackage>ws.furrify.openapi.gen.attachment.api</apiPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-worker-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <additionalProperties>
+                                <additionalProperty>serviceName=furrify-worker-service</additionalProperty>
+                            </additionalProperties>
+                            <inputSpec>${project.baseUri}src/main/resources/api/worker.json</inputSpec>
+                            <apiPackage>ws.furrify.openapi.gen.worker.api</apiPackage>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extract-service-names</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <xmlproperty file="${project.basedir}/../storage/pom.xml" prefix="service.storage"
+                                             keeproot="false"/>
+                                <xmlproperty file="${project.basedir}/../attachment/pom.xml" prefix="service.attachment"
+                                             keeproot="false"/>
+                                <xmlproperty file="${project.basedir}/../worker/pom.xml" prefix="service.worker"
+                                             keeproot="false"/>
+                                <xmlproperty file="${project.basedir}/../gateway/pom.xml" prefix="service.gateway"
+                                             keeproot="false"/>
+                                <xmlproperty file="${project.basedir}/../eureka/pom.xml" prefix="service.eureka"
+                                             keeproot="false"/>
+
+                                <mkdir dir="${project.build.outputDirectory}"/>
+                                <echo file="${project.build.outputDirectory}/services.properties"># Microservice names for Eureka discovery
+storage.service.name=${service.storage.name}
+attachment.service.name=${service.attachment.name}
+worker.service.name=${service.worker.name}
+gateway.service.name=${service.gateway.name}
+eureka.service.name=${service.eureka.name}
+</echo>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

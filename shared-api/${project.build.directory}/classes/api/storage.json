@@ -1,0 +1,4926 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/books/{id}/files/worker-task": {
+      "put": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_updateWorkerTaskInfo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutBookWorkerTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/tags": {
+      "get": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelTagDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/categories": {
+      "get": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelTagCategoryDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategoryDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/categories/bulk": {
+      "post": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateTagCategoryRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategoryDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchTagCategoryRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategoryDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/bulk": {
+      "post": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateTagRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchTagRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/aliases": {
+      "get": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelTagAliasDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagAliasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagAliasDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/aliases/bulk": {
+      "post": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateTagAliasRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagAliasDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchTagAliasRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagAliasDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sources": {
+      "get": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelSourceDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sources/bulk": {
+      "post": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateSourceRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchSourceRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/posts": {
+      "get": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelPostDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/posts/bulk": {
+      "post": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreatePostRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchPostRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/media": {
+      "get": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelMediaDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMediaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/media/bulk": {
+      "post": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateMediaRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchMediaRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/libraries": {
+      "get": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelLibraryDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLibraryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/libraries/bulk": {
+      "post": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateLibraryRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchLibraryRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/collections": {
+      "get": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelCollectionDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/collections/bulk": {
+      "post": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateCollectionRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CollectionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchCollectionRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CollectionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books": {
+      "get": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelBookDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/chapters": {
+      "get": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelBookChapterDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookChapterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookChapterDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/chapters/versions": {
+      "get": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelBookChapterVersionDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookChapterVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookChapterVersionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/chapters/versions/bulk": {
+      "post": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateBookChapterVersionRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookChapterVersionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchBookChapterVersionRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookChapterVersionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/chapters/bulk": {
+      "post": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateBookChapterRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookChapterDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchBookChapterRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookChapterDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/bulk": {
+      "post": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateBookRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchBookRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/artists": {
+      "get": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelArtistDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateArtistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtistDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/artists/bulk": {
+      "post": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateArtistRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ArtistDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchArtistRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ArtistDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/{id}": {
+      "get": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "tag-v-1-rest-controller"
+        ],
+        "operationId": "TagV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchTagRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/categories/{id}": {
+      "get": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategoryDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "tag-category-v-1-rest-controller"
+        ],
+        "operationId": "TagCategoryV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchTagCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategoryDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tags/aliases/{id}": {
+      "get": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagAliasDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "tag-alias-v-1-rest-controller"
+        ],
+        "operationId": "TagAliasV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchTagAliasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagAliasDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sources/{id}": {
+      "get": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "source-v-1-rest-controller"
+        ],
+        "operationId": "SourceV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/posts/{id}": {
+      "get": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "post-v-1-rest-controller"
+        ],
+        "operationId": "PostV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchPostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/media/{id}": {
+      "get": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "media-v-1-rest-controller"
+        ],
+        "operationId": "MediaV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchMediaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/libraries/{id}": {
+      "get": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "operationId": "LibraryV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchLibraryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/collections/{id}": {
+      "get": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "collection-v-1-rest-controller"
+        ],
+        "operationId": "CollectionV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchCollectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/{id}": {
+      "get": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-v-1-rest-controller"
+        ],
+        "operationId": "BookV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/chapters/{id}": {
+      "get": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookChapterDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-chapter-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchBookChapterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookChapterDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/books/chapters/versions/{id}": {
+      "get": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookChapterVersionDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-chapter-version-v-1-rest-controller"
+        ],
+        "operationId": "BookChapterVersionV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchBookChapterVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookChapterVersionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/artists/{id}": {
+      "get": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtistDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "artist-v-1-rest-controller"
+        ],
+        "operationId": "ArtistV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchArtistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtistDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/user/{userId}/statistics": {
+      "get": {
+        "tags": [
+          "user-statistics-v-1-rest-controller"
+        ],
+        "operationId": "UserStatisticsV1RestController_getUserStatistics",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatisticsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PutBookWorkerTaskRequest": {
+        "type": "object",
+        "properties": {
+          "formatReferenceIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "activeWorkerTaskId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CreateTagRequest": {
+        "required": [
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "name": {
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "EntityIdRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "LibraryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TagAliasDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetTag": {
+            "$ref": "#/components/schemas/TagDTO"
+          },
+          "alias": {
+            "type": "string"
+          }
+        }
+      },
+      "TagCategoryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
+          "hexColor": {
+            "type": "string"
+          }
+        }
+      },
+      "TagDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagAliasDTO"
+            }
+          },
+          "category": {
+            "$ref": "#/components/schemas/TagCategoryDTO"
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          }
+        }
+      },
+      "CreateTagCategoryRequest": {
+        "required": [
+          "hexColor",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "hexColor": {
+            "maxLength": 7,
+            "minLength": 0,
+            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$",
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "CreateTagAliasRequest": {
+        "required": [
+          "targetTag"
+        ],
+        "type": "object",
+        "properties": {
+          "targetTag": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "alias": {
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          }
+        }
+      },
+      "CreateSourceRequest": {
+        "required": [
+          "strategy"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "strategy": {
+            "type": "string"
+          }
+        }
+      },
+      "SourceDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "strategy": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePostRequest": {
+        "required": [
+          "library",
+          "tags",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tags": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "displayMediaList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "ArtistDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "nicknames": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistNickname"
+            }
+          },
+          "bioHtml": {
+            "type": "string"
+          },
+          "followersCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "avatar": {
+            "$ref": "#/components/schemas/MediaDTO"
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ArtistNickname": {
+        "required": [
+          "nickname"
+        ],
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "minLength": 1,
+            "pattern": "^\\S+(?: \\S+)*$",
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CollectionDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostDTO"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          }
+        }
+      },
+      "MediaDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          }
+        }
+      },
+      "PostDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDTO"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistDTO"
+            }
+          },
+          "displayMediaList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDTO"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDTO"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "collections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionDTO"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          }
+        }
+      },
+      "CreateMediaRequest": {
+        "required": [
+          "fileReferenceId",
+          "priority"
+        ],
+        "type": "object",
+        "properties": {
+          "priority": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateLibraryRequest": {
+        "required": [
+          "dislikesEnabled",
+          "likesEnabled",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateCollectionRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "BookRating": {
+        "type": "string",
+        "enum": [
+          "UNRATED",
+          "SAFE",
+          "TEEN",
+          "MATURE",
+          "EXPLICIT"
+        ]
+      },
+      "BookStatus": {
+        "type": "string",
+        "enum": [
+          "COMPLETED",
+          "ON_HOLD",
+          "IN_PROGRESS",
+          "CANCELED"
+        ]
+      },
+      "CreateBookRequest": {
+        "required": [
+          "descriptionHtml",
+          "library",
+          "rating",
+          "shortDescriptionHtml",
+          "status",
+          "title",
+          "views"
+        ],
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
+            "type": "string"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "prequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likes": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "dislikes": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookChapterDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "chapterNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currentNumberOfWords": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookChapterVersionDTO"
+            }
+          },
+          "versionsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookChapterVersionDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chapterVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contentHtml": {
+            "type": "string"
+          },
+          "authorNotesEnd": {
+            "type": "string"
+          },
+          "authorNotesStart": {
+            "type": "string"
+          },
+          "contentStylesheet": {
+            "type": "string"
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
+            "type": "string"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/MediaDTO"
+          },
+          "prequels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "sequels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "totalWordCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "dislikes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookChapterDTO"
+            }
+          },
+          "chaptersCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDTO"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistDTO"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/LibraryDTO"
+          },
+          "formatReferenceIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "activeWorkerTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "needsBookFileGeneration": {
+            "type": "boolean"
+          },
+          "generationRetryCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileGenerationFailed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateBookChapterRequest": {
+        "required": [
+          "book",
+          "chapterNumber",
+          "title",
+          "views"
+        ],
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "views": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int64"
+          },
+          "book": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "chapterNumber": {
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateBookChapterVersionRequest": {
+        "required": [
+          "chapter",
+          "contentHtml"
+        ],
+        "type": "object",
+        "properties": {
+          "contentHtml": {
+            "type": "string"
+          },
+          "contentStylesheet": {
+            "type": "string"
+          },
+          "authorNotesEnd": {
+            "type": "string"
+          },
+          "authorNotesStart": {
+            "type": "string"
+          },
+          "chapter": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateArtistRequest": {
+        "required": [
+          "followersCount",
+          "nicknames"
+        ],
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "nicknames": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistNickname"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "followersCount": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "bioHtml": {
+            "type": "string"
+          },
+          "avatar": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PatchTagRequest": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "name": {
+            "minLength": 1,
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "PatchTagCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "hexColor": {
+            "maxLength": 7,
+            "minLength": 0,
+            "pattern": "^#(?:[0-9a-fA-F]{3}){1,2}$",
+            "type": "string"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "PatchTagAliasRequest": {
+        "type": "object",
+        "properties": {
+          "targetTag": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "alias": {
+            "minLength": 1,
+            "pattern": "^[ _-]*[a-z0-9]+(?:[ _-]+[a-z0-9]+)*[ _-]*$",
+            "type": "string"
+          }
+        }
+      },
+      "PatchSourceRequest": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "sourceStrategy": {
+            "type": "string"
+          }
+        }
+      },
+      "PatchPostRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "displayMediaList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "PatchMediaRequest": {
+        "type": "object",
+        "properties": {
+          "priority": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PatchLibraryRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "likesEnabled": {
+            "type": "boolean"
+          },
+          "dislikesEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PatchCollectionRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          }
+        }
+      },
+      "PatchBookRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "descriptionHtml": {
+            "type": "string"
+          },
+          "shortDescriptionHtml": {
+            "type": "string"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "prequels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookStatus"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/BookRating"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "likes": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "dislikes": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PatchBookChapterRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "chapterNumber": {
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int64"
+          },
+          "book": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "publishDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PatchBookChapterVersionRequest": {
+        "type": "object",
+        "properties": {
+          "contentHtml": {
+            "type": "string"
+          },
+          "contentStylesheet": {
+            "type": "string"
+          },
+          "authorNotesEnd": {
+            "type": "string"
+          },
+          "authorNotesStart": {
+            "type": "string"
+          },
+          "chapter": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PatchArtistRequest": {
+        "type": "object",
+        "properties": {
+          "nicknames": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistNickname"
+            }
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "bioHtml": {
+            "type": "string",
+            "nullable": true
+          },
+          "followersCount": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "avatar": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "library": {
+            "$ref": "#/components/schemas/EntityIdRequest"
+          },
+          "externalUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DailyUserStatisticsChartData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newBooksCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newPostsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newCollectionsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newTagsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newArtistsCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UserStatisticsDto": {
+        "type": "object",
+        "properties": {
+          "postsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "booksCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "collectionsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "librariesCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tagsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "artistsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "imagesCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "videoCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "animationCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "musicCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "last7DaysChart": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyUserStatisticsChartData"
+            }
+          }
+        }
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageMetadata": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PagedModelTagDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelTagCategoryDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagCategoryDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelTagAliasDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagAliasDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelSourceDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelPostDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelMediaDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelLibraryDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelCollectionDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelBookDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelBookChapterDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookChapterDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelBookChapterVersionDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookChapterVersionDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "PagedModelArtistDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtistDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

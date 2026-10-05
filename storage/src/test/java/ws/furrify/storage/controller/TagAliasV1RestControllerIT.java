@@ -1,5 +1,23 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -126,5 +144,63 @@ public class TagAliasV1RestControllerIT extends BaseCrudControllerTest<TagAlias,
         TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(tagAlias.getId()));
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag1 = tagRepository.save(Tag.builder().category(tagCategory).name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().category(tagCategory).name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        CreateTagAliasRequest request1 = new CreateTagAliasRequest();
+        request1.setAlias(UUID.randomUUID().toString().replace("-", ""));
+        request1.setTargetTag(EntityIdRequest.builder().id(tag1.getId()).build());
+
+        CreateTagAliasRequest request2 = new CreateTagAliasRequest();
+        request2.setAlias(UUID.randomUUID().toString().replace("-", ""));
+        request2.setTargetTag(EntityIdRequest.builder().id(tag2.getId()).build());
+
+        List<TagAliasDTO> createdTagAliases = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdTagAliases);
+            assertEquals(2, createdTagAliases.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag1 = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag2 = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias1 = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag1).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias2 = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag2).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        PatchTagAliasRequest request1 = new PatchTagAliasRequest();
+        request1.setAlias(JsonNullable.of("newaliasnamebulk1"));
+
+        PatchTagAliasRequest request2 = new PatchTagAliasRequest();
+        request2.setAlias(JsonNullable.of("newaliasnamebulk2"));
+
+        List<TagAliasDTO> updatedTagAliases = super.patchBulk(java.util.Map.of(tagAlias1.getId(), request1, tagAlias2.getId(), request2));
+
+        assertAll(() -> {
+            assertNotNull(updatedTagAliases);
+            assertEquals(2, updatedTagAliases.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        TagCategory tagCategory = tagCategoryRepository.save(TagCategory.builder().hexColor("#3c3").name(UUID.randomUUID().toString().replace("-", "")).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Tag tag = tagRepository.save(Tag.builder().name(UUID.randomUUID().toString().replace("-", "")).category(tagCategory).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        TagAlias tagAlias2 = tagAliasRepository.save(TagAlias.builder().alias(UUID.randomUUID().toString().replace("-", "")).targetTag(tag).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(tagAlias.getId(), tagAlias2.getId())));
     }
 }

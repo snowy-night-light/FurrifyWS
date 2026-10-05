@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.service.book.chapter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +71,7 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
     @Override
     @Transactional
-    public BookChapterDTO create(BookChapterDTO dto) {
+    protected BookChapterDTO handleCreate(BookChapterDTO dto) {
         this.handleInternalReference(dto, BookChapterDTO::getBook, BookChapterDTO::setBook, this.bookEntityService);
         this.handleInternalCollectionReferences(dto, BookChapterDTO::getSources, BookChapterDTO::setSources, sourceEntityService);
 
@@ -63,12 +80,12 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
         // Later calculated
         dto.setCurrentNumberOfWords(0L);
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 
     @Override
     @Transactional
-    public BookChapterDTO patchById(UUID id, PatchBookChapterRequest patchDto) {
+    protected BookChapterDTO handlePatch(UUID id, PatchBookChapterRequest patchDto) {
         this.handleInternalReference(patchDto.getBook(), bookEntityService);
         this.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
@@ -78,7 +95,7 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
             this.checkChapterNumberForDuplicates(dto.getBook().getId(), dto.getId(), patchDto.getChapterNumber().get());
         }
 
-        BookChapterDTO patchedChapter = super.patchById(id, patchDto);
+        BookChapterDTO patchedChapter = super.handlePatch(id, patchDto);
 
         boolean needsRegeneration = patchDto.getTitle().isPresent() || patchDto.getChapterNumber().isPresent();
         if (needsRegeneration) {
@@ -90,13 +107,15 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
     @Override
     @Transactional
-    public void deleteById(UUID id) {
+    protected java.util.Optional<BookChapterDTO> handleDelete(UUID id) {
         BookChapterDTO chapter = this.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
 
-        super.deleteById(id);
+        java.util.Optional<BookChapterDTO> result = super.handleDelete(id);
 
         UUID bookId = chapter.getBook().getId();
         asyncUtils.runAsyncAfterCommit(() -> this.bookEntityService.updateBookTotalWordCountAsync(bookId));
+        
+        return result;
     }
 
     @Transactional

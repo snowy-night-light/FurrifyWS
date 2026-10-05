@@ -1,10 +1,17 @@
 spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10
   application:
     name: 'furrify-attachment-service'
   main:
       web-application-type: servlet
   jpa:
     open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
   profiles:
     active: prod
   security:
@@ -37,6 +44,7 @@ server:
   port: 8061
 
 springdoc:
+  packages-to-exclude: ws.furrify.openapi.gen, org.openapitools.configuration
   api-docs:
     version: openapi_3_0
 

@@ -1,0 +1,974 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8051",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/workers/user/plugin/import": {
+      "get": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelPluginImportUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePluginImportUserWorkerTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginImportUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/{id}/execute": {
+      "post": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_triggerExecution",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/{id}/cancel": {
+      "post": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/bulk": {
+      "post": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreatePluginImportUserWorkerTaskRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PluginImportUserWorkerTaskDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchPluginImportUserWorkerTaskRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PluginImportUserWorkerTaskDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workers/user/books/files/generator": {
+      "get": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_getAllPaged",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelBookFileUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookFileUserWorkerTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookFileUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workers/user/books/files/generator/{id}/execute": {
+      "post": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_triggerExecution",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/books/files/generator/{id}/cancel": {
+      "post": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/books/files/generator/bulk": {
+      "post": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_saveBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateBookFileUserWorkerTaskRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookFileUserWorkerTaskDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_patchBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PatchBookFileUserWorkerTaskRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookFileUserWorkerTaskDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/{id}": {
+      "get": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginImportUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchPluginImportUserWorkerTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginImportUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workers/user/books/files/generator/{id}": {
+      "get": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookFileUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchBookFileUserWorkerTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookFileUserWorkerTaskDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/list": {
+      "get": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_getInstalledPlugins",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportWorkerPluginDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreatePluginImportUserWorkerTaskRequest": {
+        "required": [
+          "destinationLibraryReferenceId",
+          "downloadExternalMedia",
+          "fileReferenceId",
+          "provider",
+          "startAt"
+        ],
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fileReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationLibraryReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "downloadExternalMedia": {
+            "type": "boolean"
+          },
+          "provider": {
+            "minLength": 1,
+            "type": "string"
+          }
+        }
+      },
+      "PluginImportUserWorkerTaskDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "log": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkStatus"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "launchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "fileReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationLibraryReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "downloadExternalMedia": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WorkStatus": {
+        "type": "string",
+        "enum": [
+          "NOT_STARTED",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "FAILED",
+          "CANCELLED"
+        ]
+      },
+      "CreateBookFileUserWorkerTaskRequest": {
+        "required": [
+          "sourceBookReferenceId",
+          "startAt"
+        ],
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceBookReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "BookFileUserWorkerTaskDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "log": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkStatus"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "launchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceBookReferenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formatReferenceIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "PatchPluginImportUserWorkerTaskRequest": {
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PatchBookFileUserWorkerTaskRequest": {
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageMetadata": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PagedModelPluginImportUserWorkerTaskDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PluginImportUserWorkerTaskDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "ImportWorkerPluginDTO": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "allowedExtensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PagedModelBookFileUserWorkerTaskDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookFileUserWorkerTaskDTO"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

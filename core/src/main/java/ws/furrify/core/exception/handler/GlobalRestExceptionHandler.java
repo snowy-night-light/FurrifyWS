@@ -1,18 +1,39 @@
+/*
+ * furrify-core - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.core.exception.handler;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import tools.jackson.databind.DatabindException;
+import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.RestException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.specification.EntitySpec;
@@ -22,6 +43,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalRestExceptionHandler {
 
@@ -67,6 +89,14 @@ public class GlobalRestExceptionHandler {
 
         String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
         return createErrorResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<Object> handleOptimisticLockingFailureException(OptimisticLockingFailureException ex) {
+        Object identifier = ex instanceof ObjectOptimisticLockingFailureException objEx ? objEx.getIdentifier() : null;
+        log.warn("Optimistic locking conflict [id={}]: {}", identifier, ex.getMessage());
+
+        return createErrorResponse(HttpStatus.CONFLICT, Errors.CONCURRENT_MODIFICATION.getErrorMessage(identifier));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

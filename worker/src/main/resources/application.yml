@@ -2,16 +2,21 @@ scalar:
   enabled: false
 
 spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10
   cloud:
     openfeign:
       client:
         config:
           default:
             connectTimeout: 10000
-            readTimeout: 60000
+            readTimeout: 180000
       httpclient:
         hc5:
           enabled: true
+          max-connections: 1000
+          max-connections-per-route: 200
       circuitbreaker:
         enabled: true
   application:
@@ -20,6 +25,10 @@ spring:
       web-application-type: servlet
   jpa:
     open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
   profiles:
     active: prod
   security:
@@ -56,10 +65,12 @@ resilience4j:
         failureRateThreshold: 60
         ignoreExceptions:
           - feign.FeignException.FeignClientException
+          - feign.RetryableException
+          - org.springframework.cloud.client.circuitbreaker.NoFallbackAvailableException
   timelimiter:
     configs:
       default:
-        timeoutDuration: 60s
+        timeoutDuration: 180s
 
 eureka:
   instance:
@@ -74,6 +85,7 @@ server:
   port: 8051
 
 springdoc:
+  packages-to-exclude: ws.furrify.openapi.gen, org.openapitools.configuration
   api-docs:
     version: openapi_3_0
 

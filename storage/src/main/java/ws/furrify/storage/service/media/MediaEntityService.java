@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.service.media;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,25 +47,25 @@ public class MediaEntityService extends BaseEntityCrudService<Media, MediaDTO, P
     }
 
     @Override
-    public MediaDTO create(MediaDTO dto) {
+    protected MediaDTO handleCreate(MediaDTO dto) {
         if (attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(dto.getFileReferenceId()).getBody() == null) {
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
 
         super.handleInternalCollectionReferences(dto, MediaDTO::getSources, MediaDTO::setSources, sourceEntityService);
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 
     @Override
-    public MediaDTO patchById(UUID id, PatchMediaRequest patchDto) {
+    protected MediaDTO handlePatch(UUID id, PatchMediaRequest patchDto) {
         if (patchDto.getFileReferenceId().isPresent() && attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(patchDto.getFileReferenceId().get()).getBody() == null) {
             throw new ServiceLogicException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(patchDto.getFileReferenceId()));
         }
 
         super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
 
-        return super.patchById(id, patchDto);
+        return super.handlePatch(id, patchDto);
     }
 
 }

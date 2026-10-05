@@ -1,3 +1,20 @@
+/*
+ * furrify-worker-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.worker.service.worker.book;
 
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +81,23 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
     private int maxConcurrentTasks;
 
     @Override
-    public BookFileUserWorkerTaskDTO create(BookFileUserWorkerTaskDTO dto) {
+    protected boolean areRequiredServicesOnline() {
+        return super.areRequiredServicesOnline() && isAttachmentServiceOnline();
+    }
+
+    @Override
+    protected String getRequiredServicesStatusMessage() {
+        if (!isStorageServiceOnline()) {
+            return "Storage service [" + getStorageServiceName() + "] is not online.";
+        }
+        if (!isAttachmentServiceOnline()) {
+            return "Attachment service [" + getAttachmentServiceName() + "] is not online.";
+        }
+        return null;
+    }
+
+    @Override
+    protected BookFileUserWorkerTaskDTO handleCreate(BookFileUserWorkerTaskDTO dto) {
         try {
             if (bookV1RestControllerApiClient.bookV1RestControllerGetById(dto.getSourceBookReferenceId()).getBody() == null) {
                 throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getSourceBookReferenceId()));
@@ -73,12 +106,12 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getSourceBookReferenceId()));
         }
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 
     @Override
     @Transactional
-    public BookFileUserWorkerTaskDTO patchById(UUID id, PatchBookFileUserWorkerTaskRequest patchDto) {
+    protected BookFileUserWorkerTaskDTO handlePatch(UUID id, PatchBookFileUserWorkerTaskRequest patchDto) {
         BookFileUserWorkerTaskDTO bookFileUserWorkerTaskDTO = getById(id);
         if (bookFileUserWorkerTaskDTO.getStatus() == IN_PROGRESS) {
             throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS.getErrorMessage(id, bookFileUserWorkerTaskDTO.getStatus().name()));
@@ -86,11 +119,10 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
 
         bookFileUserWorkerTaskDTO.setStatus(WorkStatus.NOT_STARTED);
 
-        return super.patchById(id, patchDto);
+        return super.handlePatch(id, patchDto);
     }
 
     @Override
-    @Transactional
     protected void processTask(BookFileUserWorkerTaskDTO task) {
         SecurityContextUtils.mockFeignClientSecurityContext(task.getOwnerId());
         try {
@@ -100,7 +132,12 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
             try {
                 bookDto = bookV1RestControllerApiClient.bookV1RestControllerGetById(bookId).getBody();
             } catch (Exception e) {
-                failTask(task, "Failed to fetch book: " + e.getMessage());
+                if (isServiceUnavailable(e)) {
+                    log.warn("Task {}: Storage service unavailable, will retry on next poll. Cause: {}", task.getId(), rootCauseMessage(e));
+                    rescheduleTask(task, "Storage service unavailable");
+                    return;
+                }
+                failTask(task, "Failed to fetch book: " + e.getMessage(), e);
                 return;
             }
             if (bookDto == null) {
@@ -112,7 +149,12 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
             try {
                 chapterDataList = fetchChapterData(bookId);
             } catch (Exception e) {
-                failTask(task, "Failed to fetch chapter data: " + e.getMessage());
+                if (isServiceUnavailable(e)) {
+                    log.warn("Task {}: Storage service unavailable while fetching chapters, will retry on next poll. Cause: {}", task.getId(), rootCauseMessage(e));
+                    rescheduleTask(task, "Storage service unavailable");
+                    return;
+                }
+                failTask(task, "Failed to fetch chapter data: " + e.getMessage(), e);
                 return;
             }
 
@@ -136,7 +178,7 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
                         log.warn("Task thread interrupted during generation for task {}", task.getId());
                     } else {
                         log.error("Generation failed for task {}", task.getId(), e);
-                        failTask(task, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+                        failTask(task, e.getMessage() != null ? e.getMessage() : e.getClass().getName(), e);
                     }
                     return;
                 }
@@ -247,5 +289,35 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
 
     @Override
     protected void onTaskCancelledOnShutdown(BookFileUserWorkerTaskDTO task) {
+    }
+
+    /**
+     * Returns true when the exception chain indicates the downstream service is transiently
+     * unavailable (circuit open or no load-balancer instance), so the task can be silently
+     * rescheduled instead of marked as FAILED.
+     */
+    private static boolean isServiceUnavailable(Throwable t) {
+        Throwable cause = t;
+        while (cause != null) {
+            if (cause instanceof io.github.resilience4j.circuitbreaker.CallNotPermittedException) {
+                return true;
+            }
+            if (cause instanceof feign.FeignException.ServiceUnavailable) {
+                return true;
+            }
+            if (cause instanceof feign.RetryableException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private static String rootCauseMessage(Throwable t) {
+        Throwable cause = t;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage();
     }
 }

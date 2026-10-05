@@ -1,3 +1,20 @@
+/*
+ * furrify-worker-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.worker.controller;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +73,9 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
     @MockitoBean
     private ExternalPluginLoaderService externalPluginLoaderService;
 
+    @MockitoBean
+    private ws.furrify.core.service.EurekaDiscoveryService eurekaDiscoveryService;
+
     @Autowired
     protected PluginImportUserWorkerTaskV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
@@ -89,6 +109,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         when(libraryV1RestControllerApiClient.libraryV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new LibraryDTO()));
         ImportV1WorkerPluginIntf mockPlugin = new DummyPlugin();
         when(externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class)).thenReturn(List.of(mockPlugin));
+        when(eurekaDiscoveryService.isServiceOnline(any())).thenReturn(true);
     }
 
     @Override
@@ -268,5 +289,101 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                 .then()
                 .log().all()
                 .statusCode(HttpStatus.OK.value());
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        CreatePluginImportUserWorkerTaskRequest request1 = new CreatePluginImportUserWorkerTaskRequest();
+        request1.setFileReferenceId(UUID.randomUUID());
+        request1.setDestinationLibraryReferenceId(UUID.randomUUID());
+        request1.setProvider("DummyPlugin");
+        request1.setStartAt(ZonedDateTime.now());
+        request1.setDownloadExternalMedia(true);
+
+        CreatePluginImportUserWorkerTaskRequest request2 = new CreatePluginImportUserWorkerTaskRequest();
+        request2.setFileReferenceId(UUID.randomUUID());
+        request2.setDestinationLibraryReferenceId(UUID.randomUUID());
+        request2.setProvider("DummyPlugin");
+        request2.setStartAt(ZonedDateTime.now());
+        request2.setDownloadExternalMedia(false);
+
+        List<PluginImportUserWorkerTaskDTO> createdTasks = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdTasks);
+            assertEquals(2, createdTasks.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        PluginImportUserWorkerTask task1 = pluginImportUserWorkerTaskRepository.save(
+                PluginImportUserWorkerTask.builder()
+                        .fileReferenceId(UUID.randomUUID())
+                        .destinationLibraryReferenceId(UUID.randomUUID())
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
+                        .build()
+        );
+        PluginImportUserWorkerTask task2 = pluginImportUserWorkerTaskRepository.save(
+                PluginImportUserWorkerTask.builder()
+                        .fileReferenceId(UUID.randomUUID())
+                        .destinationLibraryReferenceId(UUID.randomUUID())
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(false)
+                        .build()
+        );
+        
+        PatchPluginImportUserWorkerTaskRequest patch1 = new PatchPluginImportUserWorkerTaskRequest();
+        patch1.setStartAt(JsonNullable.of(ZonedDateTime.now()));
+
+        PatchPluginImportUserWorkerTaskRequest patch2 = new PatchPluginImportUserWorkerTaskRequest();
+        patch2.setStartAt(JsonNullable.of(ZonedDateTime.now()));
+
+        List<PluginImportUserWorkerTaskDTO> updatedTasks = super.patchBulk(java.util.Map.of(task1.getId(), patch1, task2.getId(), patch2));
+
+        assertAll(() -> {
+            assertNotNull(updatedTasks);
+            assertEquals(2, updatedTasks.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        PluginImportUserWorkerTask task = pluginImportUserWorkerTaskRepository.save(
+                PluginImportUserWorkerTask.builder()
+                        .fileReferenceId(UUID.randomUUID())
+                        .destinationLibraryReferenceId(UUID.randomUUID())
+                        .provider("DummyPlugin")
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
+                        .build()
+        );
+
+    PluginImportUserWorkerTask task2 = pluginImportUserWorkerTaskRepository.save(
+            PluginImportUserWorkerTask.builder()
+                    .fileReferenceId(UUID.randomUUID())
+                    .destinationLibraryReferenceId(UUID.randomUUID())
+                    .provider("DummyPlugin")
+                    .status(WorkStatus.NOT_STARTED)
+                    .startAt(ZonedDateTime.now())
+                    .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                    .downloadExternalMedia(true)
+                    .build()
+    );
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(task.getId(), task2.getId())));
     }
 }
