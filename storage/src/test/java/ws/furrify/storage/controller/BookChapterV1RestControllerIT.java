@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.controller;
 
 import org.junit.jupiter.api.Test;
@@ -138,5 +155,66 @@ public class BookChapterV1RestControllerIT extends BaseCrudControllerTest<BookCh
         BookChapter chapter = bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(chapter.getId()));
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        setupData();
+
+        CreateBookChapterRequest request1 = new CreateBookChapterRequest();
+        request1.setTitle("Test chapter 1");
+        request1.setBook(EntityIdRequest.builder().id(defaultBook.getId()).build());
+        request1.setViews(0L);
+        request1.setChapterNumber(1);
+
+        CreateBookChapterRequest request2 = new CreateBookChapterRequest();
+        request2.setTitle("Test chapter 2");
+        request2.setBook(EntityIdRequest.builder().id(defaultBook.getId()).build());
+        request2.setViews(10L);
+        request2.setChapterNumber(2);
+
+        List<BookChapterDTO> createdChapters = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdChapters);
+            assertEquals(2, createdChapters.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        setupData();
+        BookChapter chapter1 = bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter 1").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapter chapter2 = bookChapterRepository.save(BookChapter.builder().chapterNumber(2).title("Test chapter 2").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        PatchBookChapterRequest request1 = new PatchBookChapterRequest();
+        request1.setTitle(JsonNullable.of("Patched title 1"));
+        request1.setViews(JsonNullable.of(25L));
+        request1.setChapterNumber(JsonNullable.of(3));
+
+        PatchBookChapterRequest request2 = new PatchBookChapterRequest();
+        request2.setTitle(JsonNullable.of("Patched title 2"));
+        request2.setViews(JsonNullable.of(50L));
+        request2.setChapterNumber(JsonNullable.of(4));
+
+        List<BookChapterDTO> updatedChapters = super.patchBulk(java.util.Map.of(chapter1.getId(), request1, chapter2.getId(), request2));
+
+        assertAll(() -> {
+            assertNotNull(updatedChapters);
+            assertEquals(2, updatedChapters.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        setupData();
+        BookChapter chapter = bookChapterRepository.save(BookChapter.builder().chapterNumber(1).title("Test chapter").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapter chapter2 = bookChapterRepository.save(BookChapter.builder().chapterNumber(2).title("Test chapter 2").book(defaultBook).versions(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(chapter.getId(), chapter2.getId())));
     }
 }

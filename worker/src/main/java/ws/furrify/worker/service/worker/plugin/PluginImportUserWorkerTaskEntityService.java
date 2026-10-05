@@ -1,3 +1,20 @@
+/*
+ * furrify-worker-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.worker.service.worker.plugin;
 
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +86,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
     @Override
     @Transactional
-    public PluginImportUserWorkerTaskDTO create(PluginImportUserWorkerTaskDTO dto) {
+    protected PluginImportUserWorkerTaskDTO handleCreate(PluginImportUserWorkerTaskDTO dto) {
         List<ImportV1WorkerPluginIntf> plugins = externalPluginLoaderService.getPlugins(ImportV1WorkerPluginIntf.class);
 
         // Find the plugin matching the requested provider class
@@ -113,18 +130,18 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
             throw new ServiceLogicException("Failed to verify destination library: " + e.getMessage());
         }
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 
     @Override
     @Transactional
-    public PluginImportUserWorkerTaskDTO patchById(UUID id, PatchPluginImportUserWorkerTaskRequest patchDto) {
+    protected PluginImportUserWorkerTaskDTO handlePatch(UUID id, PatchPluginImportUserWorkerTaskRequest patchDto) {
         PluginImportUserWorkerTaskDTO pluginImportUserWorkerTaskDTO = getById(id);
         if (pluginImportUserWorkerTaskDTO.getStatus() == IN_PROGRESS || pluginImportUserWorkerTaskDTO.getStatus() == COMPLETED) {
             throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_UPDATE_WITH_STATUS.getErrorMessage(id, pluginImportUserWorkerTaskDTO.getStatus().name()));
         }
 
-        return super.patchById(id, patchDto);
+        return super.handlePatch(id, patchDto);
     }
 
     @Transactional
@@ -146,12 +163,12 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                 return;
             }
 
-            AttachmentFileDTO attachmentFileDTO = null;
+            AttachmentFileDTO attachmentFileDTO;
             try {
                 attachmentFileDTO = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(task.getFileReferenceId()).getBody();
             } catch (Exception e) {
                 log.error("Failed to fetch attachment file reference [id={}]: {}", task.getFileReferenceId(), e.getMessage());
-                failTask(task, "Failed to fetch attachment file reference: " + e.getMessage());
+                failTask(task, "Failed to fetch attachment file reference: " + e.getMessage(), e);
                 return;
             }
 
@@ -166,7 +183,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                 tempFilePath = Files.createTempFile("plugin-iuwt-", "." + attachmentFileDTO.getFileExtension());
             } catch (IOException e) {
                 log.error(e.getMessage());
-                failTask(task, "Error processing file: " + e.getMessage());
+                failTask(task, "Error processing file: " + e.getMessage(), e);
                 return;
             }
 

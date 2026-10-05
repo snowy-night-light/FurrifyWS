@@ -1,5 +1,24 @@
+/*
+ * furrify-core - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.core.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -33,6 +52,9 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     protected final BaseEntityRepository<ENTITY> entityRepository;
     protected final BaseDTOMapper<ENTITY, DTO, PATCH_REQ> dtoMapper;
 
+    @PersistenceContext
+    protected EntityManager entityManager;
+
     @Transactional
     public Optional<DTO> findById(UUID id) {
         return entityRepository.findById(id, getCombinedSpecs()).map(dtoMapper::toDto);
@@ -62,21 +84,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         ).specification()).stream().map(dtoMapper::toDto).toList();
     }
 
-    @Transactional
-    public void deleteById(UUID id) {
-        entityRepository.deleteById(id, getCombinedSpecs());
-    }
 
-    @Transactional
-    public DTO patchById(UUID id, PATCH_REQ patchDto) {
-        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
-
-        dtoMapper.patchEntity(source, patchDto);
-
-        return dtoMapper.toDto(
-                this.entityRepository.save(source)
-        );
-    }
 
     @Transactional
     protected Optional<DTO> internalFindById(UUID id) {
@@ -99,11 +107,17 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         );
     }
 
+    protected DTO handleCreate(DTO dto) {
+        return dto;
+    }
+
     @Transactional
     public DTO create(DTO dto) {
         return dtoMapper.toDto(
                 entityRepository.save(
-                        dtoMapper.toEntity(dto)
+                        dtoMapper.toEntity(
+                                handleCreate(dto)
+                        )
                 )
         );
     }
@@ -140,7 +154,7 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
                 if (!jsonNullable.isPresent()) return;
                 val = jsonNullable.orElse(null);
             }
-            
+
             specs.add(
                     EntitySpec.<ENTITY>specBuilder()
                             .where(field, specEquals(val))
@@ -149,9 +163,9 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
         });
 
         if (specs.isEmpty()) return;
-        
+
         EntitySpecResult<ENTITY> combinedSpec = EntitySpec.specCombineAllWithAnd(specs);
-        
+
         if (currentRecordId != null) {
             combinedSpec = EntitySpec.<ENTITY>specBuilder()
                     .where("id", EntitySpec.specNotEquals(currentRecordId))
@@ -233,5 +247,68 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     protected boolean useUserScopeSpec() {
         return UserScopedEntity.class.isAssignableFrom(getEntityClass());
+    }
+
+    @Transactional
+    public List<DTO> createBulk(List<DTO> dtos) {
+        List<ENTITY> entities = dtos.stream()
+                .map(this::handleCreate)
+                .map(dtoMapper::toEntity)
+                .toList();
+
+        return entityRepository.saveAll(entities).stream()
+                .map(dtoMapper::toDto)
+                .toList();
+    }
+
+    protected DTO handlePatch(UUID id, PATCH_REQ patchDto) {
+        ENTITY source = entityRepository.findById(id, getCombinedSpecs()).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
+        dtoMapper.patchEntity(source, patchDto);
+        DTO dto = dtoMapper.toDto(source);
+        if (entityManager != null) {
+            entityManager.detach(source);
+        }
+        return dto;
+    }
+
+    @Transactional
+    public DTO patchById(UUID id, PATCH_REQ patchDto) {
+        return dtoMapper.toDto(
+                this.entityRepository.save(
+                        dtoMapper.toEntity(handlePatch(id, patchDto))
+                )
+        );
+    }
+
+    @Transactional
+    public List<DTO> patchBulk(Map<UUID, PATCH_REQ> patchDtos) {
+        List<ENTITY> entities = patchDtos.entrySet().stream()
+                .map(entry -> dtoMapper.toEntity(handlePatch(entry.getKey(), entry.getValue())))
+                .toList();
+
+        return entityRepository.saveAll(entities).stream()
+                .map(dtoMapper::toDto)
+                .toList();
+    }
+
+    protected java.util.Optional<DTO> handleDelete(UUID id) {
+        return entityRepository.findById(id, getCombinedSpecs()).map(dtoMapper::toDto);
+    }
+
+    @Transactional
+    public void deleteById(UUID id) {
+        handleDelete(id).map(dtoMapper::toEntity).ifPresent(entityRepository::delete);
+    }
+
+    @Transactional
+    public void deleteBulk(List<UUID> ids) {
+        List<ENTITY> entities = ids.stream()
+                .map(this::handleDelete)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(dtoMapper::toEntity)
+                .toList();
+
+        entityRepository.deleteAll(entities);
     }
 }

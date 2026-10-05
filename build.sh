@@ -25,21 +25,37 @@ echo "Detected Maven project version: $VERSION"
 
 MODULES=("eureka" "gateway" "attachment" "storage" "worker")
 
+PIDS=()
+
 for MODULE in "${MODULES[@]}"; do
     IMAGE_NAME="furrify-$MODULE:$VERSION"
     LATEST_NAME="furrify-$MODULE:latest"
-    
+
     echo "========================================"
-    echo "Building Docker image for: $MODULE"
+    echo "Starting Docker build for: $MODULE"
     echo "Tags: $IMAGE_NAME, $LATEST_NAME"
     echo "========================================"
-    
+
     docker build \
         -f "$MODULE/Dockerfile" \
         --build-arg SKIP_TESTS=$SKIP_TESTS \
+        --build-arg MODULE_NAME=$MODULE \
         -t "$IMAGE_NAME" \
         -t "$LATEST_NAME" \
-        .
+        . &
+
+    PIDS+=($!)
 done
+
+FAIL=0
+
+for PID in "${PIDS[@]}"; do
+    wait "$PID" || FAIL=1
+done
+
+if [ "$FAIL" -ne 0 ]; then
+    echo "One or more builds failed!"
+    exit 1
+fi
 
 echo "Build complete! All images for version $VERSION have been created locally."

@@ -1,3 +1,20 @@
+/*
+ * furrify-worker-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.worker.controller;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +43,7 @@ import ws.furrify.worker.dto.worker.book.request.CreateBookFileUserWorkerTaskReq
 import ws.furrify.worker.dto.worker.book.request.PatchBookFileUserWorkerTaskRequest;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -48,6 +66,9 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
     @MockitoBean
     private BookV1RestControllerApiClient bookV1RestControllerApiClient;
 
+    @MockitoBean
+    private ws.furrify.core.service.EurekaDiscoveryService eurekaDiscoveryService;
+
     @Autowired
     protected BookFileUserWorkerTaskV1RestControllerIT(JsonMapper jsonMapper) {
         super(jsonMapper);
@@ -61,6 +82,7 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
     @BeforeEach
     void setUp() {
         when(attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new AttachmentFileDTO()));
+        when(eurekaDiscoveryService.isServiceOnline(any())).thenReturn(true);
     }
 
     @Override
@@ -210,5 +232,87 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
 
         BookFileUserWorkerTask updatedTask = bookFileUserWorkerTaskRepository.findById(task.getId()).get();
         assertEquals(WorkStatus.CANCELLED, updatedTask.getStatus());
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        CreateBookFileUserWorkerTaskRequest request1 = new CreateBookFileUserWorkerTaskRequest();
+        request1.setSourceBookReferenceId(UUID.randomUUID());
+        request1.setStartAt(ZonedDateTime.now());
+
+        CreateBookFileUserWorkerTaskRequest request2 = new CreateBookFileUserWorkerTaskRequest();
+        request2.setSourceBookReferenceId(UUID.randomUUID());
+        request2.setStartAt(ZonedDateTime.now());
+        
+        when(bookV1RestControllerApiClient.bookV1RestControllerGetById(any())).thenReturn(ResponseEntity.ok(new BookDTO()));
+
+        List<BookFileUserWorkerTaskDTO> createdTasks = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdTasks);
+            assertEquals(2, createdTasks.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        BookFileUserWorkerTask task1 = bookFileUserWorkerTaskRepository.save(
+                BookFileUserWorkerTask.builder()
+                        .sourceBookReferenceId(UUID.randomUUID())
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .build()
+        );
+        BookFileUserWorkerTask task2 = bookFileUserWorkerTaskRepository.save(
+                BookFileUserWorkerTask.builder()
+                        .sourceBookReferenceId(UUID.randomUUID())
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .build()
+        );
+        
+        PatchBookFileUserWorkerTaskRequest patch1 = new PatchBookFileUserWorkerTaskRequest();
+        patch1.setStartAt(JsonNullable.of(ZonedDateTime.now()));
+
+        PatchBookFileUserWorkerTaskRequest patch2 = new PatchBookFileUserWorkerTaskRequest();
+        patch2.setStartAt(JsonNullable.of(ZonedDateTime.now()));
+
+        List<BookFileUserWorkerTaskDTO> updatedTasks = super.patchBulk(java.util.Map.of(task1.getId(), patch1, task2.getId(), patch2));
+
+        assertAll(() -> {
+            assertNotNull(updatedTasks);
+            assertEquals(2, updatedTasks.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        BookFileUserWorkerTask task = bookFileUserWorkerTaskRepository.save(
+                BookFileUserWorkerTask.builder()
+                        .sourceBookReferenceId(UUID.randomUUID())
+
+                        .status(WorkStatus.NOT_STARTED)
+                        .startAt(ZonedDateTime.now())
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .build()
+        );
+
+    BookFileUserWorkerTask task2 = bookFileUserWorkerTaskRepository.save(
+            BookFileUserWorkerTask.builder()
+                    .sourceBookReferenceId(UUID.randomUUID())
+
+                    .status(WorkStatus.NOT_STARTED)
+                    .startAt(ZonedDateTime.now())
+                    .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                    .build()
+    );
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(task.getId(), task2.getId())));
     }
 }

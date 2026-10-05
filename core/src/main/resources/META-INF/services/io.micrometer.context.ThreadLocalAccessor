@@ -1,1 +1,1 @@
-ws.furrify.core.config.resilience4j.SecurityContextThreadLocalAccessor
+ws.furrify.core.config.micrometer.SecurityContextThreadLocalAccessor

@@ -1,13 +1,28 @@
+/*
+ * furrify-core - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.core.config.feign;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -15,6 +30,9 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import ws.furrify.core.utils.SecurityContextUtils;
+
+import java.util.Optional;
+import java.util.UUID;
 
 public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
 
@@ -40,6 +58,13 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
                 RequestContextHolder.getRequestAttributes();
 
         if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
+            String ownerId =
+                    servletRequestAttributes.getRequest()
+                            .getHeader(SecurityContextUtils.USER_ID_HEADER);
+
+            if (ownerId != null && !ownerId.isBlank()) {
+                template.header(SecurityContextUtils.USER_ID_HEADER, ownerId);
+            }
 
             String authorization =
                     servletRequestAttributes.getRequest()
@@ -47,6 +72,7 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
 
             if (authorization != null && authorization.startsWith("Bearer ")) {
                 template.header(HttpHeaders.AUTHORIZATION, authorization);
+                addCurrentSubjectHeaderIfMissing(template);
                 return;
             }
         }
@@ -58,15 +84,15 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
                         .build();
 
         OAuth2AuthorizedClient authorizedClient = null;
-        int attempts = 0;
         int maxAttempts = 3;
-        while (attempts < maxAttempts) {
+        for (int attempts = 1; attempts <= maxAttempts; attempts++) {
             try {
-                authorizedClient = serviceOAuth2AuthorizedClientManager.authorize(authorizeRequest);
+                synchronized (this) {
+                    authorizedClient = serviceOAuth2AuthorizedClientManager.authorize(authorizeRequest);
+                }
                 break;
             } catch (Exception e) {
-                attempts++;
-                if (attempts >= maxAttempts) {
+                if (attempts == maxAttempts) {
                     throw e;
                 }
                 log.warn("Failed to obtain OAuth2 token (attempt {}/{}). Retrying... Cause: {}", attempts, maxAttempts, e.getMessage());
@@ -91,22 +117,28 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
                 "Bearer " + authorizedClient.getAccessToken().getTokenValue()
         );
 
-        SecurityContextUtils.getCurrentSubject().ifPresent(subject ->
-                template.header("X-Furrify-User-Id", subject.toString())
-        );
+        log.debug("Using service token for Feign call to {}, expires: {}",
+                template.url(), authorizedClient.getAccessToken().getExpiresAt());
 
-        if (!template.headers().containsKey("X-Furrify-User-Id") && template.body() != null) {
-            String bodyString = new String(template.body());
-            Matcher matcher = Pattern.compile("\"sourceBookReferenceId\"\\s*:\\s*\"([^\"]+)\"").matcher(bodyString);
-            if (matcher.find()) {
-                try {
-                    UUID bookId = UUID.fromString(matcher.group(1));
-                    UUID ownerId = SecurityContextUtils.FEIGN_FALLBACK_OWNER_MAP.get(bookId);
-                    if (ownerId != null) {
-                        template.header("X-Furrify-User-Id", ownerId.toString());
-                    }
-                } catch (Exception ignored) {}
-            }
+        addCurrentSubjectHeaderIfMissing(template);
+    }
+
+    private void addCurrentSubjectHeaderIfMissing(RequestTemplate template) {
+        if (template.headers().containsKey(SecurityContextUtils.USER_ID_HEADER)) {
+            return;
+        }
+
+        resolveCurrentSubject().ifPresent(subject ->
+                template.header(SecurityContextUtils.USER_ID_HEADER, subject.toString())
+        );
+    }
+
+    private Optional<UUID> resolveCurrentSubject() {
+        try {
+            return SecurityContextUtils.getCurrentSubject();
+        } catch (AccessDeniedException | IllegalArgumentException | IllegalStateException e) {
+            log.debug("Could not resolve current subject for Feign owner propagation: {}", e.getMessage());
+            return Optional.empty();
         }
     }
 }

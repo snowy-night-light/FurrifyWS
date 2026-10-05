@@ -1,3 +1,20 @@
+/*
+ * furrify-core - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.core.controller;
 
 import jakarta.validation.Valid;
@@ -15,6 +32,8 @@ import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
 import ws.furrify.core.utils.EntitySpecUtils;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -59,5 +78,23 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
     @ResponseStatus(HttpStatus.OK)
     protected void delete(@PathVariable UUID id) {
         entityCrudService.deleteById(id);
+    }
+
+    @PostMapping(value = "/bulk", produces = {APPLICATION_JSON})
+    @ResponseStatus(HttpStatus.CREATED)
+    protected List<DTO> saveBulk(@RequestBody @Valid List<CREATE_REQ> dtos) {
+        return entityCrudService.createBulk(dtos.stream().map(requestDtoMapper::toDto).toList());
+    }
+
+    @PatchMapping(value = "/bulk", produces = {APPLICATION_JSON})
+    @ResponseStatus(HttpStatus.OK)
+    protected List<DTO> patchBulk(@RequestBody @Valid Map<UUID, PATCH_REQ> patchRequestDtos) {
+        return entityCrudService.patchBulk(patchRequestDtos);
+    }
+
+    @DeleteMapping(value = "/bulk", produces = {APPLICATION_JSON})
+    @ResponseStatus(HttpStatus.OK)
+    protected void deleteBulk(@RequestBody @Valid List<UUID> ids) {
+        entityCrudService.deleteBulk(ids);
     }
 }

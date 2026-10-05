@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.service.post;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +53,7 @@ public class PostEntityService extends BaseEntityCrudService<Post, PostDTO, Patc
     }
 
     @Override
-    public PostDTO patchById(UUID id, PatchPostRequest patchDto) {
+    protected PostDTO handlePatch(UUID id, PatchPostRequest patchDto) {
         super.handleCollectionInternalReferences(patchDto.getTags(), tagEntityService);
         super.handleCollectionInternalReferences(patchDto.getArtists(), artistEntityService);
         super.handleCollectionInternalReferences(patchDto.getDisplayMediaList(), mediaEntityService);
@@ -44,11 +61,11 @@ public class PostEntityService extends BaseEntityCrudService<Post, PostDTO, Patc
         super.handleCollectionInternalReferences(patchDto.getSources(), sourceEntityService);
         super.handleInternalReference(patchDto.getLibrary(), libraryEntityService);
 
-        return super.patchById(id, patchDto);
+        return super.handlePatch(id, patchDto);
     }
 
     @Override
-    public PostDTO create(PostDTO dto) {
+    protected PostDTO handleCreate(PostDTO dto) {
         super.handleInternalCollectionReferences(dto, PostDTO::getTags, PostDTO::setTags, tagEntityService);
         super.handleInternalCollectionReferences(dto, PostDTO::getArtists, PostDTO::setArtists, artistEntityService);
         super.handleInternalCollectionReferences(dto, PostDTO::getDisplayMediaList, PostDTO::setDisplayMediaList, mediaEntityService);
@@ -56,6 +73,6 @@ public class PostEntityService extends BaseEntityCrudService<Post, PostDTO, Patc
         super.handleInternalCollectionReferences(dto, PostDTO::getSources, PostDTO::setSources, sourceEntityService);
         super.handleInternalReference(dto, PostDTO::getLibrary, PostDTO::setLibrary, libraryEntityService);
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 }

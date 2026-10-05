@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.service.book;
 
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +89,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
     @Override
     @Transactional
-    public BookDTO create(BookDTO dto) {
+    protected BookDTO handleCreate(BookDTO dto) {
         this.handleInternalReference(dto, BookDTO::getCover, BookDTO::setCover, mediaEntityService);
         this.handleInternalReference(dto, BookDTO::getLibrary, BookDTO::setLibrary, libraryEntityService);
         if (dto.getSequels() != null) {
@@ -102,12 +119,12 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         LibraryDTO libraryDTO = dto.getLibrary();
         checkLikesEnabled(libraryDTO, dto.getLikes(), dto.getDislikes());
 
-        return super.create(dto);
+        return super.handleCreate(dto);
     }
 
     @Override
     @Transactional
-    public BookDTO patchById(UUID id, PatchBookRequest patchDto) {
+    protected BookDTO handlePatch(UUID id, PatchBookRequest patchDto) {
         this.handleInternalReference(patchDto.getCover(), mediaEntityService);
         if (patchDto.getSequels() != null && patchDto.getSequels().isPresent() && patchDto.getSequels().get() != null) {
             patchDto.getSequels().get().forEach(req -> {
@@ -147,7 +164,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
                 patchDto.getTags().isPresent() ||
                 patchDto.getCover().isPresent();
 
-        BookDTO patchedBook = super.patchById(id, patchDto);
+        BookDTO patchedBook = super.handlePatch(id, patchDto);
 
         if (needsRegeneration) {
             bookFileGenerationService.scheduleGeneration(id);
@@ -157,7 +174,8 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     }
 
     @Override
-    public void deleteById(UUID id) {
+    @Transactional
+    protected java.util.Optional<BookDTO> handleDelete(UUID id) {
         BookDTO bookDTO = super.findById(id).orElse(null);
         if (bookDTO != null && bookDTO.getFormatReferenceIds() != null && !bookDTO.getFormatReferenceIds().isEmpty()) {
             bookDTO.getFormatReferenceIds().values().forEach(attachmentId -> {
@@ -173,7 +191,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
         this.mediaEntityService.deleteById(id);
 
-        super.deleteById(id);
+        return super.handleDelete(id);
     }
 
     private String sanitizeHtml(String html) {

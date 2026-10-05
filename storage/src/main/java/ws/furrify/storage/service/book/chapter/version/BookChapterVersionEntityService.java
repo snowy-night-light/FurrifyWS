@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.service.book.chapter.version;
 
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -47,7 +64,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
     @Override
     @Transactional
-    public BookChapterVersionDTO patchById(UUID id, PatchBookChapterVersionRequest patchDto) {
+    protected BookChapterVersionDTO handlePatch(UUID id, PatchBookChapterVersionRequest patchDto) {
         this.handleInternalReference(patchDto.getChapter(), bookChapterEntityService);
 
         // Sanitize content
@@ -66,19 +83,17 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
             contentChanged = false;
         }
 
-        BookChapterVersionDTO bookChapterVersionDTO = super.patchById(id, patchDto);
+        BookChapterVersionDTO bookChapterVersionDTO = super.handlePatch(id, patchDto);
         asyncUtils.runAsyncAfterCommit(() -> {
             this.countChapterWordsAsync(bookChapterVersionDTO);
         });
-
-
 
         return bookChapterVersionDTO;
     }
 
     @Override
     @Transactional
-    public BookChapterVersionDTO create(BookChapterVersionDTO dto) {
+    protected BookChapterVersionDTO handleCreate(BookChapterVersionDTO dto) {
         this.handleInternalReference(dto, BookChapterVersionDTO::getChapter, BookChapterVersionDTO::setChapter, this.bookChapterEntityService);
 
         int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
@@ -95,7 +110,7 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
              dto.setContentUpdatedAt(ZonedDateTime.now());
         }
 
-        BookChapterVersionDTO createdDto = super.create(dto);
+        BookChapterVersionDTO createdDto = super.handleCreate(dto);
         asyncUtils.runAsyncAfterCommit(() -> {
             this.countChapterWordsAsync(createdDto);
         });
@@ -105,11 +120,15 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
     @Override
     @Transactional
-    public void deleteById(UUID id) {
+    protected java.util.Optional<BookChapterVersionDTO> handleDelete(UUID id) {
         BookChapterVersionDTO version = this.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
         UUID chapterId = version.getChapter().getId();
-        super.deleteById(id);
+        
+        java.util.Optional<BookChapterVersionDTO> result = super.handleDelete(id);
+        
         asyncUtils.runAsyncAfterCommit(() -> this.bookChapterEntityService.updateChapterCurrentWordCountAsync(chapterId));
+        
+        return result;
     }
 
     @Transactional

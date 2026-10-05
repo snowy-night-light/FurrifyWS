@@ -1,8 +1,24 @@
+/*
+ * furrify-core - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.core.utils;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,32 +32,17 @@ import ws.furrify.core.specification.EntitySpec;
 import ws.furrify.core.specification.EntitySpecResult;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SecurityContextUtils {
 
+    public static final String USER_ID_HEADER = "X-Furrify-User-Id";
     private final static String USER_SCOPE_OWNER_VARIABLE_NAME = "ownerId";
     private final static String SERVICE_CLIENT_CLAIM = "service_client";
     private final static String SERVICE_ACCOUNT_CLAIM = "service_account";
     private final static String SERVICE_ACCOUNT_DASH_CLAIM = "service-account";
-    private static final InheritableThreadLocal<UUID> OVERRIDE_SUBJECT = new InheritableThreadLocal<>();
-    public static final Map<UUID, UUID> FEIGN_FALLBACK_OWNER_MAP = new ConcurrentHashMap<>();
-
-    public static void setOverrideSubject(UUID subject) {
-        OVERRIDE_SUBJECT.set(subject);
-    }
-
-    public static void clearOverrideSubject() {
-        OVERRIDE_SUBJECT.remove();
-    }
-
-    public static Optional<UUID> getOverrideSubject() {
-        return Optional.ofNullable(OVERRIDE_SUBJECT.get());
-    }
 
     public static void mockFeignClientSecurityContext(UUID ownerId) {
         Jwt jwt = Jwt.withTokenValue("dummy")
@@ -53,11 +54,9 @@ public class SecurityContextUtils {
         SecurityContextHolder.getContext().setAuthentication(
                 new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_admin"), new SimpleGrantedAuthority("ROLE_service_client")))
         );
-        setOverrideSubject(ownerId);
     }
 
     public static void clearFeignClientSecurityContext() {
-        clearOverrideSubject();
         SecurityContextHolder.clearContext();
     }
 
@@ -72,18 +71,12 @@ public class SecurityContextUtils {
     }
 
     public static Optional<UUID> getCurrentSubject() {
-        if (getOverrideSubject().isPresent()) {
-            return getOverrideSubject();
-        }
-
         if (isServiceToken()) {
             RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
             if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
-                String ownerIdHeader = servletRequestAttributes.getRequest().getHeader("X-Furrify-User-Id");
+                String ownerIdHeader = servletRequestAttributes.getRequest().getHeader(USER_ID_HEADER);
                 if (ownerIdHeader != null) {
                     return Optional.of(UUID.fromString(ownerIdHeader));
-                } else {
-                    throw new AccessDeniedException("Missing X-Furrify-User-Id header for service client.");
                 }
             }
         }
@@ -110,8 +103,8 @@ public class SecurityContextUtils {
                 .anyMatch(auth -> {
                     String authority = Objects.requireNonNull(auth.getAuthority());
                     return authority.equalsIgnoreCase("ROLE_" + SERVICE_CLIENT_CLAIM) ||
-                           authority.equalsIgnoreCase("ROLE_" + SERVICE_ACCOUNT_CLAIM) ||
-                           authority.equalsIgnoreCase("ROLE_" + SERVICE_ACCOUNT_DASH_CLAIM);
+                            authority.equalsIgnoreCase("ROLE_" + SERVICE_ACCOUNT_CLAIM) ||
+                            authority.equalsIgnoreCase("ROLE_" + SERVICE_ACCOUNT_DASH_CLAIM);
                 });
     }
 

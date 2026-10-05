@@ -1,3 +1,20 @@
+/*
+ * furrify-storage-service - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.storage.controller;
 
 import org.junit.jupiter.api.Test;
@@ -151,5 +168,92 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
 
         Mockito.verify(attachmentFileV1RestControllerApiClient, Mockito.times(1))
                 .attachmentFileV1RestControllerDelete(media.getId());
+    }
+
+
+@Override
+    @Test
+    protected void testCreateBulk() throws Exception {
+        List<Source> sources1 = List.of(
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+        );
+        List<Source> sources2 = List.of(
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+        );
+        var fileReferenceId1 = UUID.randomUUID();
+        var fileReferenceId2 = UUID.randomUUID();
+
+        CreateMediaRequest request1 = new CreateMediaRequest();
+        request1.setFileReferenceId(fileReferenceId1);
+        request1.setPriority(3);
+        request1.setSources(
+                sources1.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()
+        );
+
+        CreateMediaRequest request2 = new CreateMediaRequest();
+        request2.setFileReferenceId(fileReferenceId2);
+        request2.setPriority(4);
+        request2.setSources(
+                sources2.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()
+        );
+
+        Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId1);
+        Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId2);
+
+        List<MediaDTO> createdMedia = super.createBulk(java.util.List.of(request1, request2));
+
+        assertAll(() -> {
+            assertNotNull(createdMedia);
+            assertEquals(2, createdMedia.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testPatchBulk() throws Exception {
+        List<Source> sources1 = List.of(
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+        );
+        List<Source> sources2 = List.of(
+                sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build())
+        );
+
+        var fileReferenceId1 = UUID.randomUUID();
+        var fileReferenceId2 = UUID.randomUUID();
+        Media media1 = mediaRepository.save(Media.builder().priority(1).fileReferenceId(fileReferenceId1).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Media media2 = mediaRepository.save(Media.builder().priority(2).fileReferenceId(fileReferenceId2).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        PatchMediaRequest request1 = new PatchMediaRequest();
+        request1.setPriority(JsonNullable.of(16));
+        request1.setSources(JsonNullable.of(sources1.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()));
+        request1.setFileReferenceId(JsonNullable.of(fileReferenceId1));
+
+        PatchMediaRequest request2 = new PatchMediaRequest();
+        request2.setPriority(JsonNullable.of(17));
+        request2.setSources(JsonNullable.of(sources2.stream().map(source -> EntityIdRequest.builder().id(source.getId()).build()).toList()));
+        request2.setFileReferenceId(JsonNullable.of(fileReferenceId2));
+
+        Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId1);
+        Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
+                .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId2);
+
+        List<MediaDTO> updatedMedia = super.patchBulk(java.util.Map.of(media1.getId(), request1, media2.getId(), request2));
+
+        assertAll(() -> {
+            assertNotNull(updatedMedia);
+            assertEquals(2, updatedMedia.size());
+        });
+    }
+
+@Override
+    @Test
+    protected void testDeleteBulk() throws Exception {
+        Media media = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        Media media2 = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(media.getId(), media2.getId())));
     }
 }

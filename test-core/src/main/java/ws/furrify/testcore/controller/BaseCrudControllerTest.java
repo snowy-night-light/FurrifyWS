@@ -1,3 +1,20 @@
+/*
+ * furrify-test-core - Furrify Workspace Project
+ * Copyright © 2026 FurrifyWS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ws.furrify.testcore.controller;
 
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +68,13 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
     protected abstract void testPatch();
 
     protected abstract void testDelete();
+
+    protected abstract void testCreateBulk() throws Exception;
+
+    protected abstract void testPatchBulk() throws Exception;
+
+    protected abstract void testDeleteBulk() throws Exception;
+
 
     protected DTO findById(UUID id) {
         return given()
@@ -114,4 +138,42 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
                 .log().all()
                 .statusCode(HttpStatus.OK.value());
     }
+
+    protected java.util.List<DTO> createBulk(java.util.List<CREATE_REQ> createReqs) {
+        return java.util.Arrays.asList(given()
+                .header("Content-Type", "application/json")
+                .body(createReqs)
+                .when()
+                .post(this.basePath + "/bulk")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.CREATED.value())
+                .extract()
+                .as(jsonMapper.getTypeFactory().constructArrayType(this.dtoClass)));
+    }
+
+    protected java.util.List<DTO> patchBulk(java.util.Map<UUID, PATCH_REQ> patchReqs) {
+        return java.util.Arrays.asList(given()
+                .header("Content-Type", "application/json")
+                .body(patchReqs)
+                .when()
+                .patch(this.basePath + "/bulk")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .as(jsonMapper.getTypeFactory().constructArrayType(this.dtoClass)));
+    }
+
+    protected void deleteBulk(java.util.List<UUID> ids) {
+        given()
+                .header("Content-Type", "application/json")
+                .body(ids)
+                .when()
+                .delete(this.basePath + "/bulk")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value());
+    }
+
 }
