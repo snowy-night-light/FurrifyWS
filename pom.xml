@@ -45,7 +45,7 @@
     <owasp-java-html-sanitizer.version>20260924.2</owasp-java-html-sanitizer.version>
     <pf4j.version>3.16.0</pf4j.version>
     <epub4j.version>4.2.3</epub4j.version>
-    <swagger-annotations.version>2.2.54</swagger-annotations.version>
+    <swagger-annotations.version>2.2.55</swagger-annotations.version>
   </properties>
   <dependencyManagement>
     <dependencies>
