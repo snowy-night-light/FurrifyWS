@@ -22,11 +22,11 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.BookFileUserWorkerTaskDTO;
 import org.openapitools.model.CreateBookFileUserWorkerTaskRequest;
+import org.openapitools.model.Pageable;
 import org.openapitools.model.WorkStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,15 +36,17 @@ import ws.furrify.openapi.gen.worker.api.BookFileUserWorkerTaskV1RestControllerA
 import ws.furrify.storage.dto.book.BookDTO;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class BookFileGenerationService {
 
-    private final ScheduledExecutorService taskScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService taskScheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     private final BookFileUserWorkerTaskV1RestControllerApiClient feignClient;
     private final BookEntityService bookEntityService;
     private final AsyncUtils asyncUtils;
@@ -61,16 +63,10 @@ public class BookFileGenerationService {
         this.asyncUtils = asyncUtils;
     }
 
-    @Transactional
-    public void scheduleGeneration(UUID bookId) {
-        asyncUtils.runAsyncAfterCommit(() -> executeScheduleGeneration(bookId));
-    }
-
-    @Transactional
-    protected void executeScheduleGeneration(UUID bookId) {
+    public void executeScheduleGeneration(UUID bookId) {
         log.debug("Scheduling file generation task for bookId: {}", bookId);
         
-        bookEntityService.markNeedsGeneration(bookId, true);
+        asyncUtils.runInTransaction(() -> bookEntityService.markNeedsGeneration(bookId, true));
 
         ScheduledFuture<?> existingTask = scheduledTasks.get(bookId);
         if (existingTask != null) {
@@ -87,45 +83,58 @@ public class BookFileGenerationService {
     }
 
     @Scheduled(fixedDelay = 60000)
-    @Transactional
     public void retryFailedGenerations() {
         log.debug("Checking for books that need file generation retries...");
-        
+
         bookEntityService.getAllPaged("needsBookFileGeneration = true", PageRequest.of(0, 1000)).forEach(book -> {
             if (!scheduledTasks.containsKey(book.getId())) {
                 log.debug("Found book {} that needs file generation retry. Scheduling...", book.getId());
-                scheduleGeneration(book.getId());
+                this.executeScheduleGeneration(book.getId());
             }
         });
 
-        bookEntityService.getAllPaged("activeWorkerTaskId != null", PageRequest.of(0, 1000)).forEach(book -> {
-            if (!scheduledTasks.containsKey(book.getId())) {
-                SecurityContextUtils.mockFeignClientSecurityContext(book.getOwnerId());
-                try {
-                    ResponseEntity<BookFileUserWorkerTaskDTO> response = feignClient.bookFileUserWorkerTaskV1RestControllerGetById(book.getActiveWorkerTaskId());
-                    BookFileUserWorkerTaskDTO task = response.getBody();
-                    
+        Map<UUID, List<BookDTO>> groupedBooks = bookEntityService.getAllPaged("activeWorkerTaskId != null", PageRequest.of(0, 1000))
+                .stream()
+                .filter(book -> !scheduledTasks.containsKey(book.getId()))
+                .collect(Collectors.groupingBy(BookDTO::getOwnerId));
+
+        groupedBooks.forEach((ownerId, books) -> {
+            String spec = books.stream()
+                    .map(book -> "id = " + book.getActiveWorkerTaskId())
+                    .collect(Collectors.joining(" or "));
+
+            SecurityContextUtils.mockFeignClientSecurityContext(ownerId);
+            try {
+                Pageable pageable = new Pageable()
+                        .page(0)
+                        .size(1000);
+
+                var response = feignClient.bookFileUserWorkerTaskV1RestControllerGetAllPaged(pageable, spec);
+                var pageBody = response.getBody();
+
+                Map<UUID, BookFileUserWorkerTaskDTO> taskMap = (pageBody != null && pageBody.getContent() != null ? pageBody.getContent() : java.util.Collections.<BookFileUserWorkerTaskDTO>emptyList())
+                        .stream()
+                        .collect(Collectors.toMap(BookFileUserWorkerTaskDTO::getId, task -> task));
+
+                books.forEach(book -> {
+                    BookFileUserWorkerTaskDTO task = taskMap.get(book.getActiveWorkerTaskId());
+
                     if (task == null || WorkStatus.FAILED.equals(task.getStatus())) {
                         log.warn("Found book {} with FAILED or missing worker task {}. Rescheduling...", book.getId(), book.getActiveWorkerTaskId());
-                        scheduleGeneration(book.getId());
+                        executeScheduleGeneration(book.getId());
                     }
-                } catch (FeignException e) {
-                    if (e.status() == 404) {
-                        log.warn("Found book {} with missing worker task {} (404). Rescheduling...", book.getId(), book.getActiveWorkerTaskId());
-                        scheduleGeneration(book.getId());
-                    } else {
-                        log.error("Failed to fetch worker task status for book {}: HTTP {} - {}", book.getId(), e.status(), e.contentUTF8());
-                    }
-                } catch (CallNotPermittedException e) {
-                    log.warn("Circuit breaker is OPEN. Cannot check worker task status for book {}. Will retry later.", book.getId());
-                } catch (Exception e) {
-                    log.error("Failed to check worker task status for book {}: {}", book.getId(), e.getMessage());
-                } finally {
-                    SecurityContextUtils.clearFeignClientSecurityContext();
-                }
+                });
+            } catch (FeignException e) {
+                log.error("Failed to fetch worker task status batch for owner {}: HTTP {} - {}", ownerId, e.status(), e.contentUTF8());
+            } catch (CallNotPermittedException e) {
+                log.warn("Circuit breaker is OPEN. Cannot check worker task status batch for owner {}. Will retry later.", ownerId);
+            } catch (Exception e) {
+                log.error("Failed to check worker task status batch for owner {}: {}", ownerId, e.getMessage());
+            } finally {
+                SecurityContextUtils.clearFeignClientSecurityContext();
             }
         });
-    }
+        }
 
     private void triggerWorker(UUID bookId) {
         log.debug("Triggering worker execution for bookId: {}", bookId);
