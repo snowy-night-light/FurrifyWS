@@ -40,27 +40,17 @@ import ws.furrify.worker.dto.worker.plugin.ImportWorkerPluginDTO;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTaskRequest;
 import ws.furrify.worker.model.WorkerPluginResults;
+import ws.furrify.worker.service.worker.AttachmentService;
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 import ws.furrify.worker.shared.plugin.ImportV1WorkerPluginIntf;
 import ws.furrify.worker.shared.plugin.exception.WorkerErrors;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.openapitools.model.FileUploadStatus.UPLOADED;
 import static ws.furrify.worker.domain.worker.WorkStatus.COMPLETED;
 import static ws.furrify.worker.domain.worker.WorkStatus.IN_PROGRESS;
 
@@ -71,17 +61,19 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     private final ExternalPluginLoaderService externalPluginLoaderService;
     private final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
     private final LibraryV1RestControllerApiClient libraryV1RestControllerApiClient;
+    private final AttachmentService attachmentService;
     private final ConcurrentHashMap<UUID, ImportV1WorkerPluginIntf> activePlugins = new ConcurrentHashMap<>();
 
     @Value("${FURRIFY_CDN_URL:}")
     private String cdnUrl;
 
     @Autowired
-    public PluginImportUserWorkerTaskEntityService(BaseEntityRepository<PluginImportUserWorkerTask> entityRepository, BaseDTOMapper<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, PatchPluginImportUserWorkerTaskRequest> dtoMapper, AsyncUtils asyncUtils, ExternalPluginLoaderService externalPluginLoaderService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, LibraryV1RestControllerApiClient libraryV1RestControllerApiClient) {
+    public PluginImportUserWorkerTaskEntityService(BaseEntityRepository<PluginImportUserWorkerTask> entityRepository, BaseDTOMapper<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, PatchPluginImportUserWorkerTaskRequest> dtoMapper, AsyncUtils asyncUtils, ExternalPluginLoaderService externalPluginLoaderService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, LibraryV1RestControllerApiClient libraryV1RestControllerApiClient, AttachmentService attachmentService) {
         super(entityRepository, dtoMapper, asyncUtils);
         this.externalPluginLoaderService = externalPluginLoaderService;
         this.attachmentFileV1RestControllerApiClient = attachmentFileV1RestControllerApiClient;
         this.libraryV1RestControllerApiClient = libraryV1RestControllerApiClient;
+        this.attachmentService = attachmentService;
     }
 
     @Override
@@ -163,45 +155,14 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                 return;
             }
 
-            AttachmentFileDTO attachmentFileDTO;
+            File tempFile = attachmentService.downloadAttachment(task.getFileReferenceId(), task.getOwnerId(), "plugin-iuwt-");
+
+            if (tempFile == null) {
+                failTask(task, "Failed to fetch attachment file reference [id=" + task.getFileReferenceId() + "] or file not uploaded.");
+                return;
+            }
+
             try {
-                attachmentFileDTO = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(task.getFileReferenceId()).getBody();
-            } catch (Exception e) {
-                log.error("Failed to fetch attachment file reference [id={}]: {}", task.getFileReferenceId(), e.getMessage());
-                failTask(task, "Failed to fetch attachment file reference: " + e.getMessage(), e);
-                return;
-            }
-
-            if (attachmentFileDTO == null || attachmentFileDTO.getFileUri() == null || !UPLOADED.name().equals(attachmentFileDTO.getUploadStatus().name())) {
-                log.error("File reference [id={}] not found or not uploaded! Cannot process scheduled task.", task.getFileReferenceId());
-                failTask(task, "File reference [id=" + task.getFileReferenceId() + "] not found or not uploaded! Cannot process scheduled task.");
-                return;
-            }
-
-            Path tempFilePath;
-            try {
-                tempFilePath = Files.createTempFile("plugin-iuwt-", "." + attachmentFileDTO.getFileExtension());
-            } catch (IOException e) {
-                log.error(e.getMessage());
-                failTask(task, "Error processing file: " + e.getMessage(), e);
-                return;
-            }
-
-            File tempFile = tempFilePath.toFile();
-
-            URI fileUri = attachmentFileDTO.getFileUri();
-            String urlString = fileUri.toString();
-            if (cdnUrl != null && !cdnUrl.isBlank() && !fileUri.isAbsolute()) {
-                urlString = cdnUrl + (urlString.startsWith("/") ? "" : "/") + urlString;
-            }
-            try (InputStream in = URI.create(urlString).toURL().openStream()) {
-                if (Thread.currentThread().isInterrupted()) {
-                    log.warn("Task thread interrupted for task {}", task.getId());
-                    return;
-                }
-
-                Files.copy(in, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
-
                 if (Thread.currentThread().isInterrupted()) {
                     log.warn("Task thread interrupted for task {}", task.getId());
                     return;
@@ -242,19 +203,19 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
             } catch (Exception e) {
                 PluginImportUserWorkerTaskDTO latestTask = this.internalFindById(task.getId()).orElse(task);
-                
+
                 WorkerPluginResults finalResults = plugin.trackCurrentStatus();
                 if (finalResults != null) {
                     latestTask.setErrors(finalResults.getErrors());
                     latestTask.setWarnings(finalResults.getWarnings());
                     latestTask.setLog(finalResults.getLog());
                 }
-                
+
                 Throwable cause = e.getCause();
                 while (cause != null && !(cause instanceof InterruptedException)) {
                     cause = cause.getCause();
                 }
-                
+
                 if (Thread.currentThread().isInterrupted() || cause != null) {
                     log.warn("Task thread interrupted during file processing for task {}", task.getId());
                 } else {
@@ -262,10 +223,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     failTask(latestTask, "Error processing file: " + e.getMessage());
                 }
             } finally {
-                try {
-                    Files.deleteIfExists(tempFilePath);
-                } catch (IOException _) {
-                }
+                attachmentService.cleanupTmpFile(tempFile);
             }
         } finally {
             SecurityContextUtils.clearFeignClientSecurityContext();

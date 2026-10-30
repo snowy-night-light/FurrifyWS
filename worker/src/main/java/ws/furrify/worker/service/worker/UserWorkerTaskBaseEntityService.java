@@ -17,10 +17,13 @@
  */
 package ws.furrify.worker.service.worker;
 
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -177,6 +180,7 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
             }
             log.warn("Task {} rescheduled (will retry on next poll): {}", task.getId(), reason);
             currentTask.setStatus(NOT_STARTED);
+            currentTask.setLaunchId(null);
             currentTask.setStartedAt(null);
             this.internalPutById(currentTask.getId(), currentTask);
         });
@@ -340,6 +344,8 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
         EntitySpecResult<ENTITY> spec = EntitySpec.<ENTITY>specBuilder()
                 .where("status", specEquals(IN_PROGRESS))
                 .and()
+                .where("launchId", specEquals(WorkerApplication.LAUNCH_ID))
+                .and()
                 .where("startedAt", specLessThan(timeoutThreshold))
                 .build();
 
@@ -361,13 +367,8 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
 
     protected abstract void processTask(DTO task);
 
-    @Override
-    protected DTO handleCreate(DTO dto) {
-        dto.setLaunchId(WorkerApplication.LAUNCH_ID);
-        return super.handleCreate(dto);
-    }
-
-    @PreDestroy
+    @EventListener(ContextClosedEvent.class)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @Transactional
     public void cancelRunningTasksOnShutdown() {
         isShuttingDown = true;
