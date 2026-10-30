@@ -19,8 +19,7 @@ package ws.furrify.worker.service.worker.book;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.openapitools.model.BookDTO;
-import org.openapitools.model.PutBookWorkerTaskRequest;
+import org.openapitools.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -33,29 +32,21 @@ import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.utils.AsyncUtils;
 import ws.furrify.core.utils.EntitySpecUtils;
-import org.openapitools.model.BookChapterDTO;
-import org.openapitools.model.BookChapterVersionDTO;
-import org.openapitools.model.Pageable;
+import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.storage.api.BookChapterV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.BookChapterVersionV1RestControllerApiClient;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.storage.api.BookV1RestControllerApiClient;
 import ws.furrify.worker.domain.worker.WorkStatus;
 import ws.furrify.worker.domain.worker.book.BookFileUserWorkerTask;
 import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.book.request.PatchBookFileUserWorkerTaskRequest;
 import ws.furrify.worker.generator.BookFileWorkerGenerator;
+import ws.furrify.worker.service.worker.AttachmentService;
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 import ws.furrify.worker.shared.plugin.exception.WorkerErrors;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import static ws.furrify.worker.domain.worker.WorkStatus.IN_PROGRESS;
 
@@ -67,14 +58,16 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
     private final BookV1RestControllerApiClient bookV1RestControllerApiClient;
     private final BookChapterV1RestControllerApiClient bookChapterV1RestControllerApiClient;
     private final BookChapterVersionV1RestControllerApiClient bookChapterVersionV1RestControllerApiClient;
+    private final AttachmentService attachmentService;
 
     @Autowired
-    public BookFileUserWorkerTaskEntityService(BaseEntityRepository<BookFileUserWorkerTask> entityRepository, BaseDTOMapper<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, PatchBookFileUserWorkerTaskRequest> dtoMapper, AsyncUtils asyncUtils, List<BookFileWorkerGenerator> generators, BookV1RestControllerApiClient bookV1RestControllerApiClient, BookChapterV1RestControllerApiClient bookChapterV1RestControllerApiClient, BookChapterVersionV1RestControllerApiClient bookChapterVersionV1RestControllerApiClient) {
+    public BookFileUserWorkerTaskEntityService(BaseEntityRepository<BookFileUserWorkerTask> entityRepository, BaseDTOMapper<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, PatchBookFileUserWorkerTaskRequest> dtoMapper, AsyncUtils asyncUtils, List<BookFileWorkerGenerator> generators, BookV1RestControllerApiClient bookV1RestControllerApiClient, BookChapterV1RestControllerApiClient bookChapterV1RestControllerApiClient, BookChapterVersionV1RestControllerApiClient bookChapterVersionV1RestControllerApiClient, AttachmentService attachmentService) {
         super(entityRepository, dtoMapper, asyncUtils);
         this.generators = generators;
         this.bookV1RestControllerApiClient = bookV1RestControllerApiClient;
         this.bookChapterV1RestControllerApiClient = bookChapterV1RestControllerApiClient;
         this.bookChapterVersionV1RestControllerApiClient = bookChapterVersionV1RestControllerApiClient;
+        this.attachmentService = attachmentService;
     }
 
     @Value("${furrify.worker.tasks.book.max-concurrent:1}")
@@ -160,6 +153,35 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
 
             Map<String, UUID> formatReferenceIds = new HashMap<>();
 
+            if (bookDto.getFormatReferenceIds() != null && !bookDto.getFormatReferenceIds().isEmpty()) {
+                try {
+                    PutBookWorkerTaskRequest clearRequest = new PutBookWorkerTaskRequest();
+                    clearRequest.setFormatReferenceIds(new HashMap<>());
+                    clearRequest.setActiveWorkerTaskId(task.getId());
+
+                    ResponseEntity<Void> clearResponse = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
+                            task.getSourceBookReferenceId(),
+                            clearRequest
+                    );
+
+                    if (!clearResponse.getStatusCode().is2xxSuccessful()) {
+                        log.error("Failed to clear old formats from book {}: Status code {}", task.getSourceBookReferenceId(), clearResponse.getStatusCode());
+
+                        throw new ServiceLogicException(WorkerErrors.TASK_FAILED_TO_CLEAR_BOOK_REFERENCES.getErrorMessage(task.getId(), bookId));
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to clear old formats from book {}: {}", task.getSourceBookReferenceId(), e.getMessage());
+
+                    throw new ServiceLogicException(WorkerErrors.TASK_FAILED_TO_CLEAR_BOOK_REFERENCES.getErrorMessage(task.getId(), bookId));
+                }
+
+                bookDto.getFormatReferenceIds().values().forEach(oldFormatId -> {
+                    if (oldFormatId != null) {
+                        attachmentService.deleteAttachment(oldFormatId, task.getOwnerId(), false);
+                    }
+                });
+            }
+
             for (var generator : generators) {
                 if (Thread.currentThread().isInterrupted()) {
                     log.warn("Task thread interrupted for task {}", task.getId());
@@ -188,10 +210,10 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
                 PutBookWorkerTaskRequest putRequest = getPutBookWorkerTaskRequest(formatReferenceIds);
 
                 ResponseEntity<Void> response = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
-                    task.getSourceBookReferenceId(),
-                    putRequest
+                        task.getSourceBookReferenceId(),
+                        putRequest
                 );
-                
+
                 if (!response.getStatusCode().is2xxSuccessful()) {
                     log.error("Failed to update storage service with new formats for book {}: Status code {}", task.getSourceBookReferenceId(), response.getStatusCode());
                     failTask(task, "Failed to contact storage service to update book formats: Status code " + response.getStatusCode());
@@ -284,7 +306,7 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
 
     @Override
     protected long getTaskTimeoutSeconds() {
-        return 24 * 60 * 60; // 24 hours
+        return 24 * 60 * 60;
     }
 
     @Override

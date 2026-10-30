@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -99,7 +98,7 @@ public class BookChapterEntityService extends BaseEntityCrudService<BookChapter,
 
         boolean needsRegeneration = patchDto.getTitle().isPresent() || patchDto.getChapterNumber().isPresent();
         if (needsRegeneration) {
-            bookFileGenerationService.scheduleGeneration(patchedChapter.getBook().getId());
+            asyncUtils.runAsyncAfterCommit(() -> bookFileGenerationService.executeScheduleGeneration(patchedChapter.getBook().getId()));
         }
 
         return patchedChapter;
