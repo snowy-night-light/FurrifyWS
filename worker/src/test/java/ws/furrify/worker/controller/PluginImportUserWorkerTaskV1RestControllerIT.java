@@ -101,6 +101,11 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         public String getProviderName() { return "dummy-provider"; }
         @Override
         public WorkerPluginResults trackCurrentStatus() { return null; }
+
+        @Override
+        public void interrupt() {
+
+        }
     }
 
     @BeforeEach

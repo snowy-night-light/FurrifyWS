@@ -17,31 +17,34 @@
  */
 package ws.furrify.worker.generator;
 
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.ArtistDTO;
 import org.openapitools.model.ArtistNickname;
 import org.openapitools.model.BookDTO;
 import org.openapitools.model.TagDTO;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
+import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
-import ws.furrify.openapi.gen.storage.api.BookV1RestControllerApiClient;
 import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
+import ws.furrify.worker.service.worker.AttachmentService;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
 
+    private final AttachmentService attachmentService;
+
     public HtmlGeneratorBookFile(
-            ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient) {
+            AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient,
+            AttachmentService attachmentService) {
         super(attachmentFileV1RestControllerApiClient);
+        this.attachmentService = attachmentService;
     }
 
     @Override
@@ -68,6 +71,35 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
         File tmpFile = new File("/tmp/" + UUID.randomUUID() + ".html");
         tmpFile.deleteOnExit();
 
+        String base64Cover = null;
+        String coverMimeType = null;
+
+        if (bookDto.getCover() != null && bookDto.getCover().getFileReferenceId() != null) {
+            if (bookDto.getOwnerId() != null) {
+                SecurityContextUtils.mockFeignClientSecurityContext(bookDto.getOwnerId());
+            }
+
+            File coverFile = null;
+
+            try {
+                coverFile = attachmentService.downloadAttachment(bookDto.getCover(), "gbf-html-cover-file-");
+                byte[] fileContent = Files.readAllBytes(coverFile.toPath());
+                base64Cover = Base64.getEncoder().encodeToString(fileContent);
+
+                coverMimeType = Files.probeContentType(coverFile.toPath());
+                if (coverMimeType == null) {
+                    coverMimeType = "image/jpeg";
+                }
+            } catch (Exception e) {
+                log.error("Failed to fetch attachment file reference [id={}]: {}", bookDto.getCover().getFileReferenceId(), e.getMessage());
+            } finally {
+                if (coverFile != null) {
+                    attachmentService.cleanupTmpFile(coverFile);
+                }
+                SecurityContextUtils.clearFeignClientSecurityContext();
+            }
+        }
+
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(tmpFile), StandardCharsets.UTF_8))) {
 
@@ -77,8 +109,6 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
             String bookTitle = bookDto.getTitle() != null ? bookDto.getTitle() : "Untitled Book";
             writer.write("<title>" + bookTitle + "</title>\n");
 
-            // Handle CSS: Gather all unique stylesheets from chapters and embed them in a single <style> block
-            // to ensure chapters are styled properly while avoiding duplicate CSS rules in the HTML head.
             Set<String> uniqueStyles = new LinkedHashSet<>();
             for (ChapterData chapterData : chapters) {
                 var version = chapterData.getLatestVersion();
@@ -98,10 +128,12 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
 
             writer.write("</head>\n<body>\n");
 
-            // Add Title Header
             writer.write("<h1>" + bookTitle + "</h1>\n");
 
-            // Add overview section containing book metadata
+            if (base64Cover != null) {
+                writer.write("<img src=\"data:" + coverMimeType + ";base64," + base64Cover + "\" alt=\"Cover\" style=\"max-width: 100%; height: auto;\" />\n");
+            }
+
             writer.write("<div class=\"overview\">\n");
 
             if (bookDto.getDescriptionHtml() != null) {
@@ -110,14 +142,13 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
 
             writer.write("<ul>\n");
 
-            // Add Authors inside overview list, selecting the highest-priority nickname for each artist
             if (bookDto.getArtists() != null && !bookDto.getArtists().isEmpty()) {
                 List<String> authorNames = new ArrayList<>();
                 for (ArtistDTO artist : bookDto.getArtists()) {
                     if (artist.getNicknames() != null && !artist.getNicknames().isEmpty()) {
                         ArtistNickname nickname = artist.getNicknames().stream()
                                 .max(Comparator.comparing(n -> n.getPriority() != null ? n.getPriority() : 0))
-                                .orElse(artist.getNicknames().get(0));
+                                .orElse(artist.getNicknames().getFirst());
                         authorNames.add(nickname.getNickname());
                     }
                 }
@@ -126,13 +157,11 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
                 }
             }
 
-            // Add Tags
             if (bookDto.getTags() != null && !bookDto.getTags().isEmpty()) {
                 List<String> tagNames = bookDto.getTags().stream().map(TagDTO::getName).toList();
                 writer.write("<li><strong>Tags:</strong> " + String.join(", ", tagNames) + "</li>\n");
             }
 
-            // Add Stats (Word Count, Chapters, Status, Rating, Views, Likes, Dislikes)
             if (bookDto.getTotalWordCount() != null) {
                 writer.write("<li><strong>Word Count:</strong> " + bookDto.getTotalWordCount() + "</li>\n");
             }
@@ -166,7 +195,6 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
 
             writer.write("<hr/>\n");
 
-            // Add Chapters sequentially
             for (ChapterData chapterData : chapters) {
                 var chapter = chapterData.getChapter();
                 var latestVersion = chapterData.getLatestVersion();
@@ -174,17 +202,14 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
                 writer.write("<div class=\"chapter\" id=\"chapter-" + chapter.getChapterNumber() + "\">\n");
                 writer.write("<h3>" + (chapter.getTitle() != null ? chapter.getTitle() : "Chapter " + chapter.getChapterNumber()) + "</h3>\n");
 
-                // Inject author notes at the start of the chapter if present
                 if (latestVersion.getAuthorNotesStart() != null && !latestVersion.getAuthorNotesStart().isBlank()) {
                     writer.write("<div class=\"author-notes-start\"><i><b>Author notes:</b><br/>" + latestVersion.getAuthorNotesStart() + "</i></div>\n");
                 }
 
-                // Inject the main chapter HTML content
                 if (latestVersion.getContentHtml() != null) {
                     writer.write("<div class=\"content\">" + latestVersion.getContentHtml() + "</div>\n");
                 }
 
-                // Inject author notes at the end of the chapter if present
                 if (latestVersion.getAuthorNotesEnd() != null && !latestVersion.getAuthorNotesEnd().isBlank()) {
                     writer.write("<div class=\"author-notes-end\"><i><b>Author notes:</b><br/>" + latestVersion.getAuthorNotesEnd() + "</i></div>\n");
                 }

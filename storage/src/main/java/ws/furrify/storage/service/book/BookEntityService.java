@@ -167,7 +167,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         BookDTO patchedBook = super.handlePatch(id, patchDto);
 
         if (needsRegeneration) {
-            bookFileGenerationService.scheduleGeneration(id);
+            asyncUtils.runAsyncAfterCommit(() -> bookFileGenerationService.executeScheduleGeneration(id));
         }
 
         return patchedBook;
@@ -223,7 +223,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
         this.internalPutById(bookId, bookDTO);
 
-        asyncUtils.runAsyncAfterCommit(() -> this.bookFileGenerationService.scheduleGeneration(bookId));
+        asyncUtils.runAsyncAfterCommit(() -> this.bookFileGenerationService.executeScheduleGeneration(bookId));
     }
 
     @Transactional

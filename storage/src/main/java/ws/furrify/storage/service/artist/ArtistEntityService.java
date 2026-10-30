@@ -69,7 +69,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         }
 
         UUID libraryId = dto.getLibrary() != null ? dto.getLibrary().getId() : null;
-        checkNicknameUniqueness(dto.getNicknames(), null, libraryId);
+        checkNicknameUniqueness(dto.getNicknames(), dto.getExternalId(), null, libraryId);
 
         return super.handleCreate(dto);
     }
@@ -85,10 +85,17 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
             patchDto.setBioHtml(JsonNullable.of(sanitizeHtml(patchDto.getBioHtml().get())));
         }
 
-        if (patchDto.getNicknames() != null && patchDto.getNicknames().isPresent()) {
+        if ((patchDto.getNicknames() != null && patchDto.getNicknames().isPresent())
+                || (patchDto.getExternalId() != null && patchDto.getExternalId().isPresent())) {
             Artist artist = entityRepository.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id.toString())));
+            List<ArtistNickname> nicknames = patchDto.getNicknames() != null && patchDto.getNicknames().isPresent()
+                    ? patchDto.getNicknames().get()
+                    : artist.getNicknames();
+            String externalId = patchDto.getExternalId() != null && patchDto.getExternalId().isPresent()
+                    ? patchDto.getExternalId().get()
+                    : artist.getExternalId();
             UUID libraryId = (patchDto.getLibrary() != null && patchDto.getLibrary().isPresent() && patchDto.getLibrary().get() != null) ? patchDto.getLibrary().get().getId() : (artist.getLibrary() != null ? artist.getLibrary().getId() : null);
-            checkNicknameUniqueness(patchDto.getNicknames().get(), id, libraryId);
+            checkNicknameUniqueness(nicknames, externalId, id, libraryId);
         }
 
         return super.handlePatch(id, patchDto);
@@ -98,7 +105,7 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
         return ContentHtmlSanitizerUtil.sanitize(html);
     }
 
-    private void checkNicknameUniqueness(List<ArtistNickname> nicknames, UUID recordId, UUID libraryId) {
+    private void checkNicknameUniqueness(List<ArtistNickname> nicknames, String externalId, UUID recordId, UUID libraryId) {
         if (nicknames == null || nicknames.isEmpty()) return;
         EntitySpecJoinStep<Artist> specBuilder = null;
         for (ArtistNickname nickname : nicknames) {
@@ -109,10 +116,14 @@ public class ArtistEntityService extends BaseEntityCrudService<Artist, ArtistDTO
                 specBuilder = specBuilder.or()
                         .where("nicknames.nickname", EntitySpec.specEquals(nickname.getNickname()));
             }
+            if (externalId != null) {
+                specBuilder = specBuilder.and()
+                        .where("externalId", EntitySpec.specEquals(externalId));
+            }
         }
         if (specBuilder != null) {
             var finalSpec = specBuilder.build();
-            if (libraryId != null) {
+            if (externalId != null && libraryId != null) {
                 finalSpec = EntitySpec.<Artist>specBuilder()
                         .where("library.id", EntitySpec.specEquals(libraryId))
                         .and(finalSpec)
