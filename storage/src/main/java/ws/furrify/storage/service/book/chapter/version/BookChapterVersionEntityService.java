@@ -43,6 +43,7 @@ import ws.furrify.storage.service.book.chapter.BookChapterEntityService;
 import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
@@ -52,14 +53,36 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
     private final BookChapterEntityService bookChapterEntityService;
     private final AsyncUtils asyncUtils;
-    private final BookFileGenerationService bookFileGenerationService;
 
     @Autowired
-    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService, AsyncUtils asyncUtils, @Lazy BookFileGenerationService bookFileGenerationService) {
+    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService, AsyncUtils asyncUtils) {
         super(entityRepository, dtoMapper);
         this.bookChapterEntityService = bookChapterEntityService;
         this.asyncUtils = asyncUtils;
-        this.bookFileGenerationService = bookFileGenerationService;
+    }
+
+    @Override
+    @Transactional
+    public BookChapterVersionDTO create(BookChapterVersionDTO dto) {
+        BookChapterVersionDTO createdDto = super.create(dto);
+        asyncUtils.runAsyncAfterCommit(() -> {
+            this.countChapterWordsAsync(createdDto);
+        });
+        return createdDto;
+    }
+
+    @Override
+    @Transactional
+    public BookChapterVersionDTO patchById(UUID id, PatchBookChapterVersionRequest patchDto) {
+        boolean contentChanged = patchDto != null && patchDto.getContentHtml() != null && patchDto.getContentHtml().isPresent();
+        BookChapterVersionDTO patchedDto = super.patchById(id, patchDto);
+        
+        if (contentChanged) {
+            asyncUtils.runAsyncAfterCommit(() -> {
+                this.countChapterWordsAsync(patchedDto);
+            });
+        }
+        return patchedDto;
     }
 
     @Override
@@ -73,22 +96,13 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         }
 
         // If content is updated, update the contentUpdatedAt field unless passed directly in dto
-        boolean contentChanged;
         if (patchDto.getContentHtml().isPresent()) {
-            contentChanged = true;
             if (!patchDto.getContentUpdatedAt().isPresent()) {
                 patchDto.setContentUpdatedAt(JsonNullable.of(ZonedDateTime.now()));
             }
-        } else {
-            contentChanged = false;
         }
 
-        BookChapterVersionDTO bookChapterVersionDTO = super.handlePatch(id, patchDto);
-        asyncUtils.runAsyncAfterCommit(() -> {
-            this.countChapterWordsAsync(bookChapterVersionDTO);
-        });
-
-        return bookChapterVersionDTO;
+        return super.handlePatch(id, patchDto);
     }
 
     @Override
@@ -106,28 +120,23 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
         dto.setContentHtml(sanitizeHtml(dto.getContentHtml()));
 
         // Set content updated at unless passed directly in dto
-        if(dto.getContentUpdatedAt() == null) {
-             dto.setContentUpdatedAt(ZonedDateTime.now());
+        if (dto.getContentUpdatedAt() == null) {
+            dto.setContentUpdatedAt(ZonedDateTime.now());
         }
 
-        BookChapterVersionDTO createdDto = super.handleCreate(dto);
-        asyncUtils.runAsyncAfterCommit(() -> {
-            this.countChapterWordsAsync(createdDto);
-        });
-
-        return createdDto;
+        return super.handleCreate(dto);
     }
 
     @Override
     @Transactional
-    protected java.util.Optional<BookChapterVersionDTO> handleDelete(UUID id) {
+    protected Optional<BookChapterVersionDTO> handleDelete(UUID id) {
         BookChapterVersionDTO version = this.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
         UUID chapterId = version.getChapter().getId();
-        
-        java.util.Optional<BookChapterVersionDTO> result = super.handleDelete(id);
-        
+
+        Optional<BookChapterVersionDTO> result = super.handleDelete(id);
+
         asyncUtils.runAsyncAfterCommit(() -> this.bookChapterEntityService.updateChapterCurrentWordCountAsync(chapterId));
-        
+
         return result;
     }
 
