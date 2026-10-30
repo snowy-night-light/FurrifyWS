@@ -93,10 +93,3 @@ logging:
   level:
     org.hibernate.validator.internal.metadata.aggregated.CascadingMetaDataBuilder: ERROR
     io.documentnode.epub4j: ERROR
-
-furrify:
-  worker:
-    tasks:
-      book:
-        max-concurrent: ${FURRIFY_WORKER_TASKS_BOOK_MAX_CONCURRENT:1}
-        renderer-process-limit: ${FURRIFY_WORKER_TASKS_BOOK_RENDERER_LIMIT:1}

@@ -30,4 +30,9 @@ public interface WorkerPluginIntf extends PluginIntf {
      * Returns the current status of the plugin.
      */
     WorkerPluginResults trackCurrentStatus();
+
+    /**
+     * Signal plugin to stop processing.
+     */
+    void interrupt();
 }

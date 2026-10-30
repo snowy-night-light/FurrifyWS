@@ -4,6 +4,13 @@ x-common-env: &common-env
   JAVA_TOOL_OPTIONS: "-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true"
 
 services:
+  tmp-cleaner:
+    image: busybox:latest
+    restart: "no"
+    volumes:
+      - ./tmp:/tmp
+    command: ["sh", "-c", "find /tmp -mindepth 1 -delete || rm -rf /tmp/* /tmp/.[!.]* 2>/dev/null || true"]
+
   eureka:
     image: furrify-eureka:latest
     environment:
@@ -38,7 +45,10 @@ services:
       - ./plugins:/furrify/plugins
       - ./tmp:/tmp
     depends_on:
-      - eureka
+      eureka:
+        condition: service_started
+      tmp-cleaner:
+        condition: service_completed_successfully
 
   storage:
     image: furrify-storage:latest
@@ -61,7 +71,10 @@ services:
         limits:
           memory: 2G
     depends_on:
-      - eureka
+      eureka:
+        condition: service_started
+      tmp-cleaner:
+        condition: service_completed_successfully
 
   worker:
     image: furrify-worker:latest
@@ -73,21 +86,22 @@ services:
       KEYCLOAK_REALM: ${WORKER_KEYCLOAK_REALM}
       KEYCLOAK_SERVICE_CLIENT_ID: ${WORKER_KEYCLOAK_SERVICE_CLIENT_ID}
       KEYCLOAK_SERVICE_CLIENT_SECRET: ${WORKER_KEYCLOAK_SERVICE_CLIENT_SECRET}
-      FURRIFY_WORKER_TASKS_BOOK_MAX_CONCURRENT: ${WORKER_TASKS_BOOK_MAX_CONCURRENT}
-      FURRIFY_WORKER_TASKS_BOOK_RENDERER_LIMIT: ${WORKER_TASKS_BOOK_RENDERER_LIMIT}
       DB_URL: ${WORKER_DB_URL:-jdbc:postgresql://db:5432/furrify}
       DB_USERNAME: ${WORKER_DB_USERNAME:-postgres}
       DB_PASSWORD: ${WORKER_DB_PASSWORD:-postgres}
     volumes:
       - ./plugins:/furrify/plugins
       - ./tmp:/tmp
-    stop_grace_period: 60s
+    stop_grace_period: 30s
     deploy:
       resources:
         limits:
           memory: 12G
     depends_on:
-      - eureka
+      eureka:
+        condition: service_started
+      tmp-cleaner:
+        condition: service_completed_successfully
 
 volumes:
   attachment_data:
