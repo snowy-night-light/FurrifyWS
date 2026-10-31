@@ -40,7 +40,7 @@
     <batik-transcoder.version>1.20</batik-transcoder.version>
     <openapi-generator.version>7.26.0</openapi-generator.version>
     <build-helper-maven-plugin.version>3.6.2</build-helper-maven-plugin.version>
-    <maven-failsafe-plugin.version>3.6.0</maven-failsafe-plugin.version>
+    <maven-failsafe-plugin.version>3.6.1</maven-failsafe-plugin.version>
     <failsafe.forkCount>1C</failsafe.forkCount>
     <owasp-java-html-sanitizer.version>20261011.1</owasp-java-html-sanitizer.version>
     <pf4j.version>3.16.0</pf4j.version>
