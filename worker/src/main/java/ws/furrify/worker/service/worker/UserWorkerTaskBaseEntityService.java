@@ -319,8 +319,10 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
 
     /**
      * Cancel those of {@code ids} that are waiting or running, e.g. the generation tasks of deleted books.
-     * Tasks that don't exist (or aren't the caller's) and finished tasks are left alone.
+     * Tasks that don't exist (or aren't the caller's) and finished tasks are left alone. One transaction:
+     * {@link #cancelById} is called on this object, not through the proxy, so it has none of its own.
      */
+    @Transactional
     public void cancelUnfinished(Collection<UUID> ids) {
         if (ids == null) return;
         for (UUID id : ids) {
