@@ -28,6 +28,10 @@ import ws.furrify.storage.domain.post.Post;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_collection_owner_created", columnList = "owner_id, created_at"),
+        @Index(name = "idx_collection_library", columnList = "library_id")
+})
 @Getter
 @Setter
 @ToString
@@ -40,6 +44,12 @@ public class Collection extends UserScopedEntity {
     String title;
 
     @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    @JoinTable(name = "collection_posts", joinColumns = @JoinColumn(name = "collection_id"), inverseJoinColumns = @JoinColumn(name = "posts_id"),
+            indexes = {
+                    @Index(name = "idx_collection_posts_collection", columnList = "collection_id"),
+                    // Post.collections (mappedBy) loads by this column
+                    @Index(name = "idx_collection_posts_post", columnList = "posts_id")
+            })
     List<Post> posts;
 
     @ManyToOne(optional = false)

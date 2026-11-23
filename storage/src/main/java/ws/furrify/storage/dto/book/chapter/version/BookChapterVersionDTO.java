@@ -25,8 +25,10 @@ import lombok.experimental.SuperBuilder;
 import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
+import ws.furrify.storage.dto.media.MediaDTO;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -47,4 +49,8 @@ public class BookChapterVersionDTO extends UserScopedEntityDTO<BookChapterVersio
     private BookChapterDTO chapter;
 
     private ZonedDateTime contentUpdatedAt;
+
+    private List<MediaDTO> media;
+
+    private Boolean mediaMissing;
 }

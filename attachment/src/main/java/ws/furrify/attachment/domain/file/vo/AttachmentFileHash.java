@@ -17,9 +17,19 @@
  */
 package ws.furrify.attachment.domain.file.vo;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import org.hibernate.annotations.ColumnDefault;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 /**
  * AttachmentFile hash wrapper.
@@ -27,8 +37,13 @@ import lombok.*;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class AttachmentFileHash {
+
+    /** Marks the constructor MapStruct maps with (it picks one annotated with any annotation named Default). */
+    @Retention(java.lang.annotation.RetentionPolicy.CLASS)
+    @Target(java.lang.annotation.ElementType.CONSTRUCTOR)
+    @interface Default {
+    }
 
     @NonNull
     @NotBlank
@@ -36,4 +51,22 @@ public class AttachmentFileHash {
 
     @NonNull
     private AttachmentFileHashType type;
+
+    /** Hashes stored before conversion existed are of the uploaded bytes: the column default makes them ORIGINAL. */
+    @NonNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @ColumnDefault("'ORIGINAL'")
+    private AttachmentFileHashTarget target = AttachmentFileHashTarget.ORIGINAL;
+
+    @Default
+    public AttachmentFileHash(@NonNull String hash, @NonNull AttachmentFileHashType type, AttachmentFileHashTarget target) {
+        this.hash = hash;
+        this.type = type;
+        this.target = target != null ? target : AttachmentFileHashTarget.ORIGINAL;
+    }
+
+    public AttachmentFileHash(@NonNull String hash, @NonNull AttachmentFileHashType type) {
+        this(hash, type, AttachmentFileHashTarget.ORIGINAL);
+    }
 }

@@ -17,46 +17,43 @@
  */
 package ws.furrify.storage.service.book.chapter.version;
 
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.service.BaseEntityCrudService;
-import ws.furrify.core.specification.EntitySpec;
-import ws.furrify.core.specification.EntitySpecResult;
 import ws.furrify.core.utils.AsyncUtils;
-import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
+import ws.furrify.storage.domain.book.chapter.version.BookChapterVersionRepository;
+import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 import ws.furrify.storage.dto.book.chapter.version.request.PatchBookChapterVersionRequest;
-import ws.furrify.storage.service.book.BookFileGenerationService;
 import ws.furrify.storage.service.book.chapter.BookChapterEntityService;
-import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
+import ws.furrify.storage.service.media.MediaEntityService;
 
-import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.UUID;
-
-import static ws.furrify.core.specification.EntitySpec.specEquals;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BookChapterVersionEntityService extends BaseEntityCrudService<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> {
 
     private final BookChapterEntityService bookChapterEntityService;
+    private final BookChapterVersionRepository bookChapterVersionRepository;
     private final AsyncUtils asyncUtils;
+    private final MediaEntityService mediaEntityService;
 
     @Autowired
-    public BookChapterVersionEntityService(BaseEntityRepository<BookChapterVersion> entityRepository, BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper, @Lazy BookChapterEntityService bookChapterEntityService, AsyncUtils asyncUtils) {
-        super(entityRepository, dtoMapper);
+    public BookChapterVersionEntityService(BookChapterVersionRepository bookChapterVersionRepository,
+                                           BaseDTOMapper<BookChapterVersion, BookChapterVersionDTO, PatchBookChapterVersionRequest> dtoMapper,
+                                           @Lazy BookChapterEntityService bookChapterEntityService,
+                                           AsyncUtils asyncUtils,
+                                           MediaEntityService mediaEntityService) {
+        super(bookChapterVersionRepository, dtoMapper);
+        this.mediaEntityService = mediaEntityService;
+        this.bookChapterVersionRepository = bookChapterVersionRepository;
         this.bookChapterEntityService = bookChapterEntityService;
         this.asyncUtils = asyncUtils;
     }
@@ -65,8 +62,10 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     @Transactional
     public BookChapterVersionDTO create(BookChapterVersionDTO dto) {
         BookChapterVersionDTO createdDto = super.create(dto);
-        asyncUtils.runAsyncAfterCommit(() -> {
-            this.countChapterWordsAsync(createdDto);
+        asyncUtils.runAsyncAfterCommitNoTransaction(() -> {
+            if (createdDto.getChapter() != null && createdDto.getChapter().getId() != null) {
+                this.bookChapterEntityService.updateChapterCurrentWordCountAsync(createdDto.getChapter().getId());
+            }
         });
         return createdDto;
     }
@@ -74,12 +73,18 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     @Override
     @Transactional
     public BookChapterVersionDTO patchById(UUID id, PatchBookChapterVersionRequest patchDto) {
-        boolean contentChanged = patchDto != null && patchDto.getContentHtml() != null && patchDto.getContentHtml().isPresent();
+
+        boolean contentChanged = patchDto != null && (
+                (patchDto.getContentHtml() != null && patchDto.getContentHtml().isPresent())
+                        || (patchDto.getAuthorNotesStart() != null && patchDto.getAuthorNotesStart().isPresent())
+                        || (patchDto.getAuthorNotesEnd() != null && patchDto.getAuthorNotesEnd().isPresent()));
         BookChapterVersionDTO patchedDto = super.patchById(id, patchDto);
-        
+
         if (contentChanged) {
-            asyncUtils.runAsyncAfterCommit(() -> {
-                this.countChapterWordsAsync(patchedDto);
+            asyncUtils.runAsyncAfterCommitNoTransaction(() -> {
+                if (patchedDto.getChapter() != null && patchedDto.getChapter().getId() != null) {
+                    this.bookChapterEntityService.updateChapterCurrentWordCountAsync(patchedDto.getChapter().getId());
+                }
             });
         }
         return patchedDto;
@@ -89,41 +94,91 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
     @Transactional
     protected BookChapterVersionDTO handlePatch(UUID id, PatchBookChapterVersionRequest patchDto) {
         this.handleInternalReference(patchDto.getChapter(), bookChapterEntityService);
+        this.handleCollectionInternalReferences(patchDto.getMedia(), mediaEntityService);
 
-        // Sanitize content
-        if (patchDto.getContentHtml().isPresent()) {
-            patchDto.setContentHtml(JsonNullable.of(sanitizeHtml(patchDto.getContentHtml().get())));
+        // content and notes arrive sanitized (BookChapterVersionProcessorService)
+        BookChapterVersionDTO result = super.handlePatch(id, patchDto);
+        if (patchDto.getContentHtml() != null && patchDto.getContentHtml().isPresent()) {
+            long wordCount = BookChapterVersionProcessorService.calculateWordCount(result.getContentHtml());
+            result.setWordCount(wordCount);
+            bookChapterVersionRepository.updateWordCount(id, wordCount);
         }
 
-        // If content is updated, update the contentUpdatedAt field unless passed directly in dto
-        if (patchDto.getContentHtml().isPresent()) {
-            if (!patchDto.getContentUpdatedAt().isPresent()) {
-                patchDto.setContentUpdatedAt(JsonNullable.of(ZonedDateTime.now()));
+        return result;
+    }
+
+    /**
+     * Save versions {@link BookChapterVersionProcessorService#createBulk} has prepared (sanitized, word counts):
+     * resolves chapters and media, numbers the versions and stores them in one short transaction.
+     */
+    @Transactional
+    public List<BookChapterVersionDTO> createPreparedBulk(List<BookChapterVersionDTO> dtos) {
+        Map<UUID, BookChapterDTO> chapterMap = new HashMap<>();
+        Map<UUID, Integer> highestVersionMap = new HashMap<>();
+
+        for (BookChapterVersionDTO dto : dtos) {
+            if (dto.getChapter() == null || dto.getChapter().getId() == null) {
+                throw new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage("null"));
             }
+            UUID chapterId = dto.getChapter().getId();
+
+            if (!chapterMap.containsKey(chapterId)) {
+                BookChapterDTO chapterDto = bookChapterEntityService.findById(chapterId)
+                        .orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(chapterId)));
+                chapterMap.put(chapterId, chapterDto);
+            }
+            dto.setChapter(chapterMap.get(chapterId));
+            // saved through the base handleCreate (this class's would resolve them one by one), so references are resolved here
+            this.handleInternalCollectionReferences(dto, BookChapterVersionDTO::getMedia, BookChapterVersionDTO::setMedia, mediaEntityService);
+            if (dto.getMediaMissing() == null) dto.setMediaMissing(false);
+
+            int nextVersion = highestVersionMap.computeIfAbsent(chapterId, this::getHighestChapterVersion) + 1;
+            highestVersionMap.put(chapterId, nextVersion);
+            dto.setChapterVersion(nextVersion);
         }
 
-        return super.handlePatch(id, patchDto);
+        List<BookChapterVersion> entities = dtos.stream()
+                .map(super::handleCreate)
+                .map(dtoMapper::toEntity)
+                .toList();
+
+        return entityRepository.saveAll(entities).stream()
+                .map(dtoMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<BookChapterVersionDTO> patchBulk(Map<UUID, PatchBookChapterVersionRequest> patchDtos) {
+        List<BookChapterVersionDTO> patchedDtos = super.patchBulk(patchDtos);
+
+        Set<UUID> affectedChapterIds = patchedDtos.stream()
+                .filter(dto -> dto.getChapter() != null && dto.getChapter().getId() != null)
+                .map(dto -> dto.getChapter().getId())
+                .collect(Collectors.toSet());
+
+        affectedChapterIds.forEach(chapterId ->
+                asyncUtils.runAsyncAfterCommitNoTransaction(() ->
+                        this.bookChapterEntityService.updateChapterCurrentWordCountAsync(chapterId)
+                )
+        );
+
+        return patchedDtos;
     }
 
     @Override
     @Transactional
     protected BookChapterVersionDTO handleCreate(BookChapterVersionDTO dto) {
         this.handleInternalReference(dto, BookChapterVersionDTO::getChapter, BookChapterVersionDTO::setChapter, this.bookChapterEntityService);
+        this.handleInternalCollectionReferences(dto, BookChapterVersionDTO::getMedia, BookChapterVersionDTO::setMedia, mediaEntityService);
+        if (dto.getMediaMissing() == null) dto.setMediaMissing(false);
 
-        int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
-        dto.setChapterVersion(highestVersion + 1);
-
-        // Updated later async
-        dto.setWordCount(0L);
-
-        // Sanitize content
-        dto.setContentHtml(sanitizeHtml(dto.getContentHtml()));
-
-        // Set content updated at unless passed directly in dto
-        if (dto.getContentUpdatedAt() == null) {
-            dto.setContentUpdatedAt(ZonedDateTime.now());
+        if (dto.getChapterVersion() == null) {
+            int highestVersion = this.getHighestChapterVersion(dto.getChapter().getId());
+            dto.setChapterVersion(highestVersion + 1);
         }
 
+        // content, notes, word count and contentUpdatedAt are prepared by BookChapterVersionProcessorService
         return super.handleCreate(dto);
     }
 
@@ -135,58 +190,16 @@ public class BookChapterVersionEntityService extends BaseEntityCrudService<BookC
 
         Optional<BookChapterVersionDTO> result = super.handleDelete(id);
 
-        asyncUtils.runAsyncAfterCommit(() -> this.bookChapterEntityService.updateChapterCurrentWordCountAsync(chapterId));
+        asyncUtils.runAsyncAfterCommitNoTransaction(() -> this.bookChapterEntityService.updateChapterCurrentWordCountAsync(chapterId));
 
         return result;
     }
 
     @Transactional
-    protected void countChapterWordsAsync(BookChapterVersionDTO bookChapterVersionDTO) {
-        String content = bookChapterVersionDTO.getContentHtml();
-
-        long wordCount = 0;
-
-        if (content != null) {
-            boolean word = false;
-            int endOfLine = content.length() - 1;
-
-            for (int i = 0; i < content.length(); i++) {
-                if (Character.isLetter(content.charAt(i)) && i != endOfLine) {
-                    word = true;
-                } else if (!Character.isLetter(content.charAt(i)) && word) {
-                    wordCount++;
-                    word = false;
-                } else if (Character.isLetter(content.charAt(i)) && i == endOfLine) {
-                    wordCount++;
-                }
-            }
-        }
-
-        bookChapterVersionDTO.setWordCount(wordCount);
-
-        this.internalPutById(bookChapterVersionDTO.getId(), bookChapterVersionDTO);
-
-        this.bookChapterEntityService.updateChapterCurrentWordCountAsync(bookChapterVersionDTO.getChapter().getId());
-    }
-
-    private String sanitizeHtml(String html) {
-        return ContentHtmlSanitizerUtil.sanitize(html);
-    }
-
-    @Transactional
-    protected int getHighestChapterVersion(UUID chapterId) {
-        EntitySpecResult<BookChapterVersion> chapterVersionsSpec = EntitySpec.from(SecurityContextUtils.<BookChapterVersion>getUserScopedSecuritySpec())
-                .and().where("chapter_id", specEquals(chapterId))
-                .build();
-
-        Pageable pageable = PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "chapterVersion"));
-
-        Page<BookChapterVersionDTO> bookChapterVersions = this.getAllPaged(chapterVersionsSpec.specString(), pageable);
-
-        if (bookChapterVersions.isEmpty() || bookChapterVersions.getContent().isEmpty()) {
+    public int getHighestChapterVersion(UUID chapterId) {
+        if (chapterId == null) {
             return 0;
-        } else {
-            return bookChapterVersions.getContent().getFirst().getChapterVersion();
         }
+        return bookChapterVersionRepository.findHighestChapterVersionByChapterId(chapterId);
     }
 }

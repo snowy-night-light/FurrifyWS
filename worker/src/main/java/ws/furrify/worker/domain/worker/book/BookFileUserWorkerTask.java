@@ -27,6 +27,13 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
+// Scheduler queries (UserWorkerTaskBaseEntityService): the 30 s poll filters status (+ start_at) ordered by
+// created_at; the stuck-task check filters status + launch_id. The table grows with every task ever run.
+@Table(indexes = {
+        @Index(name = "idx_bfuwt_status_created", columnList = "status, created_at"),
+        @Index(name = "idx_bfuwt_status_launch", columnList = "status, launch_id"),
+        @Index(name = "idx_bfuwt_owner", columnList = "owner_id")
+})
 @Getter
 @Setter
 @ToString
@@ -41,7 +48,8 @@ public class BookFileUserWorkerTask extends UserWorkerTask {
     @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "book_file_user_worker_task_format_id_map",
-            joinColumns = {@JoinColumn(name = "book_file_user_work_task_id", referencedColumnName = "id")})
+            joinColumns = {@JoinColumn(name = "book_file_user_work_task_id", referencedColumnName = "id")},
+            indexes = @Index(name = "idx_bfuwt_format_id_map_task", columnList = "book_file_user_work_task_id"))
     @MapKeyColumn(name = "format")
     Map<String, UUID> formatReferenceIds = new HashMap<>();
 }

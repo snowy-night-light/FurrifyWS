@@ -53,29 +53,29 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
     @PersistenceContext
     protected EntityManager entityManager;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<DTO> findById(UUID id) {
         return entityRepository.findById(id, getCombinedSpecs()).map(dtoMapper::toDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean existsById(UUID id) {
         return entityRepository.existsById(id, getCombinedSpecs());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public DTO getById(UUID id) {
         return findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id)));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<DTO> getAllPaged(String spec, Pageable pageable) {
         return entityRepository.findAll(pageable, getCombinedSpecs(
                 EntitySpec.fromSpecString(spec)
         )).map(dtoMapper::toDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<DTO> getAllInternal(String spec) {
         return entityRepository.findAll(getCombinedSpecs(
                 EntitySpec.fromSpecString(spec)
@@ -280,9 +280,22 @@ public abstract class BaseEntityCrudService<ENTITY extends BaseEntity, DTO exten
 
     @Transactional
     public List<DTO> patchBulk(Map<UUID, PATCH_REQ> patchDtos) {
+        if (patchDtos == null || patchDtos.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> ids = new ArrayList<>(patchDtos.keySet());
+
+        // One query (+ batch-fetched collections) puts every target into the persistence context,
+        // so the findById(id) inside each handlePatch is a context hit instead of a full reload.
+        entityRepository.findAllById(ids);
+
         List<ENTITY> entities = patchDtos.entrySet().stream()
                 .map(entry -> dtoMapper.toEntity(handlePatch(entry.getKey(), entry.getValue())))
                 .toList();
+
+        // handlePatch detaches each entity. Re-attach them all with one query so saveAll's merge()
+        // copies onto managed instances instead of SELECTing every row (and its collections) again.
+        entityRepository.findAllById(ids);
 
         return entityRepository.saveAll(entities).stream()
                 .map(dtoMapper::toDto)

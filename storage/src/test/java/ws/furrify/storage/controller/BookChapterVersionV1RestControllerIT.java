@@ -41,6 +41,11 @@ import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import java.util.List;
 import java.time.ZonedDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -100,6 +105,7 @@ class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest<BookCh
             assertEquals("Start", createdVersion.getAuthorNotesStart());
             assertEquals("End", createdVersion.getAuthorNotesEnd());
             assertNotNull(createdVersion.getContentUpdatedAt());
+            assertEquals(2L, createdVersion.getWordCount());
         });
     }
 
@@ -131,6 +137,102 @@ class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest<BookCh
             assertNotNull(versions);
             assertTrue(versions.getContent().size() >= 2);
         });
+    }
+
+    /** HTML with a script: what is kept and what must go. */
+    private static final String UNSAFE_HTML = "<p>Hello world</p><script>alert(1)</script>";
+
+    private static void assertSanitized(String html) {
+        assertNotNull(html);
+        assertTrue(html.contains("Hello world"), html);
+        assertFalse(html.contains("<script") || html.contains("alert(1)"), html);
+    }
+
+    @Test
+    void testCreateSanitizesContentAndNotes() {
+        setupData();
+        CreateBookChapterVersionRequest request = new CreateBookChapterVersionRequest();
+        request.setContentHtml(UNSAFE_HTML);
+        request.setChapter(EntityIdRequest.builder().id(defaultChapter.getId()).build());
+        request.setAuthorNotesStart(UNSAFE_HTML);
+        request.setAuthorNotesEnd(UNSAFE_HTML);
+
+        BookChapterVersionDTO created = super.create(request);
+
+        assertAll(
+                () -> assertSanitized(created.getContentHtml()),
+                () -> assertSanitized(created.getAuthorNotesStart()),
+                () -> assertSanitized(created.getAuthorNotesEnd()),
+                () -> assertEquals(2L, created.getWordCount(), "words of the sanitized content"),
+                () -> assertNotNull(created.getContentUpdatedAt())
+        );
+    }
+
+    @Test
+    void testPatchSanitizesContentAndNotes() {
+        setupData();
+        BookChapterVersion version = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).contentHtml("Old").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        PatchBookChapterVersionRequest request = new PatchBookChapterVersionRequest();
+        request.setContentHtml(JsonNullable.of(UNSAFE_HTML));
+        request.setAuthorNotesStart(JsonNullable.of(UNSAFE_HTML));
+        request.setAuthorNotesEnd(JsonNullable.of(UNSAFE_HTML));
+
+        BookChapterVersionDTO patched = super.patch(version.getId(), request);
+
+        assertAll(
+                () -> assertSanitized(patched.getContentHtml()),
+                () -> assertSanitized(patched.getAuthorNotesStart()),
+                () -> assertSanitized(patched.getAuthorNotesEnd()),
+                () -> assertEquals(2L, patched.getWordCount()),
+                () -> assertNotNull(patched.getContentUpdatedAt(), "new content updates contentUpdatedAt")
+        );
+    }
+
+    @Test
+    void testCreateBulkSanitizesContentAndNotes() throws Exception {
+        setupData();
+        List<CreateBookChapterVersionRequest> requests = new java.util.ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            CreateBookChapterVersionRequest request = new CreateBookChapterVersionRequest();
+            request.setContentHtml(UNSAFE_HTML);
+            request.setChapter(EntityIdRequest.builder().id(defaultChapter.getId()).build());
+            request.setAuthorNotesEnd(UNSAFE_HTML);
+            requests.add(request);
+        }
+
+        List<BookChapterVersionDTO> created = super.createBulk(requests);
+
+        assertEquals(2, created.size());
+        for (BookChapterVersionDTO version : created) {
+            assertAll(
+                    () -> assertSanitized(version.getContentHtml()),
+                    () -> assertSanitized(version.getAuthorNotesEnd()),
+                    () -> assertNull(version.getAuthorNotesStart(), "no notes stay none"),
+                    () -> assertEquals(2L, version.getWordCount())
+            );
+        }
+    }
+
+    @Test
+    void testPatchBulkSanitizesContentAndNotes() throws Exception {
+        setupData();
+        BookChapterVersion version1 = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(1).contentHtml("Old").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        BookChapterVersion version2 = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(2).contentHtml("Old").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        PatchBookChapterVersionRequest contentPatch = new PatchBookChapterVersionRequest();
+        contentPatch.setContentHtml(JsonNullable.of(UNSAFE_HTML));
+        PatchBookChapterVersionRequest notesPatch = new PatchBookChapterVersionRequest();
+        notesPatch.setAuthorNotesStart(JsonNullable.of(UNSAFE_HTML));
+
+        List<BookChapterVersionDTO> patched = super.patchBulk(java.util.Map.of(version1.getId(), contentPatch, version2.getId(), notesPatch));
+        BookChapterVersionDTO first = patched.stream().filter(v -> v.getId().equals(version1.getId())).findFirst().orElseThrow();
+        BookChapterVersionDTO second = patched.stream().filter(v -> v.getId().equals(version2.getId())).findFirst().orElseThrow();
+
+        assertAll(
+                () -> assertSanitized(first.getContentHtml()),
+                () -> assertEquals(2L, first.getWordCount()),
+                () -> assertSanitized(second.getAuthorNotesStart()),
+                () -> assertEquals("Old", second.getContentHtml(), "content not patched stays")
+        );
     }
 
     @Override
@@ -222,7 +324,7 @@ class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest<BookCh
         });
     }
 
-@Override
+    @Override
     @Test
     protected void testDeleteBulk() throws Exception {
         setupData();
@@ -230,5 +332,46 @@ class BookChapterVersionV1RestControllerIT extends BaseCrudControllerTest<BookCh
         BookChapterVersion version2 = bookChapterVersionRepository.save(BookChapterVersion.builder().chapterVersion(2).contentHtml("Test contentHtml 2").authorNotesStart("Start").authorNotesEnd("End").chapter(defaultChapter).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(version.getId(), version2.getId())));
+    }
+
+    @Test
+    void testConcurrentChapterVersionCreationWordCount() throws Exception {
+        setupData();
+
+        int numTasks = 10;
+        ExecutorService executor = Executors.newFixedThreadPool(numTasks);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(numTasks);
+        AtomicInteger failures = new AtomicInteger(0);
+
+        for (int i = 0; i < numTasks; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                try {
+                    startLatch.await();
+                    CreateBookChapterVersionRequest req = new CreateBookChapterVersionRequest();
+                    req.setContentHtml("Word one two three " + index);
+                    req.setChapter(EntityIdRequest.builder().id(defaultChapter.getId()).build());
+                    req.setAuthorNotesStart("Start");
+                    req.setAuthorNotesEnd("End");
+                    req.setContentUpdatedAt(ZonedDateTime.now());
+                    BookChapterVersionDTO dto = super.create(req);
+                    if (dto == null || dto.getWordCount() == null || dto.getWordCount() < 4) {
+                        failures.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    failures.incrementAndGet();
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        startLatch.countDown();
+        boolean completed = doneLatch.await(30, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        assertTrue(completed, "Concurrent version creations should complete within 30 seconds");
+        assertEquals(0, failures.get(), "No concurrent version creation should fail");
     }
 }

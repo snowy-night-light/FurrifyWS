@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import ws.furrify.core.config.feign.OAuth2FeignErrorDecoder;
@@ -53,12 +52,6 @@ public abstract class ApiConfig {
         return new OAuth2FeignErrorDecoder(authorizedClientService, appName);
     }
 
-    @Bean
-    public Customizer<Resilience4JCircuitBreakerFactory> circuitBreakerFactoryCustomizer() {
-        return factory -> factory.configureExecutorService(
-                new DelegatingSecurityContextExecutorService(Executors.newCachedThreadPool())
-        );
-    }
     @PostConstruct
     public void registerThreadLocalAccessors() {
         ContextRegistry.getInstance().registerThreadLocalAccessor(new RequestContextThreadLocalAccessor());
@@ -75,24 +68,25 @@ public abstract class ApiConfig {
         return new FeignResilience4jContextPropagator();
     }
 
+    /**
+     * Every Feign call runs on this executor (it enforces the call's time limit), so its size caps how many
+     * calls to other services can be in flight at once. A small fixed pool (it used to be 10 threads) makes
+     * calls queue behind each other, and when storage and worker call each other with both pools full, each
+     * waits on the other until every call times out together. Calls only wait on the network, so they run on
+     * virtual threads, up to {@link #MAX_CONCURRENT_CALLS} at once.
+     */
     @Bean
     public Customizer<Resilience4JCircuitBreakerFactory> resilience4jCircuitBreakerCustomizer() {
         return factory -> {
-            int processors = Runtime.getRuntime().availableProcessors();
-
-            int corePoolSize = processors * 4;
-
-            factory.configureExecutorService(
-                    new ContextPropagatingScheduledExecutorService(
-                            Executors.newScheduledThreadPool(corePoolSize)
-                    )
-            );
-
-            factory.configureGroupExecutorService(groupName ->
-                    new ContextPropagatingScheduledExecutorService(
-                            Executors.newScheduledThreadPool(corePoolSize)
-                    )
-            );
+            factory.configureExecutorService(newCallExecutor());
+            factory.configureGroupExecutorService(groupName -> newCallExecutor());
         };
+    }
+
+    static final int MAX_CONCURRENT_CALLS = 512;
+
+    private static ContextPropagatingScheduledExecutorService newCallExecutor() {
+        return new ContextPropagatingScheduledExecutorService(
+                Executors.newScheduledThreadPool(MAX_CONCURRENT_CALLS, Thread.ofVirtual().name("feign-call-", 0).factory()));
     }
 }

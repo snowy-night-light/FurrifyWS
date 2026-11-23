@@ -20,6 +20,7 @@ package ws.furrify.attachment.config;
 import org.apache.tika.Tika;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ws.furrify.attachment.service.file.jxl.JxlConverter;
 import ws.furrify.attachment.service.file.storage.FileMassStorageStrategy;
 import ws.furrify.attachment.service.file.storage.HostMountpointV1FileMassStorageStrategy;
 
@@ -27,8 +28,8 @@ import ws.furrify.attachment.service.file.storage.HostMountpointV1FileMassStorag
 class FileMassStorageConfig {
 
     @Bean
-    public FileMassStorageStrategy fileMassStorageService() {
-        return new HostMountpointV1FileMassStorageStrategy();
+    public FileMassStorageStrategy fileMassStorageService(JxlConverter jxlConverter) {
+        return new HostMountpointV1FileMassStorageStrategy(jxlConverter);
     }
 
     @Bean

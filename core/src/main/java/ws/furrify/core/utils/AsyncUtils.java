@@ -32,14 +32,25 @@ import org.springframework.web.context.request.RequestContextHolder;
 public class AsyncUtils {
 
     private final TransactionTemplate transactionTemplate;
+    /**
+     * Tasks run after commit would otherwise inherit the thread's already closed transaction and fail on
+     * every write; this sets it aside so the task gets a fresh transaction of its own.
+     */
+    private final TransactionTemplate suspendingTemplate;
     private final TaskExecutor taskExecutor;
+    /** Only waits out delays and hands the task to {@link #taskExecutor}; no task runs on it. */
+    private final java.util.concurrent.ScheduledExecutorService delayer =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().daemon().name("furrify-delay").factory());
 
     public AsyncUtils(PlatformTransactionManager transactionManager, TaskExecutor taskExecutor) {
         if (transactionManager != null) {
             this.transactionTemplate = new TransactionTemplate(transactionManager);
-            this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+            this.suspendingTemplate = new TransactionTemplate(transactionManager);
+            this.suspendingTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
         } else {
             this.transactionTemplate = null;
+            this.suspendingTemplate = null;
         }
         this.taskExecutor = taskExecutor != null ? taskExecutor : new SimpleAsyncTaskExecutor();
     }
@@ -49,6 +60,10 @@ public class AsyncUtils {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
 
         return () -> {
+            // Restore (not clear) what the executing thread had: with CallerRunsPolicy the task can
+            // run on the submitting request thread, whose context must survive the task.
+            SecurityContext previousSecurityContext = SecurityContextHolder.getContext();
+            RequestAttributes previousRequestAttributes = RequestContextHolder.getRequestAttributes();
             try {
                 SecurityContextHolder.setContext(securityContext);
                 if (requestAttributes != null) {
@@ -56,8 +71,33 @@ public class AsyncUtils {
                 }
                 task.run();
             } finally {
-                SecurityContextHolder.clearContext();
-                RequestContextHolder.resetRequestAttributes();
+                SecurityContextHolder.setContext(previousSecurityContext);
+                if (previousRequestAttributes != null) {
+                    RequestContextHolder.setRequestAttributes(previousRequestAttributes);
+                } else {
+                    RequestContextHolder.resetRequestAttributes();
+                }
+            }
+        };
+    }
+
+    /**
+     * Wrap a task submitted from {@code afterCommit()} so it never joins the finished transaction.
+     * <p>
+     * During {@code afterCommit()} the transaction is committed but its resources are still bound to
+     * the thread, so a {@code @Transactional(REQUIRED)} call there joins it and every UPDATE/DELETE
+     * fails with "No active transaction for update or delete query". On a pool thread this is a
+     * no-op; it only matters when the executor is saturated and {@code CallerRunsPolicy} runs the
+     * task inline on the committing thread. Spring's documented remedy is to run such work in a
+     * separate transaction scope; suspending the old one lets inner {@code @Transactional} methods
+     * start a real transaction of their own.
+     */
+    private Runnable detachedFromCompletedTransaction(Runnable task) {
+        return () -> {
+            if (suspendingTemplate != null && TransactionSynchronizationManager.isSynchronizationActive()) {
+                suspendingTemplate.executeWithoutResult(status -> task.run());
+            } else {
+                task.run();
             }
         };
     }
@@ -75,11 +115,29 @@ public class AsyncUtils {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    executeInTransaction(task);
+                    detachedFromCompletedTransaction(() -> executeInTransaction(task)).run();
                 }
             });
         } else {
             executeInTransaction(task);
+        }
+    }
+
+    /**
+     * Run a cheap, non-transactional task on the committing thread right after commit (immediately
+     * when there is no transaction). For hand-offs such as scheduling a debounced job: unlike
+     * {@link #runAsyncAfterCommitNoTransaction} it doesn't take a slot in the shared executor queue.
+     */
+    public void runAfterCommitNoTransaction(Runnable task) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    detachedFromCompletedTransaction(task).run();
+                }
+            });
+        } else {
+            task.run();
         }
     }
 
@@ -94,7 +152,7 @@ public class AsyncUtils {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    taskExecutor.execute(contextAwareTask);
+                    taskExecutor.execute(detachedFromCompletedTransaction(contextAwareTask));
                 }
             });
         } else {
@@ -109,12 +167,34 @@ public class AsyncUtils {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    taskExecutor.execute(contextAwareTask);
+                    taskExecutor.execute(detachedFromCompletedTransaction(contextAwareTask));
                 }
             });
         } else {
             taskExecutor.execute(contextAwareTask);
         }
+    }
+
+    /**
+     * Run {@code task} in its own transaction on the shared executor after {@code delay}, with the caller's
+     * security context. Cancelling the returned future before then drops it (e.g. to debounce).
+     */
+    public java.util.concurrent.ScheduledFuture<?> runAsyncLater(Runnable task, java.time.Duration delay) {
+        return later(withContext(() -> executeInTransaction(task)), delay);
+    }
+
+    /** {@link #runAsyncLater} without a transaction around the task. */
+    public java.util.concurrent.ScheduledFuture<?> runAsyncLaterNoTransaction(Runnable task, java.time.Duration delay) {
+        return later(withContext(task), delay);
+    }
+
+    private java.util.concurrent.ScheduledFuture<?> later(Runnable contextAwareTask, java.time.Duration delay) {
+        return delayer.schedule(() -> taskExecutor.execute(contextAwareTask), delay.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+    /** Pending delayed tasks are dropped at shutdown (called by Spring as the bean's destroy method). */
+    public void shutdown() {
+        delayer.shutdownNow();
     }
 
     private void executeInTransaction(Runnable task) {

@@ -25,6 +25,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.book.Book;
@@ -33,7 +36,9 @@ import ws.furrify.storage.domain.post.Post;
 import ws.furrify.storage.domain.tag.Tag;
 import ws.furrify.storage.domain.tag.category.TagCategory;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -74,4 +79,32 @@ public class Library extends UserScopedEntity {
     @Builder.Default
     @Column(nullable = false)
     Boolean dislikesEnabled = false;
+
+    @Builder.Default
+    @ColumnDefault("false")
+    @Column(nullable = false)
+    boolean scheduledForRemoval = false;
+
+    /**
+     * The content being removed from the library in the background (e.g. ["BOOKS", "TAGS"]), null when none:
+     * a second clear is refused meanwhile, and a clear cut short by a restart is resumed. Only ever set by
+     * {@code LibraryContentRemovalService}.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    List<String> contentRemoval;
+
+    /**
+     * Lease of the running removal: refreshed every minute by the storage instance doing it. A removal whose
+     * lease is older than a few minutes (its instance stopped or it failed) is taken over by any instance.
+     * Internal: not in the DTO.
+     */
+    ZonedDateTime removalHeartbeat;
+
+    /** {@code LAUNCH_ID} of the storage instance holding the removal lease. Internal: not in the DTO. */
+    UUID removalOwner;
+
+    /** Whether the library or some of its content is being removed (for clients). */
+    public boolean isRemovalInProgress() {
+        return scheduledForRemoval || (contentRemoval != null && !contentRemoval.isEmpty());
+    }
 }

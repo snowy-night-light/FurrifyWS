@@ -17,8 +17,11 @@
  */
 package ws.furrify.storage.dto.book;
 
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
+import ws.furrify.core.model.CycleAvoidingMappingContext;
 import ws.furrify.storage.domain.book.Book;
 import ws.furrify.storage.dto.artist.ArtistDTOMapper;
 import ws.furrify.storage.dto.book.chapter.BookChapterDTOMapper;
@@ -32,4 +35,8 @@ import ws.furrify.storage.dto.tag.TagDTOMapper;
         uses = {BookChapterDTOMapper.class, LibraryDTOMapper.class, TagDTOMapper.class, ArtistDTOMapper.class, SourceDTOMapper.class}
 )
 public interface BookDTOMapper extends BaseDTOMapper<Book, BookDTO, PatchBookRequest> {
+
+    @Override
+    @Mapping(target = "chapters", ignore = true)
+    BookDTO toDto(Book entity, @Context CycleAvoidingMappingContext context);
 }

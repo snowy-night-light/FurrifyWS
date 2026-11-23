@@ -20,10 +20,8 @@ package ws.furrify.worker.generator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.model.AttachmentFileDTO;
-import org.openapitools.model.BookChapterDTO;
-import org.openapitools.model.BookChapterVersionDTO;
-import org.openapitools.model.BookDTO;
+import org.openapitools.model.*;
+import org.springframework.beans.factory.annotation.Value;
 import ws.furrify.core.shared.StandardMultipartFile;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
@@ -33,12 +31,73 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
 @Slf4j
 public abstract class BookFileWorkerGenerator {
 
     protected final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
+
+    /** Gateway route of the attachment service; its fallback endpoint serves images in their original format. */
+    public static final String ATTACHMENTS_GATEWAY_PREFIX = "/attachments/";
+
+    /** {@code src}/{@code srcset} of {@code <img>}/{@code <source>}; stored content is sanitized, which writes double-quoted attributes. */
+    private static final Pattern IMAGE_URL_ATTRIBUTE = Pattern.compile(
+            "(<(?:img|source)\\b[^>]*?\\b(?:src|srcset)\\s*=\\s*\")([^\"]*)(\")", Pattern.CASE_INSENSITIVE);
+
+    @Value("${FURRIFY_CDN_URL:}")
+    protected String cdnUrl;
+
+    @Value("${FURRIFY_GATEWAY_URL:}")
+    protected String gatewayUrl;
+
+    /**
+     * Absolute URL of a path content stores relative: {@code /attachments/...} (fallback endpoint,
+     * via {@code FURRIFY_GATEWAY_URL}) or {@code /<id>/...} (a file on {@code FURRIFY_CDN_URL}).
+     * Null for anything else (absolute URLs, data URIs, protocol-relative) or a missing base URL.
+     */
+    protected String absoluteUrl(String path) {
+        if (path == null || !path.startsWith("/") || path.startsWith("//")) {
+            return null;
+        }
+        String base = path.startsWith(ATTACHMENTS_GATEWAY_PREFIX) ? gatewayBase() : cdnBase();
+        return base.isEmpty() ? null : base + path;
+    }
+
+    /** Every relative image URL ({@code <img src>}, {@code <source srcset>}) made absolute; others left alone. */
+    protected String withAbsoluteImageUrls(String html) {
+        if (html == null || (!html.contains("<img") && !html.contains("<source"))) {
+            return html;
+        }
+        Matcher m = IMAGE_URL_ATTRIBUTE.matcher(html);
+        StringBuilder out = new StringBuilder(html.length());
+        while (m.find()) {
+            String url = absoluteUrl(m.group(2).replace("&amp;", "&"));
+            String replacement = url == null ? m.group(0) : m.group(1) + url.replace("&", "&amp;") + m.group(3);
+            m.appendReplacement(out, Matcher.quoteReplacement(replacement));
+        }
+        m.appendTail(out);
+        return out.toString();
+    }
+
+    /** Fallback endpoint of an attachment (its original format), absolute; null without FURRIFY_GATEWAY_URL. */
+    protected String fallbackUrl(UUID attachmentId) {
+        return absoluteUrl(ATTACHMENTS_GATEWAY_PREFIX + "v1/files/" + attachmentId + "/fallback");
+    }
+
+    protected String gatewayBase() {
+        String gateway = gatewayUrl == null ? "" : gatewayUrl.trim();
+        while (gateway.endsWith("/")) gateway = gateway.substring(0, gateway.length() - 1);
+        return gateway;
+    }
+
+    protected String cdnBase() {
+        String cdn = cdnUrl == null ? "" : cdnUrl.trim();
+        while (cdn.endsWith("/")) cdn = cdn.substring(0, cdn.length() - 1);
+        return cdn;
+    }
 
     abstract public String getExtension();
 
@@ -59,7 +118,7 @@ public abstract class BookFileWorkerGenerator {
                     getContentType(), 
                     tmpFile
             );
-            AttachmentFileDTO attachmentResponse = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerSave(tmpFile.getName(), multipartFile).getBody();
+            AttachmentFileDTO attachmentResponse = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerSaveWithUpload(tmpFile.getName(), multipartFile).getBody();
             if (attachmentResponse != null) {
                 return attachmentResponse.getId();
             } else {
@@ -68,9 +127,9 @@ public abstract class BookFileWorkerGenerator {
                 throw new RuntimeException("Failed to upload generated file, response body was null (possibly an API error)");
             }
         } catch (Exception e) {
-            log.error("Failed to upload generated file: {}", e.getMessage());
+            log.error("Failed to upload generated file", e);
 
-            throw new RuntimeException("Failed to upload generated file");
+            throw new RuntimeException("Failed to upload generated file: " + e.getMessage(), e);
         } finally {
             try {
                 Files.deleteIfExists(tmpFile.toPath());

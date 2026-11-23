@@ -25,6 +25,7 @@ import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Data
 public class CreateBookChapterVersionRequest implements BaseCreateEntityRequest<BookChapterVersion, BookChapterVersionDTO> {
@@ -40,4 +41,10 @@ public class CreateBookChapterVersionRequest implements BaseCreateEntityRequest<
     private EntityIdRequest chapter;
 
     private ZonedDateTime contentUpdatedAt;
+
+    /** Media of the images used in {@code contentHtml}. */
+    /** Some content images could not be stored yet (still link to their original host); default false. */
+    private Boolean mediaMissing;
+
+    private List<@NotNull EntityIdRequest> media;
 }

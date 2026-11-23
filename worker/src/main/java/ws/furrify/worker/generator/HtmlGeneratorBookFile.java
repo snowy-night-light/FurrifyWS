@@ -20,17 +20,16 @@ package ws.furrify.worker.generator;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.ArtistDTO;
 import org.openapitools.model.ArtistNickname;
+import org.openapitools.model.AttachmentFileDTO;
 import org.openapitools.model.BookDTO;
 import org.openapitools.model.TagDTO;
 import org.springframework.stereotype.Component;
 import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
-import ws.furrify.worker.service.worker.AttachmentService;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,13 +37,9 @@ import java.util.stream.Collectors;
 @Component
 class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
 
-    private final AttachmentService attachmentService;
-
     public HtmlGeneratorBookFile(
-            AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient,
-            AttachmentService attachmentService) {
+            AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient) {
         super(attachmentFileV1RestControllerApiClient);
-        this.attachmentService = attachmentService;
     }
 
     @Override
@@ -71,34 +66,7 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
         File tmpFile = new File("/tmp/" + UUID.randomUUID() + ".html");
         tmpFile.deleteOnExit();
 
-        String base64Cover = null;
-        String coverMimeType = null;
-
-        if (bookDto.getCover() != null && bookDto.getCover().getFileReferenceId() != null) {
-            if (bookDto.getOwnerId() != null) {
-                SecurityContextUtils.mockFeignClientSecurityContext(bookDto.getOwnerId());
-            }
-
-            File coverFile = null;
-
-            try {
-                coverFile = attachmentService.downloadAttachment(bookDto.getCover(), "gbf-html-cover-file-");
-                byte[] fileContent = Files.readAllBytes(coverFile.toPath());
-                base64Cover = Base64.getEncoder().encodeToString(fileContent);
-
-                coverMimeType = Files.probeContentType(coverFile.toPath());
-                if (coverMimeType == null) {
-                    coverMimeType = "image/jpeg";
-                }
-            } catch (Exception e) {
-                log.error("Failed to fetch attachment file reference [id={}]: {}", bookDto.getCover().getFileReferenceId(), e.getMessage());
-            } finally {
-                if (coverFile != null) {
-                    attachmentService.cleanupTmpFile(coverFile);
-                }
-                SecurityContextUtils.clearFeignClientSecurityContext();
-            }
-        }
+        String coverHtml = coverMarkup(bookDto);
 
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(tmpFile), StandardCharsets.UTF_8))) {
@@ -130,14 +98,14 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
 
             writer.write("<h1>" + bookTitle + "</h1>\n");
 
-            if (base64Cover != null) {
-                writer.write("<img src=\"data:" + coverMimeType + ";base64," + base64Cover + "\" alt=\"Cover\" style=\"max-width: 100%; height: auto;\" />\n");
+            if (coverHtml != null) {
+                writer.write(coverHtml);
             }
 
             writer.write("<div class=\"overview\">\n");
 
             if (bookDto.getDescriptionHtml() != null) {
-                writer.write("<div class=\"description\">" + bookDto.getDescriptionHtml() + "</div>\n");
+                writer.write("<div class=\"description\">" + withCdnUrls(bookDto.getDescriptionHtml()) + "</div>\n");
             }
 
             writer.write("<ul>\n");
@@ -203,15 +171,15 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
                 writer.write("<h3>" + (chapter.getTitle() != null ? chapter.getTitle() : "Chapter " + chapter.getChapterNumber()) + "</h3>\n");
 
                 if (latestVersion.getAuthorNotesStart() != null && !latestVersion.getAuthorNotesStart().isBlank()) {
-                    writer.write("<div class=\"author-notes-start\"><i><b>Author notes:</b><br/>" + latestVersion.getAuthorNotesStart() + "</i></div>\n");
+                    writer.write("<div class=\"author-notes-start\"><i><b>Author notes:</b><br/>" + withCdnUrls(latestVersion.getAuthorNotesStart()) + "</i></div>\n");
                 }
 
                 if (latestVersion.getContentHtml() != null) {
-                    writer.write("<div class=\"content\">" + latestVersion.getContentHtml() + "</div>\n");
+                    writer.write("<div class=\"content\">" + withCdnUrls(latestVersion.getContentHtml()) + "</div>\n");
                 }
 
                 if (latestVersion.getAuthorNotesEnd() != null && !latestVersion.getAuthorNotesEnd().isBlank()) {
-                    writer.write("<div class=\"author-notes-end\"><i><b>Author notes:</b><br/>" + latestVersion.getAuthorNotesEnd() + "</i></div>\n");
+                    writer.write("<div class=\"author-notes-end\"><i><b>Author notes:</b><br/>" + withCdnUrls(latestVersion.getAuthorNotesEnd()) + "</i></div>\n");
                 }
 
                 writer.write("</div>\n<hr/>\n");
@@ -224,5 +192,48 @@ class HtmlGeneratorBookFile extends BookFileWorkerGenerator {
         }
 
         return tmpFile;
+    }
+
+    /** Our images as absolute links: JPEG XL from the CDN, the fallback endpoint (via the gateway) for the rest. */
+    String withCdnUrls(String html) {
+        if (html != null && (html.contains("<img") || html.contains("<source")) && (cdnBase().isEmpty() || gatewayBase().isEmpty())) {
+            log.warn("FURRIFY_CDN_URL or FURRIFY_GATEWAY_URL is not set: images in the HTML file keep their relative paths");
+        }
+        return withAbsoluteImageUrls(html);
+    }
+
+    /**
+     * The cover as links (no embedded copy): JPEG XL from the CDN with its original format from
+     * the fallback endpoint, or just the file when it isn't stored as JPEG XL. Null without a cover.
+     */
+    private String coverMarkup(BookDTO bookDto) {
+        if (bookDto.getCover() == null || bookDto.getCover().getFileReferenceId() == null) {
+            return null;
+        }
+        UUID fileId = bookDto.getCover().getFileReferenceId();
+        String fallback = fallbackUrl(fileId);
+        if (fallback == null) {
+            log.warn("FURRIFY_GATEWAY_URL is not set: the HTML file has no cover");
+            return null;
+        }
+        String style = " alt=\"Cover\" style=\"max-width: 100%; height: auto;\" />";
+        String jxl = null;
+        if (bookDto.getOwnerId() != null) {
+            SecurityContextUtils.mockFeignClientSecurityContext(bookDto.getOwnerId());
+        }
+        try {
+            AttachmentFileDTO file = attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerGetById(fileId).getBody();
+            if (file != null && file.getFileUri() != null && "image/jxl".equals(file.getMimeType())) {
+                jxl = absoluteUrl(file.getFileUri().toString());
+            }
+        } catch (Exception e) {
+            log.warn("Could not look up cover file {}, linking its fallback only: {}", fileId, e.getMessage());
+        } finally {
+            SecurityContextUtils.clearFeignClientSecurityContext();
+        }
+        if (jxl == null) {
+            return "<img src=\"" + fallback + "\"" + style + "\n";
+        }
+        return "<picture><source type=\"image/jxl\" srcset=\"" + jxl + "\" /><img src=\"" + fallback + "\"" + style + "</picture>\n";
     }
 }

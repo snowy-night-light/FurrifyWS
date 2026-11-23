@@ -22,10 +22,25 @@ import ws.furrify.core.model.StrategyIntf;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.UUID;
 
 public interface FileMassStorageStrategy extends StrategyIntf {
     UploadedFileReference uploadFile(UUID id, String mimeType, File file, boolean replaceExisting);
+
+    /**
+     * Store {@code file} (e.g. a JPEG XL conversion) with a thumbnail made from
+     * {@code thumbnailSource} (the uploaded original, which the thumbnail generator can read).
+     */
+    default UploadedFileReference uploadFile(UUID id, File file, File thumbnailSource, String thumbnailSourceMimeType, boolean replaceExisting) {
+        return uploadFile(id, thumbnailSourceMimeType, file, replaceExisting);
+    }
+
+    /** Absolute path of a stored file's URI (e.g. {@code /{id}/attachment.jxl}). */
+    Path resolve(URI fileUri);
+
+    /** Store a JPEG thumbnail for {@code id} (as JPEG XL when it converts); its URI. */
+    URI storeThumbnailJpeg(UUID id, File thumbnailJpeg) throws java.io.IOException;
 
     UploadedFileReference linkFile(UUID id, String mimeType, URI existingFileUri, URI existingThumbnailUri);
 

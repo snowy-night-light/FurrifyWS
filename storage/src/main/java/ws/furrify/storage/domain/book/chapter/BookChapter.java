@@ -32,11 +32,13 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_book_chapter_book_number", columnList = "book_id, chapter_number")
+})
 @Getter
 @Setter
 @ToString
 @SuperBuilder(toBuilder = true)
-@EntityListeners(BookChapterEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BookChapter extends UserScopedEntity {
@@ -58,11 +60,14 @@ public class BookChapter extends UserScopedEntity {
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "chapter")
     List<BookChapterVersion> versions;
 
+    /** Maintained by {@code BookChapterRepository.refreshVersionsCount} (SQL); see Book.chaptersCount. */
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     Integer versionsCount = 0;
 
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @JoinTable(name = "book_chapter_sources", joinColumns = @JoinColumn(name = "book_chapter_id"), inverseJoinColumns = @JoinColumn(name = "sources_id"),
+            indexes = @Index(name = "idx_book_chapter_sources_chapter", columnList = "book_chapter_id"))
     List<Source> sources;
 
     @Builder.Default
@@ -77,4 +82,12 @@ public class BookChapter extends UserScopedEntity {
 
     @Column(nullable = true)
     ZonedDateTime publishDate;
+
+    /** A chapter built without a count (builder, mapped DTO) starts with none: the column is not nullable. */
+    @PrePersist
+    void defaultVersionsCount() {
+        if (versionsCount == null) {
+            versionsCount = 0;
+        }
+    }
 }

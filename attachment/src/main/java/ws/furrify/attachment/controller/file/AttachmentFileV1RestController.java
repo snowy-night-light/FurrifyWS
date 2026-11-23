@@ -31,7 +31,7 @@ import ws.furrify.attachment.dto.file.request.AttachmentFileRequestMapper;
 import ws.furrify.attachment.dto.file.request.CreateAttachmentFileRequest;
 import ws.furrify.attachment.dto.file.request.PatchAttachmentFileRequest;
 import ws.furrify.attachment.exception.AttachmentErrors;
-import ws.furrify.attachment.service.file.AttachmentFileEntityService;
+import ws.furrify.attachment.service.file.AttachmentFileProcessorService;
 import ws.furrify.core.controller.BaseEntityRestController;
 import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.service.BaseEntityCrudService;
@@ -46,17 +46,19 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 @RequestMapping("/v1/files")
 class AttachmentFileV1RestController extends BaseEntityRestController<AttachmentFile, AttachmentFileDTO, CreateAttachmentFileRequest, PatchAttachmentFileRequest> {
 
-    private final AttachmentFileEntityService attachmentFileEntityService;
+    private final AttachmentFileProcessorService attachmentFileProcessorService;
     private final AttachmentFileRequestMapper attachmentFileRequestDtoMapper;
 
     @Autowired
-    public AttachmentFileV1RestController(BaseRequestMapper<AttachmentFile, AttachmentFileDTO, CreateAttachmentFileRequest> requestDtoMapper, BaseEntityCrudService<AttachmentFile, AttachmentFileDTO, PatchAttachmentFileRequest> entityCrudService) {
+    public AttachmentFileV1RestController(BaseRequestMapper<AttachmentFile, AttachmentFileDTO, CreateAttachmentFileRequest> requestDtoMapper, BaseEntityCrudService<AttachmentFile, AttachmentFileDTO, PatchAttachmentFileRequest> entityCrudService,
+                                         AttachmentFileProcessorService attachmentFileProcessorService) {
         super(requestDtoMapper, entityCrudService);
-        this.attachmentFileEntityService = (AttachmentFileEntityService) entityCrudService;
+        this.attachmentFileProcessorService = attachmentFileProcessorService;
         this.attachmentFileRequestDtoMapper = (AttachmentFileRequestMapper) requestDtoMapper;
     }
 
     @Operation(
+            operationId = "AttachmentFileV1RestController_saveWithUpload",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = "multipart/form-data",
@@ -67,10 +69,11 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
     @PostMapping(consumes = "multipart/form-data", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.CREATED)
     protected AttachmentFileDTO saveWithUpload(@ModelAttribute CreateAttachmentFileRequest dto) {
-        return attachmentFileEntityService.createWithFileUpload(attachmentFileRequestDtoMapper.toDto(dto), dto.getFile());
+        return attachmentFileProcessorService.createWithFileUpload(attachmentFileRequestDtoMapper.toDto(dto), dto.getFile());
     }
 
     @Operation(
+            operationId = "AttachmentFileV1RestController_patchWithUpload",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = "multipart/form-data",
@@ -81,12 +84,13 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
     @PatchMapping(value = "/{id}", consumes = "multipart/form-data", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.OK)
     protected AttachmentFileDTO patchWithUpload(@PathVariable UUID id, @ModelAttribute PatchAttachmentFileRequest patchRequestDto) {
-        return attachmentFileEntityService.patchWithFileUpload(id, patchRequestDto, patchRequestDto.getFile().orElse(null));
+        return attachmentFileProcessorService.patchWithFileUpload(id, patchRequestDto, patchRequestDto.getFile().orElse(null));
     }
 
     @Override
     @PostMapping(produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    @Hidden
     protected AttachmentFileDTO save(CreateAttachmentFileRequest dto) {
         throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Use multipart/form-data endpoint instead.");
     }
@@ -94,6 +98,7 @@ class AttachmentFileV1RestController extends BaseEntityRestController<Attachment
     @Override
     @PatchMapping(value = "/{id}", produces = {APPLICATION_JSON})
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    @Hidden
     protected AttachmentFileDTO patch(UUID id, PatchAttachmentFileRequest patchRequestDto) {
         throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Use multipart/form-data endpoint instead.");
     }

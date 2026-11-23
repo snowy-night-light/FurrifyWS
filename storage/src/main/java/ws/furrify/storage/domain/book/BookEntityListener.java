@@ -18,19 +18,53 @@
 package ws.furrify.storage.domain.book;
 
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.PreRemove;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import ws.furrify.core.utils.AsyncUtils;
+import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 
+import java.util.Set;
+import java.util.UUID;
+
+@Slf4j
 @Component
 class BookEntityListener {
 
-    @PreUpdate
-    public void preUpdate(Book book) {
-        book.setChaptersCount(book.getChapters() != null ? book.getChapters().size() : 0);
+    private final AttachmentFileV1RestControllerApiClient attachmentClient;
+    private final AsyncUtils asyncUtils;
+
+    BookEntityListener(@Lazy AttachmentFileV1RestControllerApiClient attachmentClient, @Lazy AsyncUtils asyncUtils) {
+        this.attachmentClient = attachmentClient;
+        this.asyncUtils = asyncUtils;
     }
 
     @PrePersist
     public void prePersist(Book book) {
-        book.setChaptersCount(book.getChapters() != null ? book.getChapters().size() : 0);
+        if (book.getChaptersCount() == null) {
+            book.setChaptersCount(0);
+        }
+    }
+
+    /**
+     * Generated book files (epub, pdf, ...) belong to the book alone: delete them from the
+     * attachment service once the removal is committed (nothing is deleted on rollback). Runs for
+     * every way a book is removed, including the cascade from a deleted library.
+     */
+    @PreRemove
+    public void preRemove(Book book) {
+        if (book.getFormatReferenceIds() == null || book.getFormatReferenceIds().isEmpty()) {
+            return;
+        }
+        UUID bookId = book.getId();
+        Set<UUID> attachmentIds = Set.copyOf(book.getFormatReferenceIds().values());
+        asyncUtils.runAsyncAfterCommitNoTransaction(() -> attachmentIds.forEach(attachmentId -> {
+            try {
+                attachmentClient.attachmentFileV1RestControllerDelete(attachmentId);
+            } catch (RuntimeException e) {
+                log.error("Failed to delete book file attachment {} of removed book {}", attachmentId, bookId, e);
+            }
+        }));
     }
 }

@@ -20,10 +20,12 @@ package ws.furrify.attachment;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import ws.furrify.core.ApplicationCore;
 
 @SpringBootApplication(scanBasePackages = {"ws.furrify.attachment", "ws.furrify.core"})
 @EnableJpaRepositories(basePackages = "ws.furrify.attachment.domain")
+@EnableScheduling
 public class AttachmentApplication extends ApplicationCore {
 
     static void main(String[] args) {

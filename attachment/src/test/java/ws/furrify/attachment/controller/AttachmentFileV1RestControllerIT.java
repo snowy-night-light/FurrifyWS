@@ -70,6 +70,9 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
 
         Mockito.when(fileMassStorageStrategy.uploadFile(any(), any(), any(), anyBoolean()))
                 .thenAnswer(invocation -> mockFileMassStorageStrategy.uploadFile(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
+        Mockito.when(fileMassStorageStrategy.uploadFile(any(), any(), any(), any(), anyBoolean()))
+                .thenAnswer(invocation -> mockFileMassStorageStrategy.uploadFile(invocation.getArgument(0), (java.io.File) invocation.getArgument(1),
+                        invocation.getArgument(2), invocation.getArgument(3), invocation.getArgument(4)));
         Mockito.when(fileMassStorageStrategy.linkFile(any(), any(), any(), any()))
                 .thenAnswer(invocation -> mockFileMassStorageStrategy.linkFile(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
         Mockito.when(fileMassStorageStrategy.getStorageServiceId())
@@ -138,7 +141,13 @@ public class AttachmentFileV1RestControllerIT extends BaseCrudControllerTest<Att
             assertNotNull(createdAttachmentFile.getFileUri());
             assertNotNull(createdAttachmentFile.getThumbnailUri());
             assertEquals(FileUploadStatus.UPLOADED, createdAttachmentFile.getUploadStatus());
-            assertEquals("image/png", createdAttachmentFile.getMimeType());
+            // stored as JPEG XL when cjxl is available on this machine, as the uploaded PNG otherwise
+            if (createdAttachmentFile.getOriginalMimeType() != null) { // converted on upload
+                assertEquals("image/jxl", createdAttachmentFile.getMimeType());
+                assertEquals("image/png", createdAttachmentFile.getOriginalMimeType());
+            } else {
+                assertEquals("image/png", createdAttachmentFile.getMimeType());
+            }
             assertEquals("MockFileMassStorageStrategy", createdAttachmentFile.getStorageServiceId());
         });
     }

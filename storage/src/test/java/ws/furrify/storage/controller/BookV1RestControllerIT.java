@@ -186,6 +186,21 @@ public class BookV1RestControllerIT extends BaseCrudControllerTest<Book, BookDTO
         });
     }
 
+    @Test
+    void testFindAllWithSpecHeader() {
+        setupData();
+        String wanted = "spec-" + UUID.randomUUID();
+        bookRepository.save(Book.builder().title("Wanted").externalId(wanted).descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        bookRepository.save(Book.builder().title("Other").externalId("spec-" + UUID.randomUUID()).descriptionHtml("Desc").shortDescriptionHtml("short").library(defaultLibrary).chapters(List.of()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        Page<BookDTO> books = super.findAll("externalId = '" + wanted + "'");
+
+        assertAll(
+                () -> assertEquals(1, books.getContent().size()),
+                () -> assertEquals(wanted, books.getContent().getFirst().getExternalId())
+        );
+    }
+
     @Override
     @Test
     protected void testPatch() {

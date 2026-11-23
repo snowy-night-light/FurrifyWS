@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import ws.furrify.attachment.domain.file.vo.AttachmentFileHashTarget;
 import ws.furrify.attachment.domain.file.vo.AttachmentFileHashType;
 
 @EqualsAndHashCode
@@ -33,4 +34,11 @@ public class AttachmentFileHashDTO {
     private AttachmentFileHashType type;
 
     private String hash;
+
+    /** ORIGINAL (uploaded bytes) or STORED (bytes on disk, JPEG XL). */
+    private AttachmentFileHashTarget target;
+
+    public AttachmentFileHashDTO(AttachmentFileHashType type, String hash) {
+        this(type, hash, AttachmentFileHashTarget.ORIGINAL);
+    }
 }
