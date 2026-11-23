@@ -30,7 +30,7 @@ import ws.furrify.storage.domain.book.chapter.BookChapterRepository;
 import ws.furrify.storage.domain.book.chapter.version.BookChapterVersionRepository;
 import ws.furrify.storage.domain.collection.CollectionRepository;
 import ws.furrify.storage.domain.library.LibraryRepository;
-import ws.furrify.storage.domain.library.LibraryRepository.RemovalState;
+import ws.furrify.storage.domain.library.LibraryRemovalState;
 import ws.furrify.storage.domain.media.MediaRepository;
 import ws.furrify.storage.domain.post.PostRepository;
 import ws.furrify.storage.domain.source.SourceRepository;
@@ -42,7 +42,6 @@ import ws.furrify.storage.service.book.BookFileGenerationService;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +50,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import ws.furrify.core.entity.BaseEntity;
+import ws.furrify.storage.domain.book.Book;
+import ws.furrify.storage.domain.collection.Collection;
+import ws.furrify.storage.domain.post.Post;
+import java.util.function.Function;
 
 /**
  * The transactions of a library removal, one per call (through this bean's proxy), for
@@ -113,7 +117,7 @@ public class LibraryRemovalBatchService {
 
     /** Mark a clear of {@code parts} and take its lease; false when the library is being deleted or cleared. */
     @Transactional
-    public boolean markContentRemoval(UUID libraryId, Collection<LibraryContent> parts) {
+    public boolean markContentRemoval(UUID libraryId, Set<LibraryContent> parts) {
         List<String> names = parts.stream().map(Enum::name).sorted().toList();
         return libraries.markContentRemoval(libraryId, names, ZonedDateTime.now(), ME) > 0;
     }
@@ -132,8 +136,8 @@ public class LibraryRemovalBatchService {
     }
 
     @Transactional
-    public void refreshLeases(Collection<UUID> libraryIds) {
-        if (!libraryIds.isEmpty()) libraries.refreshRemovalLeases(List.copyOf(libraryIds), ZonedDateTime.now(), ME);
+    public void refreshLeases(List<UUID> libraryIds) {
+        if (!libraryIds.isEmpty()) libraries.refreshRemovalLeases(libraryIds, ZonedDateTime.now(), ME);
     }
 
     /** A finished clear: no marker, no lease. */
@@ -143,13 +147,13 @@ public class LibraryRemovalBatchService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<RemovalState> state(UUID libraryId) {
+    public Optional<LibraryRemovalState> state(UUID libraryId) {
         return libraries.findRemovalState(libraryId);
     }
 
     /** Removals nobody works on: their lease ran out. */
     @Transactional(readOnly = true)
-    public List<RemovalState> unfinishedRemovals() {
+    public List<LibraryRemovalState> unfinishedRemovals() {
         return libraries.findUnfinishedRemovals(ZonedDateTime.now().minus(LEASE_TIMEOUT));
     }
 
@@ -189,7 +193,8 @@ public class LibraryRemovalBatchService {
         return removeBatch(libraryId, posts.findIdsByLibrary(libraryId, Limit.of(batch)), ids -> {
             Set<UUID> sourceIds = new HashSet<>(posts.findSourceIdsOfPosts(ids));
             media.releaseMediaOfPosts(ids, ZonedDateTime.now());
-            collections.deleteLinksToPosts(ids);
+            unlink(collections.findHoldingPosts(ids), Collection::getPosts, ids);
+            collections.flush();
             posts.deleteByIds(ids);
             deleteSources(sourceIds);
         });
@@ -200,8 +205,9 @@ public class LibraryRemovalBatchService {
         return removeBatch(libraryId, artists.findIdsByLibrary(libraryId, Limit.of(batch)), ids -> {
             Set<UUID> sourceIds = new HashSet<>(artists.findSourceIdsOfArtists(ids));
             media.releaseAvatarsOfArtists(ids, ZonedDateTime.now());
-            books.deleteLinksToArtists(ids);
-            posts.deleteLinksToArtists(ids);
+            unlink(books.findLinkedToArtists(ids), Book::getArtists, ids);
+            unlink(posts.findLinkedToArtists(ids), Post::getArtists, ids);
+            books.flush();
             artists.deleteByIds(ids);
             deleteSources(sourceIds);
         });
@@ -210,8 +216,9 @@ public class LibraryRemovalBatchService {
     @Transactional
     public int removeTags(UUID libraryId, int batch) {
         return removeBatch(libraryId, tags.findIdsByLibrary(libraryId, Limit.of(batch)), ids -> {
-            books.deleteLinksToTags(ids);
-            posts.deleteLinksToTags(ids);
+            unlink(books.findLinkedToTags(ids), Book::getTags, ids);
+            unlink(posts.findLinkedToTags(ids), Post::getTags, ids);
+            books.flush();
             tagAliases.deleteByTargetTags(ids);
             tags.deleteByIds(ids);
         });
@@ -242,6 +249,18 @@ public class LibraryRemovalBatchService {
         fence(libraryId);
         removal.accept(ids);
         return ids.size();
+    }
+
+    /**
+     * Take entities with these ids out of a collection of other entities (a book's tags, a collection's posts):
+     * their link rows go when the transaction flushes. Only the owners still linked are loaded; when a whole
+     * library is removed, its books and posts are gone by then and nothing is.
+     */
+    private static <O, E extends BaseEntity> void unlink(List<O> owners, Function<O, List<E>> links, List<UUID> ids) {
+        Set<UUID> removed = new HashSet<>(ids);
+        for (O owner : owners) {
+            links.apply(owner).removeIf(linked -> removed.contains(linked.getId()));
+        }
     }
 
     private void deleteSources(Set<UUID> sourceIds) {

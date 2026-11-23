@@ -34,6 +34,7 @@ import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.source.strategy.SourceStrategy;
 
 import java.util.Map;
+import org.hibernate.Length;
 
 @Entity
 // strategy: lets specs like "sources.strategy = 'X' && sources.dataUrl = '...'" narrow to one strategy's sources
@@ -57,7 +58,7 @@ public class Source extends UserScopedEntity {
      * with an index ({@code dataUrl = '...'}); a filter on {@code data.url} reads the JSON of every
      * row. A plain column rather than a database-generated one, so it works on every database.
      */
-    @Column(name = "data_url", columnDefinition = "TEXT")
+    @Column(name = "data_url", length = Length.LONG32)
     private String dataUrl;
 
     @PrePersist

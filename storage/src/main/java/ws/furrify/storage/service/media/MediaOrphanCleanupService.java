@@ -21,8 +21,7 @@ import org.springframework.data.domain.Limit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import ws.furrify.storage.service.lock.JobLockServiceImpl;
 import ws.furrify.storage.domain.media.MediaRepository;
 
 import java.time.Duration;
@@ -52,8 +51,12 @@ public class MediaOrphanCleanupService {
     private static final int BATCH = 500;
     private static final int MAX_BATCHES_PER_RUN = 200;
 
+    /** One instance cleans at a time; the lease outlasts a run and runs out by itself if the instance stops. */
+    private static final String JOB = "media-orphan-cleanup";
+    private static final Duration LEASE = Duration.ofHours(1);
+
     private final MediaRepository mediaRepository;
-    private final TransactionTemplate transactionTemplate;
+    private final JobLockServiceImpl jobLocks;
 
     private final boolean enabled;
 
@@ -62,10 +65,10 @@ public class MediaOrphanCleanupService {
      * imported again: their media are unreferenced until the import uses them again (it finds them by their
      * source URL), and would otherwise be deleted, files included, and downloaded again.
      */
-    public MediaOrphanCleanupService(MediaRepository mediaRepository, PlatformTransactionManager transactionManager,
+    public MediaOrphanCleanupService(MediaRepository mediaRepository, JobLockServiceImpl jobLocks,
                                      @Value("${furrify.media.orphan-cleanup.enabled:true}") boolean enabled) {
         this.mediaRepository = mediaRepository;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.jobLocks = jobLocks;
         this.enabled = enabled;
         if (!enabled) log.warn("Orphaned media cleanup is paused (furrify.media.orphan-cleanup.enabled=false)");
     }
@@ -73,28 +76,27 @@ public class MediaOrphanCleanupService {
     @Scheduled(initialDelay = 10 * 60 * 1000, fixedDelay = 60 * 60 * 1000)
     public void removeOrphanedMedia() {
         if (!enabled) return;
+        jobLocks.runExclusively(JOB, LEASE, this::removeOrphanedMediaNow); // skipped while another instance cleans
+    }
+
+    private void removeOrphanedMediaNow() {
         ZonedDateTime createdBefore = ZonedDateTime.now().minus(GRACE);
         ZonedDateTime releasedBefore = ZonedDateTime.now().minus(RELEASED_GRACE);
         long removed = 0;
         for (int i = 0; i < MAX_BATCHES_PER_RUN; i++) {
-            Integer count;
+            List<UUID> ids;
             try {
-                count = transactionTemplate.execute(status -> {
-                    if (!mediaRepository.tryCleanupLock()) return -1; // another instance is cleaning
-                    List<UUID> ids = mediaRepository.findOrphanIds(createdBefore, releasedBefore, Limit.of(BATCH));
-                    if (ids.isEmpty()) return 0;
-                    // entity deletes: cascade to the media's sources and fire the listener (file removal)
-                    mediaRepository.deleteAllById(ids);
-                    return ids.size();
-                });
+                ids = mediaRepository.findOrphanIds(createdBefore, releasedBefore, Limit.of(BATCH));
+                if (ids.isEmpty()) break;
+                // entity deletes (one transaction): cascade to the media's sources and fire the listener (file removal)
+                mediaRepository.deleteAllById(ids);
             } catch (RuntimeException e) {
                 // e.g. a media got linked between the lookup and the delete (FK violation): next run retries
                 log.warn("Orphaned media cleanup batch failed: {}", e.getMessage());
                 break;
             }
-            if (count == null || count <= 0) break;
-            removed += count;
-            if (count < BATCH) break;
+            removed += ids.size();
+            if (ids.size() < BATCH) break;
         }
         if (removed > 0) log.info("Removed {} orphaned media", removed);
     }

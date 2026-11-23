@@ -49,12 +49,6 @@ public interface MediaRepository extends BaseEntityRepository<Media> {
     /** Whether any media still uses the attachment {@code fileReferenceId} (files are shared between media). */
     boolean existsByFileReferenceId(UUID fileReferenceId);
 
-    /** Cluster-wide guard so only one storage instance runs the cleanup at a time; released at transaction end. */
-    @Query(value = "SELECT pg_try_advisory_xact_lock(hashtext('media-orphan-cleanup'))", nativeQuery = true)
-    boolean tryCleanupLock();
-
-    // ------------------------------------------------------------------ library removal: media stay, released (Media.releasedAt)
-
     /** Covers of the books and images of their chapters: their orphan grace period starts now. */
     @Modifying
     @Query("UPDATE Media m SET m.releasedAt = :now WHERE m.id IN (SELECT b.cover.id FROM Book b WHERE b.id IN :books)"

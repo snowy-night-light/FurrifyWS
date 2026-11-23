@@ -48,4 +48,8 @@ public interface BookChapterVersionRepository extends BaseEntityRepository<BookC
     @Query("UPDATE BookChapterVersion v SET v.wordCount = :wordCount WHERE v.id = :versionId")
     int updateWordCount(@Param("versionId") UUID versionId, @Param("wordCount") long wordCount);
 
+    /** Versions of the books' chapters; Hibernate removes their media links first. */
+    @Modifying
+    @Query("DELETE FROM BookChapterVersion v WHERE v.chapter.id IN (SELECT c.id FROM BookChapter c WHERE c.book.id IN :books)")
+    int deleteByBooks(@Param("books") List<UUID> books);
 }

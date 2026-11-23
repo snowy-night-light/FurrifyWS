@@ -19,8 +19,21 @@ package ws.furrify.storage.domain.collection;
 
 import org.springframework.stereotype.Repository;
 import ws.furrify.core.entity.BaseEntityRepository;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface CollectionRepository extends BaseEntityRepository<Collection> {
 
+    /** The library's collections; Hibernate removes their post links first. */
+    @Modifying
+    @Query("DELETE FROM Collection c WHERE c.library.id = :library")
+    int deleteByLibrary(@Param("library") UUID library);
+
+    /** Collections holding any of these posts (to unlink them before the posts go). */
+    @Query("SELECT DISTINCT c FROM Collection c JOIN c.posts p WHERE p.id IN :posts")
+    List<Collection> findHoldingPosts(@Param("posts") List<UUID> posts);
 }

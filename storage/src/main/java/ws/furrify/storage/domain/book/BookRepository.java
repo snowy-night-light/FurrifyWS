@@ -17,6 +17,7 @@
  */
 package ws.furrify.storage.domain.book;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ws.furrify.core.entity.BaseEntityRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +34,7 @@ public interface BookRepository extends BaseEntityRepository<Book> {
 
     /** Which of these attachments are a book's generated file (any book, any user). */
     @Query("SELECT DISTINCT VALUE(f) FROM Book b JOIN b.formatReferenceIds f WHERE VALUE(f) IN :attachmentIds")
-    java.util.List<UUID> findReferencedFormatFiles(@org.springframework.data.repository.query.Param("attachmentIds") java.util.Collection<UUID> attachmentIds);
+    List<UUID> findReferencedFormatFiles(@org.springframework.data.repository.query.Param("attachmentIds") Collection<UUID> attachmentIds);
 
     interface BookActiveTaskProjection {
         UUID getId();
@@ -83,4 +85,29 @@ public interface BookRepository extends BaseEntityRepository<Book> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Book b SET b.activeWorkerTaskId = null WHERE b.id = :bookId AND b.activeWorkerTaskId IS NOT NULL")
     int clearActiveWorkerTaskId(@Param("bookId") UUID bookId);
+    
+    @Query("SELECT b.id FROM Book b WHERE b.library.id = :library")
+    List<UUID> findIdsByLibrary(@Param("library") UUID library, Limit limit);
+
+    @Query("SELECT b.id AS id, b.ownerId AS ownerId, b.activeWorkerTaskId AS activeWorkerTaskId, b.generationRetryCount AS generationRetryCount"
+            + " FROM Book b WHERE b.id IN :books AND b.activeWorkerTaskId IS NOT NULL")
+    List<BookActiveTaskProjection> findActiveWorkerTasks(@Param("books") List<UUID> books);
+
+    /** Sources of the books and of their chapters. */
+    @Query("SELECT s.id FROM Book b JOIN b.sources s WHERE b.id IN :books"
+            + " UNION SELECT s.id FROM BookChapter c JOIN c.sources s WHERE c.book.id IN :books")
+    List<UUID> findSourceIdsOfBooks(@Param("books") List<UUID> books);
+
+    /** The books; Hibernate removes their rows in their own join and collection tables (tags, artists, sources, ...) first. */
+    @Modifying
+    @Query("DELETE FROM Book b WHERE b.id IN :books")
+    int deleteByIds(@Param("books") List<UUID> books);
+
+    /** Books linked to any of these tags (to unlink them before the tags go). */
+    @Query("SELECT DISTINCT b FROM Book b JOIN b.tags t WHERE t.id IN :tags")
+    List<Book> findLinkedToTags(@Param("tags") List<UUID> tags);
+
+    /** Books linked to any of these artists (to unlink them before the artists go). */
+    @Query("SELECT DISTINCT b FROM Book b JOIN b.artists a WHERE a.id IN :artists")
+    List<Book> findLinkedToArtists(@Param("artists") List<UUID> artists);
 }

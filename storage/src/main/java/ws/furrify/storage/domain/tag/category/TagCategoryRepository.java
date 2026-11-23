@@ -19,7 +19,15 @@ package ws.furrify.storage.domain.tag.category;
 
 import org.springframework.stereotype.Repository;
 import ws.furrify.core.entity.BaseEntityRepository;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface TagCategoryRepository extends BaseEntityRepository<TagCategory> {
+
+    @Modifying
+    @Query("DELETE FROM TagCategory c WHERE c.library.id = :library")
+    int deleteByLibrary(@Param("library") UUID library);
 }

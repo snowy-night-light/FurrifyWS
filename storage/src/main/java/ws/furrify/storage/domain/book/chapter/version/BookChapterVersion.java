@@ -38,6 +38,7 @@ import ws.furrify.storage.domain.media.Media;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import org.hibernate.Length;
 
 @Entity
 @Table(indexes = {
@@ -56,17 +57,17 @@ public class BookChapterVersion extends UserScopedEntity {
     @NotNull
     Integer chapterVersion;
 
-    @Column(columnDefinition = "TEXT", nullable = true)
+    @Column(nullable = true, length = Length.LONG32)
     String contentStylesheet;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(nullable = false, length = Length.LONG32)
     @NotNull
     String contentHtml;
 
-    @Column(columnDefinition = "TEXT", nullable = true)
+    @Column(nullable = true, length = Length.LONG32)
     String authorNotesEnd;
 
-    @Column(columnDefinition = "TEXT", nullable = true)
+    @Column(nullable = true, length = Length.LONG32)
     String authorNotesStart;
 
     @Builder.Default
