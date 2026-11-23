@@ -28,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 import ws.furrify.core.entity.BaseEntityRepository;
@@ -52,6 +53,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.util.Collection;
 
 import static ws.furrify.core.specification.EntitySpec.specEquals;
 import static ws.furrify.core.specification.EntitySpec.specLessThan;
@@ -172,6 +175,14 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
     }
 
     protected void rescheduleTask(DTO task, String reason) {
+        rescheduleTask(task, reason, null);
+    }
+
+    /**
+     * Put the task back in the queue. With a {@code delay}, its startAt moves that far into the
+     * future, so the immediate re-poll after a task returns doesn't pick it straight up again.
+     */
+    protected void rescheduleTask(DTO task, String reason, Duration delay) {
         asyncUtils.runInTransaction(() -> {
             DTO currentTask = this.internalFindById(task.getId()).orElse(task);
             if (currentTask.getStatus() == CANCELLED) {
@@ -182,6 +193,9 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
             currentTask.setStatus(NOT_STARTED);
             currentTask.setLaunchId(null);
             currentTask.setStartedAt(null);
+            if (delay != null) {
+                currentTask.setStartAt(ZonedDateTime.now().plus(delay));
+            }
             this.internalPutById(currentTask.getId(), currentTask);
         });
     }
@@ -206,7 +220,6 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
         });
     }
 
-    @Transactional
     public void triggerExecution(DTO task) {
         if (isShuttingDown) return;
         if (!areRequiredServicesOnline()) {
@@ -218,17 +231,18 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
             throw new ServiceLogicException(WorkerErrors.TASK_DOESNT_ALLOW_EXECUTION_WITH_STATUS.getErrorMessage(task.getId(), task.getStatus().name()));
         }
 
-        processTaskInternal(task);
+        asyncUtils.runInTransaction(() -> this.processTaskInternal(task));
     }
 
-    @Transactional
     public void triggerExecution(UUID id) {
         DTO task = this.getById(id);
+        if (entityManager != null) {
+            entityManager.clear();
+        }
         triggerExecution(task);
     }
 
     @Scheduled(fixedRate = 30, timeUnit = TimeUnit.SECONDS)
-    @Transactional
     public void processWorkerTasks() {
         if (isShuttingDown) return;
 
@@ -239,7 +253,7 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
 
         int currentlyRunning = runningTasks.size();
         int maxConcurrent = getMaxConcurrentTasks();
-        log.info("Checking for worker tasks... currentlyRunning: {}, maxConcurrent: {}", currentlyRunning, maxConcurrent);
+        log.debug("Checking for worker tasks... currentlyRunning: {}, maxConcurrent: {}", currentlyRunning, maxConcurrent);
 
         if (currentlyRunning >= maxConcurrent) {
             log.warn("Worker queue is full! Currently running: {}, Max: {}", currentlyRunning, maxConcurrent);
@@ -257,8 +271,19 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
         Pageable pageable = PageRequest.of(0, toFetch, Sort.by(Sort.Direction.ASC, "createdAt"));
 
         Page<DTO> tasks = this.getAllPaged(spec.specString(), pageable);
-        log.info("Found {} NOT_STARTED tasks to process", tasks.getTotalElements());
-        tasks.forEach(this::processTaskInternal);
+        if (entityManager != null) {
+            entityManager.clear();
+        }
+        log.debug("Found {} NOT_STARTED tasks to process", tasks.getTotalElements());
+        tasks.forEach(task -> {
+            try {
+                asyncUtils.runInTransaction(() -> this.processTaskInternal(task));
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.debug("Task {} was updated concurrently by another worker. Skipping.", task.getId());
+            } catch (Exception e) {
+                log.error("Failed to process worker task {}: {}", task.getId(), e.getMessage(), e);
+            }
+        });
     }
 
     protected int getMaxConcurrentTasks() {
@@ -292,7 +317,23 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
         this.internalPutById(id, task);
     }
 
-    @Transactional
+    /**
+     * Cancel those of {@code ids} that are waiting or running, e.g. the generation tasks of deleted books.
+     * Tasks that don't exist (or aren't the caller's) and finished tasks are left alone.
+     */
+    public void cancelUnfinished(Collection<UUID> ids) {
+        if (ids == null) return;
+        for (UUID id : ids) {
+            try {
+                DTO task = internalFindById(id).orElse(null);
+                if (task == null || (task.getStatus() != WorkStatus.NOT_STARTED && task.getStatus() != IN_PROGRESS)) continue;
+                cancelById(id);
+            } catch (RuntimeException e) {
+                log.debug("Task {} could not be cancelled: {}", id, e.getMessage());
+            }
+        }
+    }
+
     protected void processTaskInternal(DTO task) {
         if (!areRequiredServicesOnline()) {
             log.warn("Skipping execution of task {}: {}", task.getId(), getRequiredServicesStatusMessage());
@@ -331,13 +372,12 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
             } finally {
                 runningTasks.remove(updatedTask.getId());
                 // Immediately check for and start the next task to prevent delay
-                asyncUtils.runInTransaction(this::processWorkerTasks);
+                this.processWorkerTasks();
             }
         });
     }
 
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
-    @Transactional
     public void cancelStuckTasks() {
         ZonedDateTime timeoutThreshold = ZonedDateTime.now().minusSeconds(getTaskTimeoutSeconds());
 
@@ -351,6 +391,9 @@ public abstract class UserWorkerTaskBaseEntityService<ENTITY extends UserWorkerT
 
         Pageable pageable = PageRequest.of(0, 100);
         Page<DTO> tasks = this.getAllPaged(spec.specString(), pageable);
+        if (entityManager != null) {
+            entityManager.clear();
+        }
 
         tasks.forEach(task -> {
             log.warn("Task {} has been IN_PROGRESS since {}. It exceeded the timeout of {} seconds. Marking as FAILED.", task.getId(), task.getStartedAt(), getTaskTimeoutSeconds());

@@ -56,17 +56,13 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
                 RequestContextHolder.getRequestAttributes();
 
         if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
-            String ownerId =
-                    servletRequestAttributes.getRequest()
-                            .getHeader(SecurityContextUtils.USER_ID_HEADER);
+            String ownerId = requestHeader(servletRequestAttributes, SecurityContextUtils.USER_ID_HEADER);
 
             if (ownerId != null && !ownerId.isBlank()) {
                 template.header(SecurityContextUtils.USER_ID_HEADER, ownerId);
             }
 
-            String authorization =
-                    servletRequestAttributes.getRequest()
-                            .getHeader(HttpHeaders.AUTHORIZATION);
+            String authorization = requestHeader(servletRequestAttributes, HttpHeaders.AUTHORIZATION);
 
             if (authorization != null && authorization.startsWith("Bearer ")) {
                 template.header(HttpHeaders.AUTHORIZATION, authorization);
@@ -119,6 +115,20 @@ public class SmartOAuth2FeignRequestInterceptor implements RequestInterceptor {
                 template.url(), authorizedClient.getAccessToken().getExpiresAt());
 
         addCurrentSubjectHeaderIfMissing(template);
+    }
+
+    /**
+     * A header of the request this call is made for, or null when that request is over: work
+     * handed to a background thread (e.g. after commit) keeps the request attributes, but Tomcat
+     * recycles the request once it is answered and then refuses every access. Such calls use the
+     * service token, with the user taken from the propagated security context.
+     */
+    private static String requestHeader(ServletRequestAttributes attributes, String name) {
+        try {
+            return attributes.getRequest().getHeader(name);
+        } catch (IllegalStateException requestRecycled) {
+            return null;
+        }
     }
 
     private void addCurrentSubjectHeaderIfMissing(RequestTemplate template) {

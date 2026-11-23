@@ -37,6 +37,7 @@ import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -90,6 +91,27 @@ public class SourceV1RestControllerIT extends BaseCrudControllerTest<Source, Sou
             assertNotNull(foundSource);
             assertEquals(source.getId(), foundSource.getId());
         });
+    }
+
+    @Test
+    void testFindAllByJsonKey() {
+        String wanted = "https://example.com/" + UUID.randomUUID();
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("key", "inner");
+        Map<String, Object> data = new HashMap<>();
+        data.put("url", wanted);
+        data.put("meta", nested);
+        Source match = sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(data).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(new HashMap<>(Map.of("url", "https://example.com/other")))
+                .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+
+        Page<SourceDTO> byKey = super.findAll("data.url = '" + wanted + "'");
+        Page<SourceDTO> byNestedKey = super.findAll("data.url = '" + wanted + "' && data.meta.key = 'inner'");
+
+        assertAll(
+                () -> assertEquals(List.of(match.getId()), byKey.getContent().stream().map(SourceDTO::getId).toList()),
+                () -> assertEquals(List.of(match.getId()), byNestedKey.getContent().stream().map(SourceDTO::getId).toList())
+        );
     }
 
     @Override
@@ -155,7 +177,7 @@ public class SourceV1RestControllerIT extends BaseCrudControllerTest<Source, Sou
         data2.put("test", "test2");
         request2.setData(data2);
 
-        List<SourceDTO> createdSources = super.createBulk(java.util.List.of(request1, request2));
+        List<SourceDTO> createdSources = super.createBulk(List.of(request1, request2));
 
         assertAll(() -> {
             assertNotNull(createdSources);
@@ -184,7 +206,7 @@ public class SourceV1RestControllerIT extends BaseCrudControllerTest<Source, Sou
         newData2.put("patched", "value2");
         request2.setData(JsonNullable.of(newData2));
 
-        List<SourceDTO> updatedSources = super.patchBulk(java.util.Map.of(source1.getId(), request1, source2.getId(), request2));
+        List<SourceDTO> updatedSources = super.patchBulk(Map.of(source1.getId(), request1, source2.getId(), request2));
 
         assertAll(() -> {
             assertNotNull(updatedSources);
@@ -200,6 +222,6 @@ public class SourceV1RestControllerIT extends BaseCrudControllerTest<Source, Sou
         Source source = sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(data).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Source source2 = sourceRepository.save(Source.builder().strategy(new MockSourceStrategyImpl()).data(data).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
-        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(source.getId(), source2.getId())));
+        assertDoesNotThrow(() -> super.deleteBulk(List.of(source.getId(), source2.getId())));
     }
 }

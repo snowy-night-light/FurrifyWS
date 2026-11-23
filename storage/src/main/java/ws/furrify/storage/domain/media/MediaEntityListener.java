@@ -17,19 +17,56 @@
  */
 package ws.furrify.storage.domain.media;
 
-import jakarta.persistence.PreRemove;
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.PostRemove;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import ws.furrify.core.utils.AsyncUtils;
+import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 
+import java.util.UUID;
+
+/**
+ * Removes a deleted media's file from the attachment service, after commit and only when no other
+ * media still uses it (importers share one file between media, deduplicated by hash).
+ */
+@Slf4j
 @Component
-@RequiredArgsConstructor
 class MediaEntityListener {
 
-    private final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
+    private final AttachmentFileV1RestControllerApiClient attachmentClient;
+    private final MediaRepository mediaRepository;
+    private final AsyncUtils asyncUtils;
 
-    @PreRemove
-    public void preRemove(Media media) {
-        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(media.getId());
+    @Autowired
+    MediaEntityListener(@Lazy AttachmentFileV1RestControllerApiClient attachmentClient,
+                        @Lazy MediaRepository mediaRepository,
+                        @Lazy AsyncUtils asyncUtils) {
+        this.attachmentClient = attachmentClient;
+        this.mediaRepository = mediaRepository;
+        this.asyncUtils = asyncUtils;
+    }
+
+    @PostRemove
+    public void postRemove(Media media) {
+        UUID fileId = media.getFileReferenceId();
+        UUID ownerId = media.getOwnerId();
+        if (fileId == null) return;
+        asyncUtils.runAfterCommitNoTransaction(() -> {
+            try {
+                if (mediaRepository.existsByFileReferenceId(fileId)) return;
+                boolean mocked = ownerId != null && SecurityContextUtils.getCurrentUserPrincipal().isEmpty();
+                if (mocked) SecurityContextUtils.mockFeignClientSecurityContext(ownerId);
+                try {
+                    attachmentClient.attachmentFileV1RestControllerDelete(fileId);
+                } finally {
+                    if (mocked) SecurityContextUtils.clearFeignClientSecurityContext();
+                }
+            } catch (RuntimeException e) {
+                log.warn("Could not delete attachment {} of removed media {}: {}", fileId, media.getId(), e.getMessage());
+            }
+        });
     }
 }

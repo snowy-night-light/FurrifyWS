@@ -30,6 +30,8 @@ import ws.furrify.worker.dto.worker.request.PatchUserWorkerTaskRequest;
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 
 import java.util.UUID;
+import java.util.List;
+import org.springframework.web.bind.annotation.RequestBody;
 
 public abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorkerTask, DTO extends UserWorkerTaskDTO<ENTITY>, CREATE_REQ extends CreateUserWorkerTaskRequest<ENTITY, DTO>, PATCH_REQ extends PatchUserWorkerTaskRequest<ENTITY, DTO>> extends BaseEntityRestController<ENTITY, DTO, CREATE_REQ, PATCH_REQ> {
     private final UserWorkerTaskBaseEntityService<ENTITY, DTO, PATCH_REQ> entityCrudService;
@@ -49,5 +51,12 @@ public abstract class UserWorkerTaskBaseRestController<ENTITY extends UserWorker
     @ResponseStatus(HttpStatus.OK)
     public void cancel(@PathVariable UUID id) {
         entityCrudService.cancelById(id);
+    }
+
+    /** Cancel these tasks where they haven't finished yet; unknown ids and finished tasks are skipped. */
+    @PostMapping("/cancel/bulk")
+    @ResponseStatus(HttpStatus.OK)
+    public void cancelBulk(@RequestBody List<UUID> ids) {
+        entityCrudService.cancelUnfinished(ids);
     }
 }

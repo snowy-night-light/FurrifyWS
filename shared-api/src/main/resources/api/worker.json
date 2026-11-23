@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8051",
+      "url": "http://localhost:8151",
       "description": "Generated server url"
     }
   ],
@@ -24,8 +24,8 @@
         "operationId": "PluginImportUserWorkerTaskV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -123,6 +123,33 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/plugin/import/cancel/bulk": {
+      "post": {
+        "tags": [
+          "plugin-import-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "PluginImportUserWorkerTaskV1RestController_cancelBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -233,8 +260,8 @@
         "operationId": "BookFileUserWorkerTaskV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -332,6 +359,33 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/workers/user/books/files/generator/cancel/bulk": {
+      "post": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_cancelBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -640,6 +694,29 @@
           }
         }
       }
+    },
+    "/v1/workers/user/books/files/generator/extensions": {
+      "get": {
+        "tags": [
+          "book-file-user-worker-task-v-1-rest-controller"
+        ],
+        "operationId": "BookFileUserWorkerTaskV1RestController_extensions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -750,6 +827,12 @@
             "format": "uuid"
           },
           "downloadExternalMedia": {
+            "type": "boolean"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileRemoved": {
             "type": "boolean"
           }
         }
@@ -897,6 +980,12 @@
         }
       },
       "PageMetadata": {
+        "required": [
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
         "type": "object",
         "properties": {
           "size": {
@@ -918,6 +1007,10 @@
         }
       },
       "PagedModelPluginImportUserWorkerTaskDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -949,6 +1042,10 @@
         }
       },
       "PagedModelBookFileUserWorkerTaskDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {

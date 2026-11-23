@@ -32,6 +32,11 @@ import ws.furrify.storage.domain.library.Library;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_tag_owner_created", columnList = "owner_id, created_at"),
+        @Index(name = "idx_tag_category", columnList = "category_id"),
+        @Index(name = "idx_tag_library", columnList = "library_id")
+})
 @Getter
 @Setter
 @ToString

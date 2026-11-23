@@ -26,6 +26,7 @@ import ws.furrify.storage.domain.book.chapter.version.BookChapterVersion;
 import ws.furrify.storage.dto.book.chapter.version.BookChapterVersionDTO;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Data
 public class PatchBookChapterVersionRequest implements BasePatchEntityRequest<BookChapterVersion, BookChapterVersionDTO> {
@@ -37,4 +38,8 @@ public class PatchBookChapterVersionRequest implements BasePatchEntityRequest<Bo
 
     private JsonNullable<@NotNull EntityIdRequest> chapter = JsonNullable.undefined();
     private JsonNullable<ZonedDateTime> contentUpdatedAt = JsonNullable.undefined();
+
+    private JsonNullable<List<@NotNull EntityIdRequest>> media = JsonNullable.undefined();
+
+    private JsonNullable<@NotNull Boolean> mediaMissing = JsonNullable.undefined();
 }

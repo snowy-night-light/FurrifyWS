@@ -45,6 +45,7 @@ import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -162,12 +163,14 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
     @Override
     @Test
     protected void testDelete() {
-        Media media = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
+        var fileReferenceId = UUID.randomUUID();
+        Media media = mediaRepository.save(Media.builder().priority(1).fileReferenceId(fileReferenceId).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
         assertDoesNotThrow(() -> super.delete(media.getId()));
 
-        Mockito.verify(attachmentFileV1RestControllerApiClient, Mockito.times(1))
-                .attachmentFileV1RestControllerDelete(media.getId());
+        // the media's attachment file is deleted, by its file reference id
+        Mockito.verify(attachmentFileV1RestControllerApiClient, Mockito.timeout(5000).times(1))
+                .attachmentFileV1RestControllerDelete(fileReferenceId);
     }
 
 
@@ -202,7 +205,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
                 .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId2);
 
-        List<MediaDTO> createdMedia = super.createBulk(java.util.List.of(request1, request2));
+        List<MediaDTO> createdMedia = super.createBulk(List.of(request1, request2));
 
         assertAll(() -> {
             assertNotNull(createdMedia);
@@ -240,7 +243,7 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         Mockito.doReturn(ResponseEntity.ok(new AttachmentFileDTO()))
                 .when(attachmentFileV1RestControllerApiClient).attachmentFileV1RestControllerGetById(fileReferenceId2);
 
-        List<MediaDTO> updatedMedia = super.patchBulk(java.util.Map.of(media1.getId(), request1, media2.getId(), request2));
+        List<MediaDTO> updatedMedia = super.patchBulk(Map.of(media1.getId(), request1, media2.getId(), request2));
 
         assertAll(() -> {
             assertNotNull(updatedMedia);
@@ -254,6 +257,6 @@ public class MediaV1RestControllerIT extends BaseCrudControllerTest<Media, Media
         Media media = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
         Media media2 = mediaRepository.save(Media.builder().priority(1).fileReferenceId(UUID.randomUUID()).ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID).build());
 
-        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(media.getId(), media2.getId())));
+        assertDoesNotThrow(() -> super.deleteBulk(List.of(media.getId(), media2.getId())));
     }
 }

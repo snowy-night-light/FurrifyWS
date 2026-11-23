@@ -17,9 +17,33 @@
  */
 package ws.furrify.attachment.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 import ws.furrify.core.config.SecurityConfig;
 
 @Configuration
 class SecurityConfigImpl extends SecurityConfig {
+
+    /**
+     * Fallbacks of JPEG XL images are public, like the files on the CDN they stand in for:
+     * browsers load them from {@code <img src>} without a token.
+     */
+    @Bean
+    @Order(0)
+    public SecurityFilterChain publicFallbackFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/v1/files/*/fallback", "/v1/files/*/thumbnail/fallback")
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/v1/files/*/fallback", "/v1/files/*/thumbnail/fallback").permitAll()
+                        .anyRequest().denyAll())
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        return http.build();
+    }
 }

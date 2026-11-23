@@ -49,8 +49,18 @@ public class Media extends UserScopedEntity {
     UUID fileReferenceId;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JoinTable(name = "media_sources", joinColumns = @JoinColumn(name = "media_id"), inverseJoinColumns = @JoinColumn(name = "sources_id"),
+            indexes = @Index(name = "idx_media_sources_media", columnList = "media_id"))
     List<Source> sources;
 
     @Column(nullable = true)
     ZonedDateTime externalUpdatedAt;
+
+    /**
+     * When a library removal unlinked this media from what used it (book cover, artist avatar, chapter image,
+     * post). Kept by the orphan cleanup for a week from then, so a cleared library can be
+     * imported again without its images being deleted and downloaded anew.
+     */
+    @Column(nullable = true)
+    ZonedDateTime releasedAt;
 }
