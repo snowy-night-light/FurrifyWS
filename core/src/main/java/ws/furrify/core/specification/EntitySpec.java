@@ -15,19 +15,28 @@
  */
 package ws.furrify.core.specification;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.springframework.data.core.PropertyPath;
+import org.springframework.data.core.PropertyReferenceException;
 import ws.furrify.core.entity.BaseEntity;
 import ws.furrify.core.exception.BadRequestException;
 import ws.furrify.core.exception.Errors;
+import ws.furrify.core.model.StrategyIntf;
+import ws.furrify.core.service.StrategyRegistryService;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,7 +75,7 @@ public class EntitySpec {
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specEquals(Object value) {
         return new InternalExpression<>(EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             if (v == null) return cb.isNull(path);
             return cb.equal(path, coerceValue(path, v));
         }, value, null);
@@ -74,7 +83,7 @@ public class EntitySpec {
 
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotEquals(Object value) {
         return new InternalExpression<>(NOT_EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             if (v == null) return cb.isNotNull(path);
             return cb.notEqual(path, coerceValue(path, v));
         }, value, null);
@@ -83,10 +92,10 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specGreaterThan(Object value) {
         return new InternalExpression<>(GREATER_THAN_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
-                return cb.greaterThan((Path<Comparable>) path, comparable);
+                return cb.greaterThan((Expression<Comparable>) path, comparable);
             }
             throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, coerced));
         }, value, null);
@@ -95,10 +104,10 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specGreaterThanOrEqual(Object value) {
         return new InternalExpression<>(GREATER_THAN_OR_EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
-                return cb.greaterThanOrEqualTo((Path<Comparable>) path, comparable);
+                return cb.greaterThanOrEqualTo((Expression<Comparable>) path, comparable);
             }
             throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, coerced));
         }, value, null);
@@ -107,10 +116,10 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLessThan(Object value) {
         return new InternalExpression<>(LESS_THAN_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
-                return cb.lessThan((Path<Comparable>) path, comparable);
+                return cb.lessThan((Expression<Comparable>) path, comparable);
             }
             throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, coerced));
         }, value, null);
@@ -119,17 +128,60 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLessThanOrEqual(Object value) {
         return new InternalExpression<>(LESS_THAN_OR_EQUAL_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof Comparable comparable) {
-                return cb.lessThanOrEqualTo((Path<Comparable>) path, comparable);
+                return cb.lessThanOrEqualTo((Expression<Comparable>) path, comparable);
             }
             throw new BadRequestException(Errors.SPECIFICATION_FIELD_NOT_COMPARABLE_TO_VALUE.getErrorMessage(f, coerced));
         }, value, null);
     }
 
-    private static Path<?> getPath(Root<?> root, String field) {
-        PropertyPath propertyPath = PropertyPath.from(field, root.getJavaType());
+    /**
+     * Expression for a (dotted) field. Besides entity paths ({@code book.id}, {@code tags.name}),
+     * keys inside a JSON map attribute: {@code sources.data.url} reads key {@code url} of the
+     * {@code data} JSON column as text (nested keys: {@code data.a.b}). Uses Hibernate's portable
+     * {@code json_value}, which each dialect renders for its database; any operator applies to the text value.
+     */
+    /** SQL/JSON path of these keys: {@code $.a.b}; keys other than plain names quoted ({@code $."my key"}). */
+    static String jsonPath(String[] keys) {
+        StringBuilder path = new StringBuilder("$");
+        for (String key : keys) {
+            if (key.matches("[A-Za-z_][A-Za-z0-9_]*")) {
+                path.append('.').append(key);
+            } else {
+                path.append(".\"").append(key.replace("\\", "\\\\").replace("\"", "\\\"")).append('"');
+            }
+        }
+        return path.toString();
+    }
+
+    private static Expression<?> getPath(Root<?> root, CriteriaBuilder cb, String field) {
+        try {
+            return resolvePath(root, PropertyPath.from(field, root.getJavaType()));
+        } catch (PropertyReferenceException e) {
+            // Longest prefix that resolves to a Map (JSON) attribute; the remaining segments are JSON keys.
+            String[] segments = field.split("\\.");
+            for (int i = segments.length - 1; i >= 1; i--) {
+                Path<?> mapPath;
+                try {
+                    mapPath = resolvePath(root, PropertyPath.from(String.join(".", Arrays.copyOfRange(segments, 0, i)), root.getJavaType()));
+                } catch (PropertyReferenceException notThisPrefix) {
+                    continue;
+                }
+                if (!Map.class.isAssignableFrom(mapPath.getJavaType())) {
+                    break;
+                }
+                if (!(cb instanceof HibernateCriteriaBuilder hcb)) {
+                    throw new IllegalStateException("JSON fields in specs need Hibernate's CriteriaBuilder");
+                }
+                return hcb.jsonValue(mapPath, jsonPath(Arrays.copyOfRange(segments, i, segments.length)));
+            }
+            throw e;
+        }
+    }
+
+    private static Path<?> resolvePath(Root<?> root, PropertyPath propertyPath) {
         Path<?> path = root;
         while (propertyPath != null) {
             if (propertyPath.isCollection()) {
@@ -152,11 +204,13 @@ public class EntitySpec {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Object coerceValue(Path<?> path, Object value) {
+    private static Object coerceValue(Expression<?> path, Object value) {
         if (value instanceof String strValue) {
             Class<?> type = path.getJavaType();
             try {
                 if (type.isEnum()) return Enum.valueOf((Class<Enum>) type, strValue);
+                // strategy columns (e.g. Source.strategy) are compared by strategy name
+                if (StrategyIntf.class.isAssignableFrom(type)) return StrategyRegistryService.getInstance().deserializeStrategy(strValue);
                 if (type == ZonedDateTime.class) return ZonedDateTime.parse(strValue);
                 if (type == LocalDate.class) return LocalDate.parse(strValue);
                 if (type == Long.class || type == long.class) return Long.valueOf(strValue);
@@ -172,10 +226,10 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specEqualsIgnoreCase(Object value) {
         return new InternalExpression<>(EQUAL_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof String strValue) {
-                return cb.equal(cb.lower((Path<String>) path), strValue.toLowerCase());
+                return cb.equal(cb.lower((Expression<String>) path), strValue.toLowerCase());
             }
             return cb.equal(path, coerced);
         }, value, null);
@@ -184,10 +238,10 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotEqualsIgnoreCase(Object value) {
         return new InternalExpression<>(NOT_EQUAL_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             Object coerced = coerceValue(path, v);
             if (coerced instanceof String strValue) {
-                return cb.notEqual(cb.lower((Path<String>) path), strValue.toLowerCase());
+                return cb.notEqual(cb.lower((Expression<String>) path), strValue.toLowerCase());
             }
             return cb.notEqual(path, coerced);
         }, value, null);
@@ -196,34 +250,34 @@ public class EntitySpec {
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLike(Object value) {
         return new InternalExpression<>(LIKE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) ->
-                cb.like((Path<String>) getPath(root, f), String.valueOf(v)), value, null);
+                cb.like((Expression<String>) getPath(root, cb, f), String.valueOf(v)), value, null);
     }
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotLike(Object value) {
         return new InternalExpression<>(NOT_LIKE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) ->
-                cb.notLike((Path<String>) getPath(root, f), String.valueOf(v)), value, null);
+                cb.notLike((Expression<String>) getPath(root, cb, f), String.valueOf(v)), value, null);
     }
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specLikeIgnoreCase(Object value) {
         return new InternalExpression<>(LIKE_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             if (v instanceof String strValue) {
-                return cb.like(cb.lower((Path<String>) path), strValue.toLowerCase());
+                return cb.like(cb.lower((Expression<String>) path), strValue.toLowerCase());
             }
-            return cb.like((Path<String>) path, String.valueOf(v));
+            return cb.like((Expression<String>) path, String.valueOf(v));
         }, value, null);
     }
 
     @SuppressWarnings({"unchecked"})
     public static <ENTITY extends BaseEntity> EntitySpecExpression<ENTITY> specNotLikeIgnoreCase(Object value) {
         return new InternalExpression<>(NOT_LIKE_IGNORE_CASE_OPERATOR + formatValueForSpecString(value), (f, v) -> (root, query, cb) -> {
-            Path<?> path = getPath(root, f);
+            Expression<?> path = getPath(root, cb, f);
             if (v instanceof String strValue) {
-                return cb.notLike(cb.lower((Path<String>) path), strValue.toLowerCase());
+                return cb.notLike(cb.lower((Expression<String>) path), strValue.toLowerCase());
             }
-            return cb.notLike((Path<String>) path, String.valueOf(v));
+            return cb.notLike((Expression<String>) path, String.valueOf(v));
         }, value, null);
     }
 

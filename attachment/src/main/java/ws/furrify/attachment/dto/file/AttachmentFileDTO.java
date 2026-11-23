@@ -17,6 +17,7 @@
  */
 package ws.furrify.attachment.dto.file;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,8 +29,7 @@ import ws.furrify.core.entity.dto.UserScopedEntityDTO;
 
 import java.net.URI;
 import java.util.List;
-
-import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -52,4 +52,8 @@ public class AttachmentFileDTO extends UserScopedEntityDTO<AttachmentFile> {
     private URI thumbnailUri;
 
     private String storageServiceId;
+    private String originalMimeType;
+    private String originalFileExtension;
+    /** Metadata of the uploaded file its JPEG XL doesn't carry over (exiftool, Group:Tag keys); null when nothing is lost. */
+    private Map<String, Object> originalMetadata;
 }

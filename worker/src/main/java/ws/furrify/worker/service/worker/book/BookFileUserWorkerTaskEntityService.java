@@ -151,88 +151,70 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
                 return;
             }
 
+            // The book keeps its current files while the new ones are generated. Storage deletes the
+            // replaced ones when the new set is saved below; files uploaded by a run that doesn't get
+            // that far are deleted here, so neither a failure nor a cancellation leaves files behind.
             Map<String, UUID> formatReferenceIds = new HashMap<>();
+            boolean delivered = false;
+            try {
+                for (var generator : generators) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        log.warn("Task thread interrupted for task {}", task.getId());
+                        return;
+                    }
+                    try {
+                        UUID formatId = generator.generate(task, bookDto, chapterDataList);
+                        if (formatId != null) {
+                            formatReferenceIds.put(generator.getExtension(), formatId);
+                        }
+                    } catch (RuntimeException e) {
+                        Throwable cause = e.getCause();
+                        while (cause != null && !(cause instanceof InterruptedException)) {
+                            cause = cause.getCause();
+                        }
+                        if (Thread.currentThread().isInterrupted() || cause != null) {
+                            log.warn("Task thread interrupted during generation for task {}", task.getId());
+                        } else {
+                            log.error("Generation failed for task {}", task.getId(), e);
+                            failTask(task, e.getMessage() != null ? e.getMessage() : e.getClass().getName(), e);
+                        }
+                        return;
+                    }
+                }
 
-            if (bookDto.getFormatReferenceIds() != null && !bookDto.getFormatReferenceIds().isEmpty()) {
                 try {
-                    PutBookWorkerTaskRequest clearRequest = new PutBookWorkerTaskRequest();
-                    clearRequest.setFormatReferenceIds(new HashMap<>());
-                    clearRequest.setActiveWorkerTaskId(task.getId());
+                    PutBookWorkerTaskRequest putRequest = getPutBookWorkerTaskRequest(formatReferenceIds);
 
-                    ResponseEntity<Void> clearResponse = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
+                    ResponseEntity<Void> response = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
                             task.getSourceBookReferenceId(),
-                            clearRequest
+                            putRequest
                     );
 
-                    if (!clearResponse.getStatusCode().is2xxSuccessful()) {
-                        log.error("Failed to clear old formats from book {}: Status code {}", task.getSourceBookReferenceId(), clearResponse.getStatusCode());
-
-                        throw new ServiceLogicException(WorkerErrors.TASK_FAILED_TO_CLEAR_BOOK_REFERENCES.getErrorMessage(task.getId(), bookId));
+                    if (!response.getStatusCode().is2xxSuccessful()) {
+                        log.error("Failed to update storage service with new formats for book {}: Status code {}", task.getSourceBookReferenceId(), response.getStatusCode());
+                        failTask(task, "Failed to contact storage service to update book formats: Status code " + response.getStatusCode());
+                        return;
                     }
+                    delivered = true;
                 } catch (Exception e) {
-                    log.error("Failed to clear old formats from book {}: {}", task.getSourceBookReferenceId(), e.getMessage());
-
-                    throw new ServiceLogicException(WorkerErrors.TASK_FAILED_TO_CLEAR_BOOK_REFERENCES.getErrorMessage(task.getId(), bookId));
-                }
-
-                bookDto.getFormatReferenceIds().values().forEach(oldFormatId -> {
-                    if (oldFormatId != null) {
-                        attachmentService.deleteAttachment(oldFormatId, task.getOwnerId(), false);
-                    }
-                });
-            }
-
-            for (var generator : generators) {
-                if (Thread.currentThread().isInterrupted()) {
-                    log.warn("Task thread interrupted for task {}", task.getId());
-                    return;
-                }
-                try {
-                    UUID formatId = generator.generate(task, bookDto, chapterDataList);
-
-                    formatReferenceIds.put(generator.getExtension(), formatId);
-                } catch (RuntimeException e) {
                     Throwable cause = e.getCause();
-                    while (cause != null && !(cause instanceof InterruptedException)) {
+                    while (cause != null && !(cause instanceof feign.FeignException)) {
                         cause = cause.getCause();
                     }
-                    if (Thread.currentThread().isInterrupted() || cause != null) {
-                        log.warn("Task thread interrupted during generation for task {}", task.getId());
+                    if (cause instanceof feign.FeignException feignException) {
+                        log.error("Failed to update storage service with new formats for book {}: HTTP {} - {}", task.getSourceBookReferenceId(), feignException.status(), feignException.contentUTF8(), e);
+                        failTask(task, "Failed to contact storage service to update book formats: HTTP " + feignException.status() + " - " + feignException.contentUTF8());
                     } else {
-                        log.error("Generation failed for task {}", task.getId(), e);
-                        failTask(task, e.getMessage() != null ? e.getMessage() : e.getClass().getName(), e);
+                        String errorMessage = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+                        log.error("Failed to update storage service with new formats for book {}: {}", task.getSourceBookReferenceId(), errorMessage, e);
+                        failTask(task, "Failed to contact storage service to update book formats: " + errorMessage);
                     }
                     return;
                 }
-            }
-
-            try {
-                PutBookWorkerTaskRequest putRequest = getPutBookWorkerTaskRequest(formatReferenceIds);
-
-                ResponseEntity<Void> response = bookV1RestControllerApiClient.bookV1RestControllerUpdateWorkerTaskInfo(
-                        task.getSourceBookReferenceId(),
-                        putRequest
-                );
-
-                if (!response.getStatusCode().is2xxSuccessful()) {
-                    log.error("Failed to update storage service with new formats for book {}: Status code {}", task.getSourceBookReferenceId(), response.getStatusCode());
-                    failTask(task, "Failed to contact storage service to update book formats: Status code " + response.getStatusCode());
-                    return;
+            } finally {
+                if (!delivered) {
+                    deleteUndeliveredFiles(task, formatReferenceIds);
                 }
-            } catch (Exception e) {
-                Throwable cause = e.getCause();
-                while (cause != null && !(cause instanceof feign.FeignException)) {
-                    cause = cause.getCause();
-                }
-                if (cause instanceof feign.FeignException feignException) {
-                    log.error("Failed to update storage service with new formats for book {}: HTTP {} - {}", task.getSourceBookReferenceId(), feignException.status(), feignException.contentUTF8(), e);
-                    failTask(task, "Failed to contact storage service to update book formats: HTTP " + feignException.status() + " - " + feignException.contentUTF8());
-                } else {
-                    String errorMessage = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-                    log.error("Failed to update storage service with new formats for book {}: {}", task.getSourceBookReferenceId(), errorMessage, e);
-                    failTask(task, "Failed to contact storage service to update book formats: " + errorMessage);
-                }
-                return;
             }
 
             task.setFormatReferenceIds(formatReferenceIds);
@@ -289,6 +271,40 @@ public class BookFileUserWorkerTaskEntityService extends UserWorkerTaskBaseEntit
         }
 
         return chapterDataList;
+    }
+
+    /**
+     * Files this run uploaded that the book never got: nothing references them, so remove them.
+     * A failed save may still have reached storage (e.g. a timeout on the response), so the book
+     * is checked first; when that can't be confirmed the files are kept, a stray file being
+     * better than a book pointing at deleted ones.
+     */
+    private void deleteUndeliveredFiles(BookFileUserWorkerTaskDTO task, Map<String, UUID> uploaded) {
+        if (uploaded.isEmpty()) {
+            return;
+        }
+        try {
+            BookDTO current = bookV1RestControllerApiClient.bookV1RestControllerGetById(task.getSourceBookReferenceId()).getBody();
+            if (current != null && current.getFormatReferenceIds() != null
+                    && current.getFormatReferenceIds().values().stream().anyMatch(uploaded::containsValue)) {
+                log.warn("Task {}: storage did save the new files despite the error, keeping them", task.getId());
+                return;
+            }
+        } catch (feign.FeignException.NotFound e) {
+            // book deleted meanwhile: nothing can reference the files
+        } catch (Exception e) {
+            log.warn("Task {}: could not check whether book {} uses the uploaded files, keeping them: {}",
+                    task.getId(), task.getSourceBookReferenceId(), e.getMessage());
+            return;
+        }
+        for (Map.Entry<String, UUID> file : uploaded.entrySet()) {
+            if (attachmentService.deleteAttachment(file.getValue(), task.getOwnerId(), false)) {
+                log.debug("Task {}: deleted undelivered {} file {}", task.getId(), file.getKey(), file.getValue());
+            } else {
+                log.warn("Task {}: could not delete undelivered {} file {}, it is left in the attachment service",
+                        task.getId(), file.getKey(), file.getValue());
+            }
+        }
     }
 
     private static @NonNull PutBookWorkerTaskRequest getPutBookWorkerTaskRequest(Map<String, UUID> formatReferenceIds) {

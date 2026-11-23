@@ -21,6 +21,7 @@ import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.FileSystemUtils;
 import ws.furrify.attachment.exception.AttachmentErrors;
+import ws.furrify.attachment.service.file.jxl.JxlConverter;
 import ws.furrify.attachment.service.file.storage.thumbnail.ThumbnailGenerator;
 import ws.furrify.attachment.service.file.storage.vo.UploadedFileReference;
 import ws.furrify.core.exception.ServiceLogicException;
@@ -40,27 +41,26 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
     private final String MOUNT_POINT_PATH = "/furrify/data";
 
     private final ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator();
+    private final JxlConverter jxlConverter;
+
+    public HostMountpointV1FileMassStorageStrategy(JxlConverter jxlConverter) {
+        this.jxlConverter = jxlConverter;
+    }
 
     @Override
     public UploadedFileReference uploadFile(UUID id, String mimeType, File file, boolean replaceExisting) {
+        return uploadFile(id, file, file, mimeType, replaceExisting);
+    }
+
+    @Override
+    public UploadedFileReference uploadFile(UUID id, File file, File thumbnailSource, String thumbnailSourceMimeType, boolean replaceExisting) {
         try {
             Path destinationFilePath = getDestinationFilePath(id, file);
-            Path destinationThumbnailFilePath = getDestinationThumbnailFilePath(id, file);
 
             // Ensure parent directory exists
             createDirectories(destinationFilePath.getParent());
 
-            // Thumbnail
-            URI destinationThumbnailUri = null;
-            try {
-                File thumbnailFile = thumbnailGenerator.generateThumbnail(mimeType, file);
-                if (thumbnailFile != null) {
-                    Files.move(thumbnailFile, destinationThumbnailFilePath.toFile());
-                    destinationThumbnailUri = URI.create("/" + id + "/thumbnail.jpg");
-                }
-            } catch (Exception e) {
-                log.warn("Failed to generate thumbnail for attachment {} ({}): {}", id, file.getName(), e.getMessage());
-            }
+            URI destinationThumbnailUri = storeThumbnail(id, thumbnailSource, thumbnailSourceMimeType);
 
             // Main file
             Files.move(file, destinationFilePath.toFile());
@@ -74,6 +74,46 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
         }
     }
 
+    /**
+     * Thumbnail (JPEG from the generator) stored as {@code thumbnail.jxl}, transcoded losslessly so
+     * the JPEG can be rebuilt as its fallback; as {@code thumbnail.jpg} when that conversion fails.
+     */
+    private URI storeThumbnail(UUID id, File source, String mimeType) {
+        File thumbnailFile = null;
+        try {
+            thumbnailFile = thumbnailGenerator.generateThumbnail(mimeType, source);
+            if (thumbnailFile == null) {
+                return null;
+            }
+            return storeThumbnailJpeg(id, thumbnailFile);
+        } catch (Exception e) {
+            log.warn("Failed to generate thumbnail for attachment {} ({}): {}", id, source.getName(), e.getMessage());
+            return null;
+        } finally {
+            if (thumbnailFile != null) thumbnailFile.delete();
+        }
+    }
+
+    /** Store a JPEG thumbnail for {@code id}, as JPEG XL when possible. */
+    @Override
+    public URI storeThumbnailJpeg(UUID id, File thumbnailJpeg) throws IOException {
+        createDirectories(getDestinationDirectoryPath(id));
+        var converted = jxlConverter.convert(thumbnailJpeg, "image/jpeg");
+        if (converted.isPresent()) {
+            Path target = getDestinationDirectoryPath(id).resolve("thumbnail." + JxlConverter.JXL_EXTENSION);
+            java.nio.file.Files.move(converted.get().jxlFile().toPath(), target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return URI.create("/" + id + "/thumbnail." + JxlConverter.JXL_EXTENSION);
+        }
+        Path target = getDestinationDirectoryPath(id).resolve("thumbnail.jpg");
+        java.nio.file.Files.copy(thumbnailJpeg.toPath(), target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        return URI.create("/" + id + "/thumbnail.jpg");
+    }
+
+    @Override
+    public Path resolve(URI fileUri) {
+        return Path.of(MOUNT_POINT_PATH + fileUri.getPath());
+    }
+
     @Override
     public UploadedFileReference linkFile(UUID id, String mimeType, URI existingFileUri, URI existingThumbnailUri) {
         try {
@@ -81,7 +121,6 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
             
             String ext = Files.getFileExtension(existingFilePath.toFile().getName());
             Path destinationFilePath = Path.of(MOUNT_POINT_PATH + "/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext));
-            Path destinationThumbnailFilePath = Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail.jpg");
 
             // Ensure parent directory exists
             createDirectories(destinationFilePath.getParent());
@@ -91,8 +130,9 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
             if (existingThumbnailUri != null) {
                 Path existingThumbnailPath = Path.of(MOUNT_POINT_PATH + existingThumbnailUri.getPath());
                 if (existingThumbnailPath.toFile().exists()) {
-                    createLink(destinationThumbnailFilePath, existingThumbnailPath);
-                    destinationThumbnailUri = URI.create("/" + id + "/thumbnail.jpg");
+                    String thumbnailName = existingThumbnailPath.getFileName().toString(); // thumbnail.jxl or .jpg
+                    createLink(getDestinationDirectoryPath(id).resolve(thumbnailName), existingThumbnailPath);
+                    destinationThumbnailUri = URI.create("/" + id + "/" + thumbnailName);
                 }
             }
 
@@ -110,10 +150,6 @@ public class HostMountpointV1FileMassStorageStrategy implements FileMassStorageS
     private Path getDestinationFilePath(UUID id, File file) {
         String ext = Files.getFileExtension(file.getName());
         return Path.of(MOUNT_POINT_PATH + "/" + id + "/attachment" + (ext.isEmpty() ? "" : "." + ext));
-    }
-
-    private Path getDestinationThumbnailFilePath(UUID id, File file) {
-        return Path.of(MOUNT_POINT_PATH + "/" + id + "/thumbnail.jpg");
     }
 
     private Path getDestinationDirectoryPath(UUID id) {

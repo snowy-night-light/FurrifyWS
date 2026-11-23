@@ -22,6 +22,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import ws.furrify.attachment.domain.file.vo.AttachmentFileHash;
 import ws.furrify.core.converters.URIConverter;
 import ws.furrify.core.entity.UserScopedEntity;
@@ -30,6 +32,7 @@ import java.net.URI;
 import java.util.List;
 
 @Entity
+@Table(indexes = @Index(name = "idx_attachment_file_owner_id", columnList = "owner_id"))
 @Getter
 @Setter
 @ToString
@@ -47,7 +50,12 @@ public class AttachmentFile extends UserScopedEntity {
 
     @Column(nullable = true)
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "attachment_file_hashes", joinColumns = @JoinColumn(name = "attachment_file_id"))
+    // hash: duplicate lookup on every upload (uploadFile); attachment_file_id: eager load on every read.
+    @CollectionTable(name = "attachment_file_hashes", joinColumns = @JoinColumn(name = "attachment_file_id"),
+            indexes = {
+                    @Index(name = "idx_attachment_file_hashes_hash", columnList = "hash"),
+                    @Index(name = "idx_attachment_file_hashes_file", columnList = "attachment_file_id")
+            })
     private List<AttachmentFileHash> fileHashes;
 
     @Column(nullable = true, length = 255)
@@ -71,6 +79,23 @@ public class AttachmentFile extends UserScopedEntity {
 
     @Column(nullable = true)
     private String storageServiceId;
+
+    /** Format the file was uploaded in, when it is stored converted (JPEG XL); null otherwise. */
+    @Column(nullable = true, length = 255)
+    private String originalMimeType;
+
+    @Column(nullable = true, length = 255)
+    private String originalFileExtension;
+
+    /**
+     * Metadata of the uploaded file that its JPEG XL doesn't carry over, read before conversion
+     * (exiftool, {@code Group:Tag} keys): nothing for JPEG, PNG text chunks/timestamp for PNG,
+     * everything for formats converted through PNG (WebP, HEIC, ...). Null when nothing is lost.
+     * Portable JSON type (jsonb on PostgreSQL, JSON on H2).
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = true)
+    private java.util.Map<String, Object> originalMetadata;
 
 
 }

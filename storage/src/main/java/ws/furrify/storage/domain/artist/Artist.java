@@ -33,6 +33,10 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_artist_library_external_id", columnList = "library_id, external_id"),
+        @Index(name = "idx_artist_owner_created", columnList = "owner_id, created_at")
+})
 @Getter
 @Setter
 @ToString
@@ -43,7 +47,11 @@ public class Artist extends UserScopedEntity {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "artist_nicknames",
-            joinColumns = @JoinColumn(name = "artist_id")
+            joinColumns = @JoinColumn(name = "artist_id"),
+            indexes = {
+                    @Index(name = "idx_artist_nicknames_artist", columnList = "artist_id"),
+                    @Index(name = "idx_artist_nicknames_nickname", columnList = "nickname")
+            }
     )
     @NotEmpty
     List<ArtistNickname> nicknames;
@@ -51,8 +59,8 @@ public class Artist extends UserScopedEntity {
     @Column()
     String externalId;
 
-    @Column(length = 2048)
-    @Length(max = 2048)
+    @Column(length = 18432)
+    @Length(max = 18432)
     String bioHtml;
 
     @Builder.Default
@@ -61,14 +69,17 @@ public class Artist extends UserScopedEntity {
     Integer followersCount = 0;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JoinTable(name = "artist_sources", joinColumns = @JoinColumn(name = "artist_id"), inverseJoinColumns = @JoinColumn(name = "sources_id"),
+            indexes = @Index(name = "idx_artist_sources_artist", columnList = "artist_id"))
     @ToString.Exclude
     List<Source> sources;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    /** Not cascaded: unused media are removed by {@code MediaOrphanCleanupService}. */
+    @OneToOne(fetch = FetchType.EAGER)
     Media avatar;
 
-    @ManyToOne(optional = true)
-    @JoinColumn(name = "library_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "library_id", nullable = false)
     Library library;
 
     @Column(nullable = true)

@@ -15,22 +15,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package ws.furrify.storage.domain.book.chapter;
+package ws.furrify.storage.service.library;
 
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import org.springframework.stereotype.Component;
-
-@Component
-class BookChapterEntityListener {
-
-    @PreUpdate
-    public void preUpdate(BookChapter bookChapter) {
-        bookChapter.setVersionsCount(bookChapter.getVersions() != null ? bookChapter.getVersions().size() : 0);
-    }
-
-    @PrePersist
-    public void prePersist(BookChapter bookChapter) {
-        bookChapter.setVersionsCount(bookChapter.getVersions() != null ? bookChapter.getVersions().size() : 0);
-    }
+public enum LibraryContent {
+    BOOKS,
+    POSTS,
+    COLLECTIONS,
+    TAGS,
+    ARTISTS
 }

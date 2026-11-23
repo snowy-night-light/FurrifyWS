@@ -4,14 +4,25 @@ spring:
       maximum-pool-size: 50
   application:
     name: 'furrify-eureka-service'
+  security:
+    user:
+      name: ${EUREKA_USERNAME:admin}
+      password: ${EUREKA_PASSWORD:password}
   main:
     web-application-type: servlet
 server:
   port: 8761
 eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: false
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      defaultZone: ${EUREKA_URL:http://${EUREKA_USERNAME:admin}:${EUREKA_PASSWORD:password}@${eureka.instance.hostname}:${server.port}/eureka/}
+  server:
+    my-url: ${eureka.client.service-url.defaultZone}
 springdoc:
   api-docs:
     version: openapi_3_0

@@ -1,21 +1,25 @@
 x-common-env: &common-env
   FURRIFY_CDN_URL: ${FURRIFY_CDN_URL}
-  EUREKA_URL: http://eureka:8761/eureka/
+  # public URL of the gateway: book files and content link JPEG XL fallbacks through it (/attachments/v1/files/{id}/fallback)
+  FURRIFY_GATEWAY_URL: ${FURRIFY_GATEWAY_URL}
+  EUREKA_URL: ${EUREKA_URL:-http://${EUREKA_USERNAME:-admin}:${EUREKA_PASSWORD}@${EUREKA_HOST:-eureka}:8761/eureka/}
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+  EUREKA_INSTANCE_IP_ADDRESS: ${HOST_IP}
   JAVA_TOOL_OPTIONS: "-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true"
 
 services:
-  tmp-cleaner:
-    image: busybox:latest
-    restart: "no"
-    volumes:
-      - ./tmp:/tmp
-    command: ["sh", "-c", "find /tmp -mindepth 1 -delete || rm -rf /tmp/* /tmp/.[!.]* 2>/dev/null || true"]
-
   eureka:
     image: furrify-eureka:latest
     environment:
       <<: *common-env
-      EUREKA_INSTANCE_HOSTNAME: eureka
+      EUREKA_INSTANCE_HOSTNAME: localhost
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_USERNAME: ${EUREKA_USERNAME:-admin}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
+      SPRING_SECURITY_USER_NAME: ${EUREKA_USERNAME:-admin}
+      SPRING_SECURITY_USER_PASSWORD: ${EUREKA_PASSWORD}
+    ports:
+      - "8761:8761"
 
   gateway:
     image: furrify-gateway:latest
@@ -40,6 +44,18 @@ services:
       DB_URL: ${ATTACHMENT_DB_URL:-jdbc:postgresql://db:5432/furrify}
       DB_USERNAME: ${ATTACHMENT_DB_USERNAME:-postgres}
       DB_PASSWORD: ${ATTACHMENT_DB_PASSWORD:-postgres}
+      # JPEG XL encoder effort for uploaded images (always lossless, quality never changes), 1-10.
+      # Higher = smaller files but slower uploads: 7 is cjxl's default, 8 is ~1-2% smaller at ~2x the
+      # encode time, 9 a few % more at many times the time. JPEG uploads barely gain above 7.
+      # Decoding speed is the same at any effort.
+      FURRIFY_JXL_EFFORT: ${ATTACHMENT_JXL_EFFORT:-7}
+      # Longest one conversion may take; a conversion that runs over keeps the upload in its original format.
+      # Raise it with the effort (e.g. 1800 at effort 9) so large images don't end up unconverted.
+      FURRIFY_JXL_TIMEOUT_SECONDS: ${ATTACHMENT_JXL_TIMEOUT_SECONDS:-600}
+      # Conversions running at once; more uploads wait their turn. 0 = half the CPU threads (4 on a 4-core/8-thread CPU).
+      FURRIFY_JXL_MAX_CONCURRENT: ${ATTACHMENT_JXL_MAX_CONCURRENT:-0}
+    ports:
+      - "8061:8061"
     volumes:
       - ./data:/furrify/data
       - ./plugins:/furrify/plugins
@@ -63,6 +79,10 @@ services:
       DB_URL: ${STORAGE_DB_URL:-jdbc:postgresql://db:5432/furrify}
       DB_USERNAME: ${STORAGE_DB_USERNAME:-postgres}
       DB_PASSWORD: ${STORAGE_DB_PASSWORD:-postgres}
+      # false pauses the hourly removal of unreferenced media, e.g. while a library's books are deleted and imported again
+      FURRIFY_MEDIA_ORPHAN_CLEANUP_ENABLED: ${STORAGE_MEDIA_ORPHAN_CLEANUP:-true}
+    ports:
+      - "8081:8081"
     volumes:
       - ./plugins:/furrify/plugins
       - ./tmp:/tmp
@@ -89,6 +109,8 @@ services:
       DB_URL: ${WORKER_DB_URL:-jdbc:postgresql://db:5432/furrify}
       DB_USERNAME: ${WORKER_DB_USERNAME:-postgres}
       DB_PASSWORD: ${WORKER_DB_PASSWORD:-postgres}
+    ports:
+      - "8051:8051"
     volumes:
       - ./plugins:/furrify/plugins
       - ./tmp:/tmp

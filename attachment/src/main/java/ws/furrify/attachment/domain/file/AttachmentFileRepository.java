@@ -17,11 +17,22 @@
  */
 package ws.furrify.attachment.domain.file;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ws.furrify.core.entity.BaseEntityRepository;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.UUID;
 
 
 
 @Repository
 public interface AttachmentFileRepository extends BaseEntityRepository<AttachmentFile> {
+
+    /** Records whose upload never finished (the request was killed after the record was saved). */
+    @Query("SELECT a.id FROM AttachmentFile a WHERE a.uploadStatus = ws.furrify.attachment.domain.file.FileUploadStatus.NOT_UPLOADED AND a.createdAt < :createdBefore ORDER BY a.createdAt")
+    List<UUID> findStaleUploadIds(@Param("createdBefore") ZonedDateTime createdBefore, Pageable pageable);
 }

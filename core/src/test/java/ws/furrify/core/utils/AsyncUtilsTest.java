@@ -48,6 +48,7 @@ class AsyncUtilsTest {
 
     @AfterEach
     void tearDown() {
+        asyncUtils.shutdown();
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.clearSynchronization();
         }
@@ -63,6 +64,28 @@ class AsyncUtilsTest {
     }
 
     @Test
+    void runAsyncLater_runsAfterTheDelayInTransaction() throws Exception {
+        java.util.concurrent.CountDownLatch ran = new java.util.concurrent.CountDownLatch(1);
+        long start = System.nanoTime();
+        asyncUtils.runAsyncLater(ran::countDown, java.time.Duration.ofMillis(200));
+
+        assertTrue(ran.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        assertTrue(System.nanoTime() - start >= 200_000_000L, "not before the delay");
+        assertEquals(1, transactionManager.getTransactionCount());
+    }
+
+    @Test
+    void runAsyncLater_cancelledBeforeTheDelay_neverRuns() throws Exception {
+        AtomicBoolean ran = new AtomicBoolean(false);
+        var future = asyncUtils.runAsyncLaterNoTransaction(() -> ran.set(true), java.time.Duration.ofMillis(300));
+        future.cancel(false);
+
+        Thread.sleep(600);
+        assertFalse(ran.get());
+        assertEquals(0, transactionManager.getTransactionCount());
+    }
+
+    @Test
     void runAfterCommit_whenSynchronizationActive_runsAfterCommitInNewTransaction() {
         TransactionSynchronizationManager.initSynchronization();
 
@@ -75,6 +98,7 @@ class AsyncUtilsTest {
 
         assertTrue(ran.get());
         assertEquals(1, transactionManager.getTransactionCount());
+        assertEquals(1, transactionManager.getSuspendCount(), "finished transaction suspended before the task's own");
     }
 
     @Test
@@ -99,6 +123,48 @@ class AsyncUtilsTest {
 
         assertTrue(ran.get());
         assertEquals(1, transactionManager.getTransactionCount());
+        assertEquals(1, transactionManager.getSuspendCount(), "caller-runs task must not join the finished transaction");
+    }
+
+    @Test
+    void runAsyncAfterCommitNoTransaction_whenSynchronizationActive_suspendsFinishedTransaction() {
+        TransactionSynchronizationManager.initSynchronization();
+
+        AtomicBoolean ran = new AtomicBoolean(false);
+        asyncUtils.runAsyncAfterCommitNoTransaction(() -> ran.set(true));
+
+        assertFalse(ran.get());
+
+        TransactionSynchronizationUtils.triggerAfterCommit();
+
+        assertTrue(ran.get());
+        assertEquals(0, transactionManager.getTransactionCount());
+        assertEquals(1, transactionManager.getSuspendCount());
+    }
+
+    @Test
+    void runAfterCommitNoTransaction_whenSynchronizationActive_runsInlineAfterCommit() {
+        TransactionSynchronizationManager.initSynchronization();
+
+        AtomicBoolean ran = new AtomicBoolean(false);
+        asyncUtils.runAfterCommitNoTransaction(() -> ran.set(true));
+
+        assertFalse(ran.get());
+
+        TransactionSynchronizationUtils.triggerAfterCommit();
+
+        assertTrue(ran.get());
+        assertEquals(0, transactionManager.getTransactionCount());
+    }
+
+    @Test
+    void runAfterCommitNoTransaction_whenNoSynchronization_runsImmediately() {
+        AtomicBoolean ran = new AtomicBoolean(false);
+        asyncUtils.runAfterCommitNoTransaction(() -> ran.set(true));
+
+        assertTrue(ran.get());
+        assertEquals(0, transactionManager.getTransactionCount());
+        assertEquals(0, transactionManager.getSuspendCount());
     }
 
     @Test
@@ -125,11 +191,20 @@ class AsyncUtilsTest {
 
     private static class TestTransactionManager implements PlatformTransactionManager {
         private final AtomicInteger transactionCount = new AtomicInteger(0);
+        private final AtomicInteger suspendCount = new AtomicInteger(0);
 
         @Override
         public TransactionStatus getTransaction(TransactionDefinition definition) throws TransactionException {
+            if (definition != null && definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED) {
+                suspendCount.incrementAndGet();
+                return new SimpleTransactionStatus(false);
+            }
             transactionCount.incrementAndGet();
             return new SimpleTransactionStatus(true);
+        }
+
+        public int getSuspendCount() {
+            return suspendCount.get();
         }
 
         @Override

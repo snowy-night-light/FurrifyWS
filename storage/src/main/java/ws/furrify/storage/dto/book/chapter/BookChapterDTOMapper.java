@@ -19,6 +19,7 @@ package ws.furrify.storage.dto.book.chapter;
 
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
@@ -40,6 +41,14 @@ import java.util.List;
         uses = {SourceDTOMapper.class}
 )
 public abstract class BookChapterDTOMapper implements BaseDTOMapper<BookChapter, BookChapterDTO, PatchBookChapterRequest> {
+
+    /**
+     * Versions (full chapter HTML) are never part of a chapter response; use {@code versionsCount}
+     * or query versions by {@code chapter.id}.
+     */
+    @Override
+    @Mapping(target = "versions", ignore = true)
+    public abstract BookChapterDTO toDto(BookChapter entity, @Context CycleAvoidingMappingContext context);
 
     protected BookChapterVersionDTOMapper bookChapterVersionDTOMapper;
     protected BookDTOMapper bookDTOMapper;

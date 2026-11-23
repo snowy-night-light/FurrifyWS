@@ -46,12 +46,12 @@ public class AsyncConfig {
 
         int processors = Runtime.getRuntime().availableProcessors();
 
-        int corePoolSize = processors * 2;
-        int maxPoolSize = processors * 4;
+        int corePoolSize = Math.clamp(processors * 2L, 4, 8);
+        int maxPoolSize = Math.clamp(processors * 4L, 8, 12);
 
         executor.setCorePoolSize(corePoolSize);
         executor.setMaxPoolSize(maxPoolSize);
-        executor.setQueueCapacity(100);
+        executor.setQueueCapacity(500);
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setThreadNamePrefix("furrify-async-");
         executor.setWaitForTasksToCompleteOnShutdown(true);

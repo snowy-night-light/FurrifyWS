@@ -17,9 +17,27 @@
  */
 package ws.furrify.worker.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import ws.furrify.core.config.CacheConfig;
 
 @Configuration
 class CacheConfigImpl extends CacheConfig {
+
+    /**
+     * Bounded, expiring cache shared with plugins (they autowire {@link CacheManager}.
+     * <p>
+     * Tune with {@code FURRIFY_CACHE_CAFFEINE_SPEC}, e.g. {@code maximumSize=500000,expireAfterAccess=12h}.
+     */
+    @Bean
+    @Primary
+    CacheManager cacheManager(@Value("${furrify.cache.caffeine-spec:maximumSize=250000,expireAfterAccess=6h,recordStats}") String spec) {
+        CaffeineCacheManager manager = new CaffeineCacheManager();
+        manager.setCacheSpecification(spec);
+        return manager;
+    }
 }

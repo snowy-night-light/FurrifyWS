@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.1",
   "info": {
     "title": "OpenAPI definition",
     "version": "v0"
@@ -24,8 +24,8 @@
         "operationId": "AttachmentFileV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -57,7 +57,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "AttachmentFileV1RestController_save",
+        "operationId": "AttachmentFileV1RestController_saveWithUpload",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -65,8 +65,7 @@
                 "$ref": "#/components/schemas/CreateAttachmentFileRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -138,7 +137,7 @@
         "tags": [
           "attachment-file-v-1-rest-controller"
         ],
-        "operationId": "AttachmentFileV1RestController_patch",
+        "operationId": "AttachmentFileV1RestController_patchWithUpload",
         "parameters": [
           {
             "name": "id",
@@ -157,8 +156,7 @@
                 "$ref": "#/components/schemas/PatchAttachmentFileRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -173,26 +171,117 @@
           }
         }
       }
+    },
+    "/v1/files/{id}/thumbnail/fallback": {
+      "get": {
+        "tags": [
+          "jxl-fallback-v-1-rest-controller"
+        ],
+        "operationId": "JxlFallbackV1RestController_thumbnailFallback",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/files/{id}/fallback": {
+      "get": {
+        "tags": [
+          "jxl-fallback-v-1-rest-controller"
+        ],
+        "operationId": "JxlFallbackV1RestController_fileFallback",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/files/bulk": {
+      "delete": {
+        "tags": [
+          "attachment-file-v-1-rest-controller"
+        ],
+        "operationId": "AttachmentFileV1RestController_deleteBulk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "CreateAttachmentFileRequest": {
+        "required": [
+          "file",
+          "fileName"
+        ],
         "type": "object",
         "properties": {
           "fileName": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "string"
           },
           "file": {
             "type": "string",
             "format": "binary"
           }
-        },
-        "required": [
-          "file",
-          "fileName"
-        ]
+        }
       },
       "AttachmentFileDTO": {
         "type": "object",
@@ -255,6 +344,18 @@
           },
           "storageServiceId": {
             "type": "string"
+          },
+          "originalMimeType": {
+            "type": "string"
+          },
+          "originalFileExtension": {
+            "type": "string"
+          },
+          "originalMetadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
           }
         }
       },
@@ -266,8 +367,18 @@
           },
           "hash": {
             "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AttachmentFileHashTarget"
           }
         }
+      },
+      "AttachmentFileHashTarget": {
+        "type": "string",
+        "enum": [
+          "ORIGINAL",
+          "STORED"
+        ]
       },
       "AttachmentFileHashType": {
         "type": "string",
@@ -287,6 +398,7 @@
         "type": "object",
         "properties": {
           "fileName": {
+            "minLength": 1,
             "type": "string"
           },
           "file": {
@@ -299,14 +411,14 @@
         "type": "object",
         "properties": {
           "page": {
+            "minimum": 0,
             "type": "integer",
-            "format": "int32",
-            "minimum": 0
+            "format": "int32"
           },
           "size": {
+            "minimum": 1,
             "type": "integer",
-            "format": "int32",
-            "minimum": 1
+            "format": "int32"
           },
           "sort": {
             "type": "array",
@@ -317,6 +429,12 @@
         }
       },
       "PageMetadata": {
+        "required": [
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
         "type": "object",
         "properties": {
           "size": {
@@ -338,6 +456,10 @@
         }
       },
       "PagedModelAttachmentFileDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {

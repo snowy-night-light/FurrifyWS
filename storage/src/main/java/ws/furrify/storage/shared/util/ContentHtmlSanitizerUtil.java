@@ -21,6 +21,8 @@ import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
 
+import java.util.regex.Pattern;
+
 public class ContentHtmlSanitizerUtil {
 
     private static final PolicyFactory EPUB_POLICY = new HtmlPolicyBuilder()
@@ -35,13 +37,25 @@ public class ContentHtmlSanitizerUtil {
             .allowAttributes("id", "title", "dir", "lang", "xml:lang", "epub:type", "role", "class").globally()
             .toFactory();
 
+    /**
+     * {@code <picture><source type="image/jxl" srcset="..."><img src="..."></picture>}: JPEG XL with
+     * an {@code <img>} fallback for clients without JPEG XL support. Only that one shape: a single
+     * relative or http(s) URL in srcset, type image/jxl.
+     */
+    private static final PolicyFactory PICTURE_POLICY = new HtmlPolicyBuilder()
+            .allowElements("picture", "source")
+            .allowAttributes("type").matching(Pattern.compile("image/jxl")).onElements("source")
+            .allowAttributes("srcset").matching(Pattern.compile("(/(?!/)[^\\s,\"'<>]*|https?://[^\\s,\"'<>]+)")).onElements("source")
+            .toFactory();
+
     private static final PolicyFactory POLICY = Sanitizers.BLOCKS
             .and(Sanitizers.LINKS)
             .and(Sanitizers.STYLES)
             .and(Sanitizers.FORMATTING)
             .and(Sanitizers.TABLES)
             .and(Sanitizers.IMAGES)
-            .and(EPUB_POLICY);
+            .and(EPUB_POLICY)
+            .and(PICTURE_POLICY);
 
     public static String sanitize(String htmlContent) {
         return POLICY.sanitize(htmlContent);

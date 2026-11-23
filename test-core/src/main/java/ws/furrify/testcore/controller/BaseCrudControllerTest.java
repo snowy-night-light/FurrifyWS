@@ -1,19 +1,17 @@
 /*
- * furrify-test-core - Furrify Workspace Project
  * Copyright © 2026 FurrifyWS
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package ws.furrify.testcore.controller;
 
@@ -31,6 +29,7 @@ import ws.furrify.core.entity.dto.BaseEntityDTO;
 import ws.furrify.core.entity.request.BaseCreateEntityRequest;
 import ws.furrify.core.entity.request.BasePatchEntityRequest;
 import ws.furrify.core.model.RestPageImpl;
+import ws.furrify.core.utils.EntitySpecUtils;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.config.PostgresTestConfig;
 
@@ -90,8 +89,25 @@ public abstract class BaseCrudControllerTest<ENTITY extends BaseEntity, DTO exte
     }
 
     protected Page<DTO> findAll(Pageable pageable) {
-        return given()
-                .header("Content-Type", "application/json")
+        return findAll(null, pageable);
+    }
+
+    protected Page<DTO> findAll(String spec) {
+        return findAll(spec, Pageable.unpaged());
+    }
+
+    protected Page<DTO> findAll(String spec, Pageable pageable) {
+        var request = given()
+                .header("Content-Type", "application/json");
+        if (spec != null) {
+            request.header(EntitySpecUtils.SPEC_HEADER, EntitySpecUtils.encodeSpecToBase64(spec));
+        }
+        if (pageable.isPaged()) {
+            request.queryParam("page", pageable.getPageNumber())
+                    .queryParam("size", pageable.getPageSize());
+        }
+        pageable.getSort().forEach(order -> request.queryParam("sort", order.getProperty() + "," + order.getDirection().name().toLowerCase()));
+        return request
                 .when()
                 .get(this.basePath)
                 .then()

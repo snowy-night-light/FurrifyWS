@@ -41,11 +41,11 @@ public class CreateBookRequest implements BaseCreateEntityRequest<Book, BookDTO>
     @NotBlank
     private String title;
 
-    @Length(max = 40240)
+    @Length(max = 10240)
     @NotNull
     private String descriptionHtml;
 
-    @Length(max = 10240)
+    @Length(max = 5120)
     @NotNull
     private String shortDescriptionHtml;
 

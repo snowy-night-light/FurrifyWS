@@ -51,7 +51,8 @@ public class BaseEntityRestController<ENTITY extends BaseEntity, DTO extends Bas
 
     @GetMapping(produces = {APPLICATION_JSON})
     @ResponseStatus(value = HttpStatus.OK)
-    protected Page<DTO> getAllPaged(@RequestParam(required = false, name = "spec") String specBase64, Pageable pageable) {
+    protected Page<DTO> getAllPaged(@RequestHeader(required = false, name = EntitySpecUtils.SPEC_HEADER) String specBase64,
+                                    Pageable pageable) {
         String decodedSpec = null;
         if (specBase64 != null) {
             decodedSpec = EntitySpecUtils.decodeSpecFromBase64(specBase64);

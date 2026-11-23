@@ -21,18 +21,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ws.furrify.core.entity.request.BaseRequestMapper;
 import ws.furrify.core.security.annotation.ServiceClientOnlySecured;
+import ws.furrify.core.utils.EntitySpecUtils;
 import ws.furrify.worker.domain.worker.book.BookFileUserWorkerTask;
 import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.book.request.CreateBookFileUserWorkerTaskRequest;
 import ws.furrify.worker.dto.worker.book.request.PatchBookFileUserWorkerTaskRequest;
+import ws.furrify.worker.generator.BookFileWorkerGenerator;
 import ws.furrify.worker.service.worker.UserWorkerTaskBaseEntityService;
 
+import java.util.List;
 import java.util.UUID;
+
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 // All of the methods need to be overridden for roles security to work here
 @RestController
@@ -40,9 +50,26 @@ import java.util.UUID;
 @RequestMapping("/v1/workers/user/books/files/generator")
 public class BookFileUserWorkerTaskV1RestController extends UserWorkerTaskBaseRestController<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, CreateBookFileUserWorkerTaskRequest, PatchBookFileUserWorkerTaskRequest> {
 
+    private final List<BookFileWorkerGenerator> generators;
+
     @Autowired
-    public BookFileUserWorkerTaskV1RestController(BaseRequestMapper<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, CreateBookFileUserWorkerTaskRequest> requestDtoMapper, UserWorkerTaskBaseEntityService<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, PatchBookFileUserWorkerTaskRequest> entityCrudService) {
+    public BookFileUserWorkerTaskV1RestController(BaseRequestMapper<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, CreateBookFileUserWorkerTaskRequest> requestDtoMapper,
+                                                  UserWorkerTaskBaseEntityService<BookFileUserWorkerTask, BookFileUserWorkerTaskDTO, PatchBookFileUserWorkerTaskRequest> entityCrudService,
+                                                  List<BookFileWorkerGenerator> generators) {
         super(requestDtoMapper, entityCrudService);
+        this.generators = generators;
+    }
+
+    /** File extensions of the book files the worker generates ("epub", "html", ...): one per generator. */
+    @GetMapping(value = "/extensions", produces = {APPLICATION_JSON})
+    @ResponseStatus(HttpStatus.OK)
+    public List<String> extensions() {
+        return generators.stream().map(BookFileWorkerGenerator::getExtension).distinct().sorted().toList();
+    }
+
+    @Override
+    public void cancelBulk(@RequestBody List<UUID> ids) {
+        super.cancelBulk(ids);
     }
 
     @Override
@@ -60,7 +87,8 @@ public class BookFileUserWorkerTaskV1RestController extends UserWorkerTaskBaseRe
         return super.getById(id);
     }
     @Override
-    protected Page<BookFileUserWorkerTaskDTO> getAllPaged(String specBase64, Pageable pageable) {
+    protected Page<BookFileUserWorkerTaskDTO> getAllPaged(@RequestHeader(required = false, name = EntitySpecUtils.SPEC_HEADER) String specBase64,
+                                                          Pageable pageable) {
         return super.getAllPaged(specBase64, pageable);
     }
 

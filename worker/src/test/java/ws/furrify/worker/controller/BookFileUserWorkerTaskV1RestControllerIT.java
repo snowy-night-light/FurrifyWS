@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.openapitools.model.AttachmentFileDTO;
 import org.openapitools.model.BookDTO;
-import ws.furrify.worker.domain.worker.WorkStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -36,11 +35,13 @@ import ws.furrify.openapi.gen.storage.api.BookV1RestControllerApiClient;
 import ws.furrify.testcore.config.AuthorizationTestConfig;
 import ws.furrify.testcore.controller.BaseCrudControllerTest;
 import ws.furrify.worker.WorkerApplication;
+import ws.furrify.worker.domain.worker.WorkStatus;
 import ws.furrify.worker.domain.worker.book.BookFileUserWorkerTask;
 import ws.furrify.worker.domain.worker.book.BookFileUserWorkerTaskRepository;
 import ws.furrify.worker.dto.worker.book.BookFileUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.book.request.CreateBookFileUserWorkerTaskRequest;
 import ws.furrify.worker.dto.worker.book.request.PatchBookFileUserWorkerTaskRequest;
+import ws.furrify.worker.generator.BookFileWorkerGenerator;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -59,6 +60,9 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
 
     @Autowired
     private BookFileUserWorkerTaskRepository bookFileUserWorkerTaskRepository;
+
+    @Autowired
+    private List<BookFileWorkerGenerator> generators;
 
     @MockitoBean
     private AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
@@ -232,6 +236,55 @@ public class BookFileUserWorkerTaskV1RestControllerIT extends BaseCrudController
 
         BookFileUserWorkerTask updatedTask = bookFileUserWorkerTaskRepository.findById(task.getId()).get();
         assertEquals(WorkStatus.CANCELLED, updatedTask.getStatus());
+    }
+
+    @Test
+    void testCancelBulk() {
+        BookFileUserWorkerTask waiting = saveTask(WorkStatus.NOT_STARTED);
+        BookFileUserWorkerTask finished = saveTask(WorkStatus.COMPLETED);
+
+        given()
+                .header("Content-Type", "application/json")
+                .body(List.of(waiting.getId(), finished.getId(), UUID.randomUUID()))
+                .when()
+                .post(this.basePath + "/cancel/bulk")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value());
+
+        assertAll(
+                () -> assertEquals(WorkStatus.CANCELLED, bookFileUserWorkerTaskRepository.findById(waiting.getId()).get().getStatus()),
+                () -> assertEquals(WorkStatus.COMPLETED, bookFileUserWorkerTaskRepository.findById(finished.getId()).get().getStatus(),
+                        "a finished task is left as it is")
+        );
+    }
+
+    @Test
+    void testExtensionsAreThoseOfTheGenerators() {
+        List<String> extensions = given()
+                .header("Content-Type", "application/json")
+                .when()
+                .get(this.basePath + "/extensions")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .jsonPath().getList(".", String.class);
+
+        assertEquals(generators.stream().map(ws.furrify.worker.generator.BookFileWorkerGenerator::getExtension).distinct().sorted().toList(), extensions);
+        assertTrue(extensions.containsAll(List.of("epub", "html")));
+    }
+
+    /** A task of the test user that isn't due yet, so the worker doesn't pick it up during the test. */
+    private BookFileUserWorkerTask saveTask(WorkStatus status) {
+        return bookFileUserWorkerTaskRepository.save(
+                BookFileUserWorkerTask.builder()
+                        .sourceBookReferenceId(UUID.randomUUID())
+                        .status(status)
+                        .startAt(ZonedDateTime.now().plusDays(1))
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .build()
+        );
     }
 
 

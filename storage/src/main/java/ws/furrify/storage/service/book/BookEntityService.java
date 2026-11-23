@@ -19,30 +19,25 @@ package ws.furrify.storage.service.book;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.jackson.nullable.JsonNullable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ws.furrify.core.entity.BaseEntityRepository;
 import ws.furrify.core.entity.dto.BaseDTOMapper;
 import ws.furrify.core.exception.Errors;
 import ws.furrify.core.exception.ReferenceNotFoundException;
 import ws.furrify.core.exception.ServiceLogicException;
 import ws.furrify.core.service.BaseEntityCrudService;
-import ws.furrify.core.specification.EntitySpec;
-import ws.furrify.core.specification.EntitySpecResult;
 import ws.furrify.core.utils.AsyncUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.storage.domain.book.Book;
-import ws.furrify.storage.domain.book.chapter.BookChapter;
+import ws.furrify.storage.domain.book.BookRepository;
+import ws.furrify.storage.domain.book.chapter.BookChapterRepository;
 import ws.furrify.storage.dto.book.BookDTO;
-import ws.furrify.storage.dto.book.chapter.BookChapterDTO;
 import ws.furrify.storage.dto.book.request.PatchBookRequest;
 import ws.furrify.storage.dto.library.LibraryDTO;
 import ws.furrify.storage.service.artist.ArtistEntityService;
-import ws.furrify.storage.service.book.chapter.BookChapterEntityService;
 import ws.furrify.storage.service.library.LibraryEntityService;
 import ws.furrify.storage.service.media.MediaEntityService;
 import ws.furrify.storage.service.source.SourceEntityService;
@@ -50,21 +45,16 @@ import ws.furrify.storage.service.tag.TagEntityService;
 import ws.furrify.storage.shared.exception.StorageErrors;
 import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
-import java.util.concurrent.CompletableFuture;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import static ws.furrify.core.specification.EntitySpec.specEquals;
+import java.util.*;
+import java.util.concurrent.*;
 
 @Service
 @Slf4j
 public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, PatchBookRequest> {
 
     private final MediaEntityService mediaEntityService;
-    private final BookChapterEntityService bookChapterEntityService;
+    private final BookChapterRepository bookChapterRepository;
+    private final BookRepository bookRepository;
     private final TagEntityService tagEntityService;
     private final ArtistEntityService artistEntityService;
     private final LibraryEntityService libraryEntityService;
@@ -73,11 +63,15 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     private final AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient;
     private final AsyncUtils asyncUtils;
 
+    private final Map<UUID, ScheduledFuture<?>> pendingWordCountTasks = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> firstScheduledTimes = new ConcurrentHashMap<>();
+
     @Autowired
-    public BookEntityService(BaseEntityRepository<Book> entityRepository, BaseDTOMapper<Book, BookDTO, PatchBookRequest> dtoMapper, MediaEntityService mediaEntityService, BookChapterEntityService bookChapterEntityService, TagEntityService tagEntityService, ArtistEntityService artistEntityService, LibraryEntityService libraryEntityService, SourceEntityService sourceEntityService, @Lazy BookFileGenerationService bookFileGenerationService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, AsyncUtils asyncUtils) {
-        super(entityRepository, dtoMapper);
+    public BookEntityService(BookRepository bookRepository, BaseDTOMapper<Book, BookDTO, PatchBookRequest> dtoMapper, MediaEntityService mediaEntityService, BookChapterRepository bookChapterRepository, TagEntityService tagEntityService, ArtistEntityService artistEntityService, LibraryEntityService libraryEntityService, SourceEntityService sourceEntityService, @Lazy BookFileGenerationService bookFileGenerationService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, AsyncUtils asyncUtils) {
+        super(bookRepository, dtoMapper);
+        this.bookRepository = bookRepository;
+        this.bookChapterRepository = bookChapterRepository;
         this.mediaEntityService = mediaEntityService;
-        this.bookChapterEntityService = bookChapterEntityService;
         this.tagEntityService = tagEntityService;
         this.artistEntityService = artistEntityService;
         this.libraryEntityService = libraryEntityService;
@@ -153,9 +147,12 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
             patchDto.setShortDescriptionHtml(JsonNullable.of(sanitizeHtml(patchDto.getShortDescriptionHtml().get())));
         }
 
-        // Verify user can update likes and dislikes based on library setting
-        LibraryDTO libraryDTO = super.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id))).getLibrary();
-        checkLikesEnabled(libraryDTO, patchDto.getLikes().orElse(null), patchDto.getDislikes().orElse(null));
+        // Verify user can update likes and dislikes based on library setting (only load the book
+        // when the patch actually touches them; checkLikesEnabled is a no-op otherwise)
+        if (patchDto.getLikes().isPresent() || patchDto.getDislikes().isPresent()) {
+            LibraryDTO libraryDTO = super.findById(id).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(id))).getLibrary();
+            checkLikesEnabled(libraryDTO, patchDto.getLikes().orElse(null), patchDto.getDislikes().orElse(null));
+        }
 
         boolean needsRegeneration = patchDto.getTitle().isPresent() ||
                 patchDto.getDescriptionHtml().isPresent() ||
@@ -167,7 +164,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         BookDTO patchedBook = super.handlePatch(id, patchDto);
 
         if (needsRegeneration) {
-            asyncUtils.runAsyncAfterCommit(() -> bookFileGenerationService.executeScheduleGeneration(id));
+            asyncUtils.runAsyncAfterCommitNoTransaction(() -> bookFileGenerationService.executeScheduleGeneration(id));
         }
 
         return patchedBook;
@@ -175,22 +172,9 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
 
     @Override
     @Transactional
-    protected java.util.Optional<BookDTO> handleDelete(UUID id) {
-        BookDTO bookDTO = super.findById(id).orElse(null);
-        if (bookDTO != null && bookDTO.getFormatReferenceIds() != null && !bookDTO.getFormatReferenceIds().isEmpty()) {
-            bookDTO.getFormatReferenceIds().values().forEach(attachmentId -> {
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(attachmentId);
-                    } catch (Exception e) {
-                        log.error("Failed to delete format reference attachment file {} during book {} deletion", attachmentId, id, e);
-                    }
-                });
-            });
-        }
-
-        this.mediaEntityService.deleteById(id);
-
+    protected Optional<BookDTO> handleDelete(UUID id) {
+        // Book files are deleted after commit by BookEntityListener (also on library deletion).
+        // The cover is not deleted here: unused media are removed by MediaOrphanCleanupService.
         return super.handleDelete(id);
     }
 
@@ -209,38 +193,76 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
     }
 
     @Transactional
+    public void updateBookTotalWordCount(UUID bookId) {
+        if (bookId == null) {
+            return;
+        }
+
+        long bookWordCount = bookChapterRepository.sumWordsByBookId(bookId);
+        bookRepository.updateTotalWordCountAndMarkNeedsGeneration(bookId, bookWordCount);
+        bookRepository.refreshChaptersCount(bookId);
+
+        asyncUtils.runAsyncAfterCommitNoTransaction(() -> this.bookFileGenerationService.executeScheduleGeneration(bookId));
+    }
+
     public void updateBookTotalWordCountAsync(UUID bookId) {
-        BookDTO bookDTO = this.internalFindById(bookId).orElseThrow(() -> new ReferenceNotFoundException(Errors.NO_RECORD_FOUND.getErrorMessage(bookId)));
+        if (bookId == null) {
+            return;
+        }
 
-        EntitySpecResult<BookChapter> entitySpecResult = EntitySpec.<BookChapter>specBuilder().where("book.id", specEquals(bookId)).build();
+        long now = System.currentTimeMillis();
+        Long firstTime = firstScheduledTimes.putIfAbsent(bookId, now);
+        if (firstTime == null) {
+            firstTime = now;
+        }
 
-        Page<BookChapterDTO> bookChapters = this.bookChapterEntityService.getAllPaged(entitySpecResult.specString(), PageRequest.of(0, 100));
-        Long bookWordCount = bookChapters.get()
-                .map(c -> c.getCurrentNumberOfWords() != null ? c.getCurrentNumberOfWords() : 0L)
-                .reduce(0L, Long::sum);
+        ScheduledFuture<?> existing = pendingWordCountTasks.get(bookId);
+        if (existing != null && (now - firstTime < 5000)) {
+            existing.cancel(false);
+        } else if (existing != null && !existing.isDone()) {
+            return;
+        }
 
-        bookDTO.setTotalWordCount(bookWordCount);
+        ScheduledFuture<?> newTask = asyncUtils.runAsyncLaterNoTransaction(() -> {
+            try {
+                pendingWordCountTasks.remove(bookId);
+                firstScheduledTimes.remove(bookId);
+                asyncUtils.runInTransaction(() -> this.updateBookTotalWordCount(bookId));
+            } catch (Exception e) {
+                log.error("Failed to execute debounced total word count update for bookId: {}", bookId, e);
+            }
+        }, java.time.Duration.ofSeconds(1));
 
-        this.internalPutById(bookId, bookDTO);
+        pendingWordCountTasks.put(bookId, newTask);
+    }
 
-        asyncUtils.runAsyncAfterCommit(() -> this.bookFileGenerationService.executeScheduleGeneration(bookId));
+    /** Up to {@code limit} books waiting for their files to be generated (not given up on). */
+    @Transactional(readOnly = true)
+    public List<UUID> findBookIdsNeedingGeneration(int limit) {
+        return bookRepository.findBookIdsNeedingGeneration(PageRequest.of(0, limit));
+    }
+
+    /** Up to {@code limit} books with a worker task generating their files. */
+    @Transactional(readOnly = true)
+    public List<BookRepository.BookActiveTaskProjection> findBooksWithActiveWorkerTask(int limit) {
+        return bookRepository.findBooksWithActiveWorkerTask(PageRequest.of(0, limit));
     }
 
     @Transactional
     public void markNeedsGeneration(UUID bookId, boolean needsGeneration) {
-        BookDTO book = this.internalFindById(bookId).orElse(null);
-        if (book != null) {
-            book.setNeedsBookFileGeneration(needsGeneration);
-            this.internalPutById(bookId, book);
+        if (bookId != null) {
+            bookRepository.updateNeedsBookFileGeneration(bookId, needsGeneration);
         }
     }
 
     @Transactional
     public BookDTO claimBookForGeneration(UUID bookId) {
-        BookDTO book = this.internalFindById(bookId).orElse(null);
-        if (book != null && Boolean.TRUE.equals(book.getNeedsBookFileGeneration())) {
-            book.setNeedsBookFileGeneration(false);
-            return this.internalPutById(bookId, book);
+        if (bookId == null) {
+            return null;
+        }
+        int updated = bookRepository.claimBookForGeneration(bookId);
+        if (updated > 0) {
+            return this.findById(bookId).orElse(null);
         }
         return null;
     }
@@ -251,11 +273,10 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         if (book != null) {
             if (newFormatReferenceIds != null) {
                 if (book.getFormatReferenceIds() != null) {
+                    // replaced (or dropped) files are deleted once this is committed
                     Set<UUID> oldAttachments = new HashSet<>(book.getFormatReferenceIds().values());
-                    Set<UUID> newAttachments = new HashSet<>(newFormatReferenceIds.values());
-                    
-                    oldAttachments.removeAll(newAttachments);
-                    
+                    oldAttachments.removeAll(new HashSet<>(newFormatReferenceIds.values()));
+                    oldAttachments.remove(null);
                     deleteAttachmentFilesAsync(bookId, oldAttachments);
                     book.getFormatReferenceIds().clear();
                     book.getFormatReferenceIds().putAll(newFormatReferenceIds);
@@ -264,6 +285,8 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
                 }
             }
             book.setActiveWorkerTaskId(newActiveWorkerTaskId);
+            book.setGenerationRetryCount(0);
+            book.setFileGenerationFailed(false);
             this.internalPutById(bookId, book);
         }
     }
@@ -273,12 +296,39 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
         BookDTO book = this.internalFindById(bookId).orElse(null);
         if (book != null) {
             book.setActiveWorkerTaskId(workerTaskId);
-            if (book.getFormatReferenceIds() != null) {
-                deleteAttachmentFilesAsync(bookId, new HashSet<>(book.getFormatReferenceIds().values()));
-                book.getFormatReferenceIds().clear();
-            }
+            // The current files stay until the worker delivers the new ones: updateBookFileWorkerTaskInfo
+            // then deletes the ones that were replaced. Readers keep a file meanwhile, and a failed
+            // generation leaves the book with its old files instead of none.
             book.setNeedsBookFileGeneration(false);
             this.internalPutById(bookId, book);
+        }
+    }
+
+    @Transactional
+    public void clearActiveWorkerTaskId(UUID bookId) {
+        if (bookId != null) {
+            bookRepository.clearActiveWorkerTaskId(bookId);
+        }
+    }
+
+    @Transactional
+    public void incrementGenerationRetryCount(UUID bookId) {
+        if (bookId != null) {
+            bookRepository.incrementGenerationRetryCount(bookId);
+        }
+    }
+
+    @Transactional
+    public void resetGenerationRetryCount(UUID bookId) {
+        if (bookId != null) {
+            bookRepository.resetGenerationRetryCount(bookId);
+        }
+    }
+
+    @Transactional
+    public void markFileGenerationFailed(UUID bookId) {
+        if (bookId != null) {
+            bookRepository.markFileGenerationFailed(bookId);
         }
     }
 
@@ -287,7 +337,7 @@ public class BookEntityService extends BaseEntityCrudService<Book, BookDTO, Patc
      */
     private void deleteAttachmentFilesAsync(UUID bookId, Set<UUID> attachmentIds) {
         attachmentIds.forEach(attachmentId -> {
-            asyncUtils.runAsyncAfterCommit(() -> {
+            asyncUtils.runAsyncAfterCommitNoTransaction(() -> {
                 try {
                     attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(attachmentId);
                 } catch (Exception e) {

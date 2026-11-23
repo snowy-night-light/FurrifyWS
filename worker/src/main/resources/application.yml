@@ -4,7 +4,7 @@ scalar:
 spring:
   datasource:
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:30}
   cloud:
     openfeign:
       client:
@@ -19,6 +19,13 @@ spring:
           max-connections-per-route: 200
       circuitbreaker:
         enabled: true
+    # Spring Cloud's default Resilience4j bulkhead gives every Feign method its own small thread pool
+    # (CPU-thread count, queue of 100): too few for an import's parallel calls. The circuit breaker and
+    # time limiter still guard every call; ApiConfig caps calls in flight.
+    circuitbreaker:
+      bulkhead:
+        resilience4j:
+          enabled: false
   application:
     name: 'furrify-worker-service'
   main:
@@ -83,6 +90,7 @@ eureka:
 
 server:
   port: 8051
+  max-http-request-header-size: 2MB
 
 springdoc:
   packages-to-exclude: ws.furrify.openapi.gen, org.openapitools.configuration
@@ -93,3 +101,9 @@ logging:
   level:
     org.hibernate.validator.internal.metadata.aggregated.CascadingMetaDataBuilder: ERROR
     io.documentnode.epub4j: ERROR
+
+furrify:
+  worker:
+    tasks:
+      book:
+        max-concurrent: ${FURRIFY_WORKER_TASKS_BOOK_MAX_CONCURRENT:1}
