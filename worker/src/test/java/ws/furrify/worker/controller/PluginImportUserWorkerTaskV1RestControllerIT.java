@@ -49,6 +49,8 @@ import java.io.File;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import ws.furrify.core.service.EurekaDiscoveryService;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,7 +76,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
     private ExternalPluginLoaderService externalPluginLoaderService;
 
     @MockitoBean
-    private ws.furrify.core.service.EurekaDiscoveryService eurekaDiscoveryService;
+    private EurekaDiscoveryService eurekaDiscoveryService;
 
     @Autowired
     protected PluginImportUserWorkerTaskV1RestControllerIT(JsonMapper jsonMapper) {
@@ -286,6 +288,42 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
     }
 
     @Test
+    void testCancelBulk() {
+        PluginImportUserWorkerTask waiting = saveTask(WorkStatus.NOT_STARTED);
+        PluginImportUserWorkerTask finished = saveTask(WorkStatus.COMPLETED);
+
+        given()
+                .header("Content-Type", "application/json")
+                .body(List.of(waiting.getId(), finished.getId(), UUID.randomUUID()))
+                .when()
+                .post(this.basePath + "/cancel/bulk")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.OK.value());
+
+        assertAll(
+                () -> assertEquals(WorkStatus.CANCELLED, pluginImportUserWorkerTaskRepository.findById(waiting.getId()).get().getStatus()),
+                () -> assertEquals(WorkStatus.COMPLETED, pluginImportUserWorkerTaskRepository.findById(finished.getId()).get().getStatus(),
+                        "a finished task is left as it is")
+        );
+    }
+
+    /** A task of the test user that isn't due yet, so the worker doesn't pick it up during the test. */
+    private PluginImportUserWorkerTask saveTask(WorkStatus status) {
+        return pluginImportUserWorkerTaskRepository.save(
+                PluginImportUserWorkerTask.builder()
+                        .fileReferenceId(UUID.randomUUID())
+                        .destinationLibraryReferenceId(UUID.randomUUID())
+                        .provider("DummyPlugin")
+                        .status(status)
+                        .startAt(ZonedDateTime.now().plusDays(1))
+                        .ownerId(AuthorizationTestConfig.MOCK_SUBJECT_ID)
+                        .downloadExternalMedia(true)
+                        .build()
+        );
+    }
+
+    @Test
     void testGetInstalledPlugins() {
         given()
                 .header("Content-Type", "application/json")
@@ -314,7 +352,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         request2.setStartAt(ZonedDateTime.now());
         request2.setDownloadExternalMedia(false);
 
-        List<PluginImportUserWorkerTaskDTO> createdTasks = super.createBulk(java.util.List.of(request1, request2));
+        List<PluginImportUserWorkerTaskDTO> createdTasks = super.createBulk(List.of(request1, request2));
 
         assertAll(() -> {
             assertNotNull(createdTasks);
@@ -354,7 +392,7 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
         PatchPluginImportUserWorkerTaskRequest patch2 = new PatchPluginImportUserWorkerTaskRequest();
         patch2.setStartAt(JsonNullable.of(ZonedDateTime.now()));
 
-        List<PluginImportUserWorkerTaskDTO> updatedTasks = super.patchBulk(java.util.Map.of(task1.getId(), patch1, task2.getId(), patch2));
+        List<PluginImportUserWorkerTaskDTO> updatedTasks = super.patchBulk(Map.of(task1.getId(), patch1, task2.getId(), patch2));
 
         assertAll(() -> {
             assertNotNull(updatedTasks);
@@ -389,6 +427,6 @@ public class PluginImportUserWorkerTaskV1RestControllerIT extends BaseCrudContro
                     .build()
     );
 
-        assertDoesNotThrow(() -> super.deleteBulk(java.util.List.of(task.getId(), task2.getId())));
+        assertDoesNotThrow(() -> super.deleteBulk(List.of(task.getId(), task2.getId())));
     }
 }

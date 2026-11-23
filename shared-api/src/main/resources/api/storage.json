@@ -58,8 +58,8 @@
         "operationId": "TagV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -124,8 +124,8 @@
         "operationId": "TagCategoryV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -380,8 +380,8 @@
         "operationId": "TagAliasV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -541,8 +541,8 @@
         "operationId": "SourceV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -702,8 +702,8 @@
         "operationId": "PostV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -863,8 +863,8 @@
         "operationId": "MediaV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -1024,8 +1024,8 @@
         "operationId": "LibraryV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -1082,6 +1082,43 @@
         }
       }
     },
+    "/v1/libraries/{id}/clear": {
+      "post": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "summary": "Remove the chosen content of the library (BOOKS, POSTS, COLLECTIONS, TAGS, ARTISTS), in the background",
+        "operationId": "LibraryV1RestController_clear",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LibraryContent"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
     "/v1/libraries/bulk": {
       "post": {
         "tags": [
@@ -1121,6 +1158,7 @@
         "tags": [
           "library-v-1-rest-controller"
         ],
+        "summary": "Delete these libraries and everything in them, in the background",
         "operationId": "LibraryV1RestController_deleteBulk",
         "requestBody": {
           "content": {
@@ -1137,8 +1175,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "202": {
+            "description": "Accepted"
           }
         }
       },
@@ -1185,8 +1223,8 @@
         "operationId": "CollectionV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -1346,8 +1384,8 @@
         "operationId": "BookV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -1412,8 +1450,8 @@
         "operationId": "BookChapterV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -1478,8 +1516,8 @@
         "operationId": "BookChapterVersionV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -1829,8 +1867,8 @@
         "operationId": "ArtistV1RestController_getAllPaged",
         "parameters": [
           {
-            "name": "spec",
-            "in": "query",
+            "name": "Furrify-Spec",
+            "in": "header",
             "required": false,
             "schema": {
               "type": "string"
@@ -2568,6 +2606,7 @@
         "tags": [
           "library-v-1-rest-controller"
         ],
+        "summary": "Delete the library and everything in it, in the background (202; the content disappears gradually)",
         "operationId": "LibraryV1RestController_delete",
         "parameters": [
           {
@@ -2581,8 +2620,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "202": {
+            "description": "Accepted"
           }
         }
       },
@@ -3115,6 +3154,38 @@
           }
         }
       }
+    },
+    "/v1/libraries/{id}/statistics": {
+      "get": {
+        "tags": [
+          "library-v-1-rest-controller"
+        ],
+        "summary": "Counts of what the library holds (books, chapters, posts, collections, tags, tag categories, artists)",
+        "operationId": "LibraryV1RestController_statistics",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryStatisticsDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3199,6 +3270,22 @@
           },
           "dislikesEnabled": {
             "type": "boolean"
+          },
+          "scheduledForRemoval": {
+            "type": "boolean"
+          },
+          "contentRemoval": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "description": "Content being removed in the background, e.g. [\"BOOKS\", \"TAGS\"]; null when none"
+          },
+          "removalInProgress": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "True while the library or some of its content is being removed"
           }
         }
       },
@@ -3767,6 +3854,16 @@
           }
         }
       },
+      "LibraryContent": {
+        "type": "string",
+        "enum": [
+          "BOOKS",
+          "POSTS",
+          "COLLECTIONS",
+          "TAGS",
+          "ARTISTS"
+        ]
+      },
       "CreateCollectionRequest": {
         "type": "object",
         "properties": {
@@ -4017,6 +4114,15 @@
           "contentUpdatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDTO"
+            }
+          },
+          "mediaMissing": {
+            "type": "boolean"
           }
         }
       },
@@ -4231,6 +4337,15 @@
           "contentUpdatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "mediaMissing": {
+            "type": "boolean"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
           }
         }
       },
@@ -4579,6 +4694,15 @@
           "contentUpdatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityIdRequest"
+            }
+          },
+          "mediaMissing": {
+            "type": "boolean"
           }
         }
       },
@@ -4726,6 +4850,12 @@
         }
       },
       "PageMetadata": {
+        "required": [
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
         "type": "object",
         "properties": {
           "size": {
@@ -4747,6 +4877,10 @@
         }
       },
       "PagedModelTagDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4761,6 +4895,10 @@
         }
       },
       "PagedModelTagCategoryDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4775,6 +4913,10 @@
         }
       },
       "PagedModelTagAliasDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4789,6 +4931,10 @@
         }
       },
       "PagedModelSourceDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4803,6 +4949,10 @@
         }
       },
       "PagedModelPostDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4817,6 +4967,10 @@
         }
       },
       "PagedModelMediaDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4831,6 +4985,10 @@
         }
       },
       "PagedModelLibraryDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4845,6 +5003,10 @@
         }
       },
       "PagedModelCollectionDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4859,6 +5021,10 @@
         }
       },
       "PagedModelBookDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4873,6 +5039,10 @@
         }
       },
       "PagedModelBookChapterDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4887,6 +5057,10 @@
         }
       },
       "PagedModelBookChapterVersionDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4901,6 +5075,10 @@
         }
       },
       "PagedModelArtistDTO": {
+        "required": [
+          "content",
+          "page"
+        ],
         "type": "object",
         "properties": {
           "content": {
@@ -4911,6 +5089,43 @@
           },
           "page": {
             "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "LibraryStatisticsDto": {
+        "type": "object",
+        "properties": {
+          "libraryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "booksCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chaptersCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "postsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "collectionsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tagsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tagCategoriesCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "artistsCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }

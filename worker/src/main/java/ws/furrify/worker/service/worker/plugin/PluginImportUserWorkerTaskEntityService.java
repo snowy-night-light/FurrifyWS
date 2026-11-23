@@ -36,6 +36,7 @@ import ws.furrify.core.utils.SecurityContextUtils;
 import ws.furrify.openapi.gen.attachment.api.AttachmentFileV1RestControllerApiClient;
 import ws.furrify.openapi.gen.storage.api.LibraryV1RestControllerApiClient;
 import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTask;
+import ws.furrify.worker.domain.worker.plugin.PluginImportUserWorkerTaskRepository;
 import ws.furrify.worker.dto.worker.plugin.ImportWorkerPluginDTO;
 import ws.furrify.worker.dto.worker.plugin.PluginImportUserWorkerTaskDTO;
 import ws.furrify.worker.dto.worker.plugin.request.PatchPluginImportUserWorkerTaskRequest;
@@ -50,6 +51,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import feign.FeignException;
+import java.time.Duration;
 
 import static ws.furrify.worker.domain.worker.WorkStatus.COMPLETED;
 import static ws.furrify.worker.domain.worker.WorkStatus.IN_PROGRESS;
@@ -63,13 +66,17 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     private final LibraryV1RestControllerApiClient libraryV1RestControllerApiClient;
     private final AttachmentService attachmentService;
     private final ConcurrentHashMap<UUID, ImportV1WorkerPluginIntf> activePlugins = new ConcurrentHashMap<>();
+    /** destination library id -> the import task currently writing into it (this worker instance). */
+    private final ConcurrentHashMap<UUID, UUID> librariesInImport = new ConcurrentHashMap<>();
+    private final PluginImportUserWorkerTaskRepository pluginImportUserWorkerTaskRepository;
 
     @Value("${FURRIFY_CDN_URL:}")
     private String cdnUrl;
 
     @Autowired
-    public PluginImportUserWorkerTaskEntityService(BaseEntityRepository<PluginImportUserWorkerTask> entityRepository, BaseDTOMapper<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, PatchPluginImportUserWorkerTaskRequest> dtoMapper, AsyncUtils asyncUtils, ExternalPluginLoaderService externalPluginLoaderService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, LibraryV1RestControllerApiClient libraryV1RestControllerApiClient, AttachmentService attachmentService) {
+    public PluginImportUserWorkerTaskEntityService(BaseEntityRepository<PluginImportUserWorkerTask> entityRepository, BaseDTOMapper<PluginImportUserWorkerTask, PluginImportUserWorkerTaskDTO, PatchPluginImportUserWorkerTaskRequest> dtoMapper, AsyncUtils asyncUtils, ExternalPluginLoaderService externalPluginLoaderService, AttachmentFileV1RestControllerApiClient attachmentFileV1RestControllerApiClient, LibraryV1RestControllerApiClient libraryV1RestControllerApiClient, AttachmentService attachmentService, PluginImportUserWorkerTaskRepository pluginImportUserWorkerTaskRepository) {
         super(entityRepository, dtoMapper, asyncUtils);
+        this.pluginImportUserWorkerTaskRepository = pluginImportUserWorkerTaskRepository;
         this.externalPluginLoaderService = externalPluginLoaderService;
         this.attachmentFileV1RestControllerApiClient = attachmentFileV1RestControllerApiClient;
         this.libraryV1RestControllerApiClient = libraryV1RestControllerApiClient;
@@ -93,9 +100,12 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
             if (attachmentFile == null) {
                 throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
             }
-        } catch (feign.FeignException.NotFound e) {
+        } catch (FeignException.NotFound e) {
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getFileReferenceId()));
         }
+
+        // Remember the original file name for task details: the attachment itself is deleted after the import.
+        dto.setFileName(attachmentFile.getFileName());
 
         // Validate the attachment file extension against the plugin's allowed extensions
         String[] allowedExtensions = selectedPlugin.getAllowedExtensions();
@@ -116,7 +126,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
             if (libraryV1RestControllerApiClient.libraryV1RestControllerGetById(dto.getDestinationLibraryReferenceId()).getBody() == null) {
                 throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getDestinationLibraryReferenceId()));
             }
-        } catch (feign.FeignException.NotFound e) {
+        } catch (FeignException.NotFound e) {
             throw new ReferenceNotFoundException(Errors.REFERENCE_NOT_FOUND.getErrorMessage(dto.getDestinationLibraryReferenceId()));
         } catch (Exception e) {
             throw new ServiceLogicException("Failed to verify destination library: " + e.getMessage());
@@ -139,6 +149,18 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
     @Transactional
     @Override
     protected void processTask(PluginImportUserWorkerTaskDTO task) {
+        // One import per library at a time. Concurrent imports into the same library race on the
+        // same books (each only deduplicates its own threads): both see chapters missing and both
+        // create them ("Chapter with number N already exists"), and books/artists, which have no
+        // unique (library, externalId) constraint, can be duplicated. A waiting import is put back
+        // in the queue and starts on a later poll, once the running one has finished.
+        UUID libraryId = task.getDestinationLibraryReferenceId();
+        if (!claimLibrary(libraryId, task)) {
+            rescheduleTask(task, "Another import into library " + libraryId + " is running; this one waits until it finishes.",
+                    Duration.ofSeconds(30));
+            return;
+        }
+
         SecurityContextUtils.mockFeignClientSecurityContext(task.getOwnerId());
 
         try {
@@ -181,35 +203,22 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     activePlugins.remove(task.getId());
                 }
 
-                Optional<PluginImportUserWorkerTaskDTO> optionalTask = this.internalFindById(task.getId());
-                if (optionalTask.isEmpty()) {
-                    return;
+                if (!saveResults(task.getId(), results)) {
+                    return; // task was deleted while the import ran
                 }
-                PluginImportUserWorkerTaskDTO latestTask = optionalTask.get();
-                if (results != null) {
-                    latestTask.setErrors(results.getErrors());
-                    latestTask.setWarnings(results.getWarnings());
-                    latestTask.setLog(results.getLog());
-                }
-                succeedTask(latestTask);
+                succeedTask(task);
 
+                UUID fileReferenceId = task.getFileReferenceId();
                 asyncUtils.runAsyncAfterCommit(() -> {
                     try {
-                        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(latestTask.getFileReferenceId());
+                        attachmentFileV1RestControllerApiClient.attachmentFileV1RestControllerDelete(fileReferenceId);
                     } catch (Exception e) {
                         log.error("Failed to delete attachment file after task completion: {}", e.getMessage());
                     }
                 });
 
             } catch (Exception e) {
-                PluginImportUserWorkerTaskDTO latestTask = this.internalFindById(task.getId()).orElse(task);
-
-                WorkerPluginResults finalResults = plugin.trackCurrentStatus();
-                if (finalResults != null) {
-                    latestTask.setErrors(finalResults.getErrors());
-                    latestTask.setWarnings(finalResults.getWarnings());
-                    latestTask.setLog(finalResults.getLog());
-                }
+                saveResults(task.getId(), plugin.trackCurrentStatus());
 
                 Throwable cause = e.getCause();
                 while (cause != null && !(cause instanceof InterruptedException)) {
@@ -220,14 +229,69 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
                     log.warn("Task thread interrupted during file processing for task {}", task.getId());
                 } else {
                     log.error("Plugin execution failed: {}", e.getMessage(), e);
-                    failTask(latestTask, "Error processing file: " + e.getMessage());
+                    failTask(task, "Error processing file: " + e.getMessage());
                 }
             } finally {
                 attachmentService.cleanupTmpFile(tempFile);
             }
         } finally {
             SecurityContextUtils.clearFeignClientSecurityContext();
+            librariesInImport.remove(libraryId, task.getId());
         }
+    }
+
+    /**
+     * Claim {@code libraryId} for {@code task}: free in this instance and no import into it started
+     * earlier elsewhere (still IN_PROGRESS). On false nothing is held.
+     */
+    private boolean claimLibrary(UUID libraryId, PluginImportUserWorkerTaskDTO task) {
+        if (libraryId == null) {
+            return true;
+        }
+        UUID holder = librariesInImport.putIfAbsent(libraryId, task.getId());
+        if (holder != null && !holder.equals(task.getId())) {
+            return false;
+        }
+        boolean earlierElsewhere;
+        try {
+            // Plain read: needs no transaction (unlike the locking reads elsewhere in this class).
+            earlierElsewhere = task.getStartedAt() != null
+                    && pluginImportUserWorkerTaskRepository.existsEarlierImportIntoLibrary(libraryId, IN_PROGRESS, task.getId(), task.getStartedAt());
+        } catch (RuntimeException e) {
+            librariesInImport.remove(libraryId, task.getId());
+            throw e;
+        }
+        if (earlierElsewhere) {
+            librariesInImport.remove(libraryId, task.getId());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Persist the plugin's final log/warnings/errors on the task, in its own transaction.
+     * <p>
+     * processTask runs on a pool thread outside any transaction, and {@code this.internalFindById}
+     * is a self-invocation (no transactional proxy), so the locking read it does
+     * ({@code SELECT ... FOR UPDATE}) failed there with "No active transaction". Also,
+     * succeedTask/failTask re-read the task, so results set on a separately loaded copy were
+     * silently dropped; saving them first means those re-reads pick them up.
+     *
+     * @return false when the task no longer exists
+     */
+    private boolean saveResults(UUID taskId, WorkerPluginResults results) {
+        boolean[] exists = {false};
+        asyncUtils.runInTransaction(() -> this.internalFindById(taskId).ifPresent(latestTask -> {
+            exists[0] = true;
+            if (results != null) {
+                latestTask.setErrors(results.getErrors());
+                latestTask.setWarnings(results.getWarnings());
+                latestTask.setLog(results.getLog());
+                truncateTaskData(latestTask);
+                this.internalPutById(taskId, latestTask);
+            }
+        }));
+        return exists[0];
     }
 
     @Scheduled(fixedRate = 30, timeUnit = TimeUnit.SECONDS)
@@ -266,7 +330,7 @@ public class PluginImportUserWorkerTaskEntityService extends UserWorkerTaskBaseE
 
     @Override
     protected long getTaskTimeoutSeconds() {
-        return 24 * 60 * 60 * 7; // 7 days
+        return 24 * 60 * 60 * 30; // 30 days
     }
 
     @Override

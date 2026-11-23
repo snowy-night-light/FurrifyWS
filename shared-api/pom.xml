@@ -103,7 +103,7 @@
                             <additionalProperties>
                                 <additionalProperty>serviceName=furrify-storage-service</additionalProperty>
                             </additionalProperties>
-                            <inputSpec>${project.baseUri}src/main/resources/api/storage.json</inputSpec>
+                            <inputSpec>${project.build.directory}/api/storage.json</inputSpec>
                             <apiPackage>ws.furrify.openapi.gen.storage.api</apiPackage>
                         </configuration>
                     </execution>
@@ -116,7 +116,7 @@
                             <additionalProperties>
                                 <additionalProperty>serviceName=furrify-attachment-service</additionalProperty>
                             </additionalProperties>
-                            <inputSpec>${project.baseUri}src/main/resources/api/attachment.json</inputSpec>
+                            <inputSpec>${project.build.directory}/api/attachment.json</inputSpec>
                             <apiPackage>ws.furrify.openapi.gen.attachment.api</apiPackage>
                         </configuration>
                     </execution>
@@ -129,8 +129,26 @@
                             <additionalProperties>
                                 <additionalProperty>serviceName=furrify-worker-service</additionalProperty>
                             </additionalProperties>
-                            <inputSpec>${project.baseUri}src/main/resources/api/worker.json</inputSpec>
+                            <inputSpec>${project.build.directory}/api/worker.json</inputSpec>
                             <apiPackage>ws.furrify.openapi.gen.worker.api</apiPackage>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- Jackson's jars for PrepareOpenApiSpecs; declared before antrun so it runs first in the phase -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>openapi-specs-classpath</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>tools.jackson.core,com.fasterxml.jackson.core</includeGroupIds>
+                            <outputProperty>openapi.specs.classpath</outputProperty>
                         </configuration>
                     </execution>
                 </executions>
@@ -167,6 +185,25 @@ worker.service.name=${service.worker.name}
 gateway.service.name=${service.gateway.name}
 eureka.service.name=${service.eureka.name}
 </echo>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>prepare-openapi-specs</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/api"/>
+                                <exec executable="java" failonerror="true">
+                                    <arg value="--class-path"/>
+                                    <arg value="${openapi.specs.classpath}"/>
+                                    <arg value="${project.basedir}/src/main/scripts/PrepareOpenApiSpecs.java"/>
+                                    <arg value="${project.basedir}/src/main/resources/api"/>
+                                    <arg value="${project.build.directory}/api"/>
+                                </exec>
                             </target>
                         </configuration>
                     </execution>

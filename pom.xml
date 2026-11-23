@@ -277,6 +277,7 @@
               <useTags>true</useTags>
               <dateLibrary>java8</dateLibrary>
               <useSpringBoot3>true</useSpringBoot3>
+              <openApiNullable>true</openApiNullable>
             </configOptions>
             <typeMappings>
               <typeMapping>OffsetDateTime=java.time.ZonedDateTime</typeMapping>

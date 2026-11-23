@@ -15,13 +15,17 @@
  */
 package ws.furrify.core.config;
 
+import io.swagger.v3.oas.models.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.jackson.nullable.JsonNullableModule;
+import org.springdoc.core.customizers.PropertyCustomizer;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.providers.ObjectMapperProvider;
 import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import ws.furrify.core.model.StrategyIntf;
+
+import java.util.Collections;
 
 @RequiredArgsConstructor
 public class OpenApiConfig {
@@ -35,5 +39,22 @@ public class OpenApiConfig {
         ObjectMapperProvider objectMapperProvider = new ObjectMapperProvider(springDocConfigProperties);
         objectMapperProvider.jsonMapper().registerModule(new JsonNullableModule());
         return objectMapperProvider;
+    }
+
+    @Bean
+    public PropertyCustomizer jsonNullablePropertyCustomizer() {
+        return (schema, type) -> {
+            if (schema != null && type != null && type.getType() != null &&
+                    type.getType().getTypeName().contains("org.openapitools.jackson.nullable.JsonNullable")) {
+                if (schema.get$ref() != null) {
+                    Schema<?> refSchema = new Schema<>();
+                    refSchema.set$ref(schema.get$ref());
+                    schema.set$ref(null);
+                    schema.setAllOf(Collections.singletonList(refSchema));
+                }
+                schema.setNullable(true);
+            }
+            return schema;
+        };
     }
 }

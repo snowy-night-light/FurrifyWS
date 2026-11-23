@@ -34,6 +34,10 @@ import ws.furrify.storage.domain.tag.Tag;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_post_owner_created", columnList = "owner_id, created_at"),
+        @Index(name = "idx_post_library", columnList = "library_id")
+})
 @Getter
 @Setter
 @ToString
@@ -50,16 +54,38 @@ public class Post extends UserScopedEntity {
     String description;
 
     @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    @JoinTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "tags_id"),
+            indexes = {
+                    @Index(name = "idx_post_tags_post", columnList = "post_id"),
+                    @Index(name = "idx_post_tags_tag", columnList = "tags_id")
+            })
     @NotEmpty
     List<Tag> tags;
     @ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+    @JoinTable(name = "post_artists", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "artists_id"),
+            indexes = {
+                    @Index(name = "idx_post_artists_post", columnList = "post_id"),
+                    @Index(name = "idx_post_artists_artist", columnList = "artists_id")
+            })
     List<Artist> artists;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "post_display_media_list", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "display_media_list_id"),
+            indexes = {
+                    @Index(name = "idx_post_display_media_post", columnList = "post_id"),
+                    @Index(name = "idx_post_display_media_media", columnList = "display_media_list_id")
+            })
     List<Media> displayMediaList;
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "post_attachments", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "attachments_id"),
+            indexes = {
+                    @Index(name = "idx_post_attachments_post", columnList = "post_id"),
+                    @Index(name = "idx_post_attachments_media", columnList = "attachments_id")
+            })
     List<Media> attachments;
     @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @JoinTable(name = "post_sources", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "sources_id"),
+            indexes = @Index(name = "idx_post_sources_post", columnList = "post_id"))
     List<Source> sources;
 
     @ManyToMany(mappedBy = "posts", fetch = FetchType.LAZY)

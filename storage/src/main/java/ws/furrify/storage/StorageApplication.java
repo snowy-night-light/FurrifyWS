@@ -21,10 +21,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import ws.furrify.core.ApplicationCore;
+import java.util.UUID;
 
 @SpringBootApplication(scanBasePackages = {"ws.furrify.storage", "ws.furrify.core"})
 @EnableJpaRepositories(basePackages = "ws.furrify.storage.domain")
 public class StorageApplication extends ApplicationCore {
+
+	/** Identifies this run of the service: what it owns (e.g. a library removal) is recorded with it. */
+	public static final UUID LAUNCH_ID = UUID.randomUUID();
 
 	static void main(String[] args) {
 		SpringApplication.run(StorageApplication.class, args);

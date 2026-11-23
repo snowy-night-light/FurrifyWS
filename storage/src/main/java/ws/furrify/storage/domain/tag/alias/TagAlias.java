@@ -20,7 +20,9 @@ package ws.furrify.storage.domain.tag.alias;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -30,6 +32,7 @@ import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.tag.Tag;
 
 @Entity
+@Table(indexes = @Index(name = "idx_tag_alias_target_tag", columnList = "target_tag_id"))
 @Getter
 @Setter
 @ToString

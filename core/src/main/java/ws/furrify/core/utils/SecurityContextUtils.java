@@ -72,9 +72,14 @@ public class SecurityContextUtils {
         if (isServiceToken()) {
             RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
             if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
-                String ownerIdHeader = servletRequestAttributes.getRequest().getHeader(USER_ID_HEADER);
-                if (ownerIdHeader != null) {
-                    return Optional.of(UUID.fromString(ownerIdHeader));
+                try {
+                    String ownerIdHeader = servletRequestAttributes.getRequest().getHeader(USER_ID_HEADER);
+                    if (ownerIdHeader != null) {
+                        return Optional.of(UUID.fromString(ownerIdHeader));
+                    }
+                } catch (IllegalStateException ignored) {
+                    // The servlet container may recycle the request before a transaction flushes.
+                    // In that case, fall back to the authenticated token subject below.
                 }
             }
         }

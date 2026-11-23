@@ -50,4 +50,7 @@ public class LibraryDTO extends UserScopedEntityDTO<Library> {
     private List<BookDTO> books;
     private Boolean likesEnabled;
     private Boolean dislikesEnabled;
+    private Boolean scheduledForRemoval;
+    private List<String> contentRemoval;
+    private Boolean removalInProgress;
 }

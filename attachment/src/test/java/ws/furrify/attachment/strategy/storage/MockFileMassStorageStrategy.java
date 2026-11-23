@@ -23,6 +23,7 @@ import ws.furrify.attachment.service.file.storage.vo.UploadedFileReference;
 import java.io.File;
 import java.net.URI;
 import java.util.UUID;
+import java.nio.file.Path;
 
 public class MockFileMassStorageStrategy implements FileMassStorageStrategy {
 
@@ -39,6 +40,21 @@ public class MockFileMassStorageStrategy implements FileMassStorageStrategy {
     @Override
     public boolean removeFileDirectory(UUID id) {
         return true;
+    }
+
+    @Override
+    public UploadedFileReference uploadFile(UUID id, File file, File thumbnailSource, String thumbnailSourceMimeType, boolean replaceExisting) {
+        return uploadFile(id, thumbnailSourceMimeType, file, replaceExisting);
+    }
+
+    @Override
+    public Path resolve(URI fileUri) {
+        return Path.of(System.getProperty("java.io.tmpdir"), fileUri.getPath());
+    }
+
+    @Override
+    public URI storeThumbnailJpeg(UUID id, File thumbnailJpeg) {
+        return URI.create("https://example.com/thumbnail.jpg");
     }
 
     @Override

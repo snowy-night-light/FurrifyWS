@@ -22,6 +22,15 @@
     </license>
   </licenses>
   <dependencies>
+    <!-- Cache of JPEG XL fallbacks (one hour); versions managed by the Spring Boot BOM -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context-support</artifactId>
+    </dependency>
     <dependency>
       <groupId>ws.furrify</groupId>
       <artifactId>core</artifactId>
