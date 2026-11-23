@@ -26,6 +26,7 @@ import ws.furrify.core.entity.UserScopedEntity;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.Length;
 
 @MappedSuperclass
 @Getter
@@ -40,7 +41,7 @@ public class UserWorkerTask extends UserScopedEntity {
     @Column(length = 10485760)
     List<String> warnings;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = Length.LONG32)
     String log;
 
     @Column(nullable = false)

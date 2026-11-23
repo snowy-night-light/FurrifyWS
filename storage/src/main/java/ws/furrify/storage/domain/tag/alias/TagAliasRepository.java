@@ -19,7 +19,16 @@ package ws.furrify.storage.domain.tag.alias;
 
 import org.springframework.stereotype.Repository;
 import ws.furrify.core.entity.BaseEntityRepository;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface TagAliasRepository extends BaseEntityRepository<TagAlias> {
+
+    @Modifying
+    @Query("DELETE FROM TagAlias a WHERE a.targetTag.id IN :tags")
+    int deleteByTargetTags(@Param("tags") List<UUID> tags);
 }

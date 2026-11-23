@@ -20,10 +20,10 @@ package ws.furrify.storage.domain.book;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.validator.constraints.Length;
 import ws.furrify.core.entity.UserScopedEntity;
 import ws.furrify.storage.domain.artist.Artist;
 import ws.furrify.storage.domain.book.chapter.BookChapter;
@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.hibernate.Length;
 
 @Entity
 @Table(indexes = {
@@ -59,17 +60,17 @@ public class Book extends UserScopedEntity {
     @Column(nullable = false, length = 255)
     String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false, length = 92160)
+    @Column(nullable = false, length = Length.LONG32)
     @NotNull
-    @Length(max = 92160)
+    @Size(max = 92160)
     String descriptionHtml;
 
     @Column()
     String externalId;
 
-    @Column(columnDefinition = "TEXT", nullable = false, length = 46080)
+    @Column(nullable = false, length = Length.LONG32)
     @NotNull
-    @Length(max = 46080)
+    @Size(max = 46080)
     String shortDescriptionHtml;
 
     @ElementCollection(fetch = FetchType.EAGER)

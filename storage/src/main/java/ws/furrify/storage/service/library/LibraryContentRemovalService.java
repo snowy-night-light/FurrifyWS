@@ -22,7 +22,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ws.furrify.core.exception.ConflictException;
 import ws.furrify.core.utils.AsyncUtils;
-import ws.furrify.storage.domain.library.LibraryRepository.RemovalState;
+import ws.furrify.storage.domain.library.LibraryRemovalState;
 import ws.furrify.storage.service.library.LibraryRemovalBatchService.LeaseLostException;
 
 import java.util.EnumSet;
@@ -82,7 +82,7 @@ public class LibraryContentRemovalService {
         Set<LibraryContent> what = EnumSet.copyOf(parts);
         // marker and lease in one statement: no other request or instance can start a removal in between
         if (!batches.markContentRemoval(libraryId, what)) {
-            Optional<RemovalState> state = batches.state(libraryId);
+            Optional<LibraryRemovalState> state = batches.state(libraryId);
             if (state.isPresent() && state.get().isScheduledForRemoval()) {
                 throw new ConflictException("Library " + libraryId + " is being deleted.");
             }
@@ -125,14 +125,14 @@ public class LibraryContentRemovalService {
         } catch (RuntimeException e) {
             log.warn("[Library removal] Could not refresh removal leases: {}", e.getMessage());
         }
-        List<RemovalState> unfinished;
+        List<LibraryRemovalState> unfinished;
         try {
             unfinished = batches.unfinishedRemovals();
         } catch (RuntimeException e) {
             log.warn("[Library removal] Could not look for unfinished removals: {}", e.getMessage());
             return;
         }
-        for (RemovalState state : unfinished) {
+        for (LibraryRemovalState state : unfinished) {
             UUID libraryId = state.getId();
             if (running.contains(libraryId) || !batches.claim(libraryId)) continue;
             boolean deletion = state.isScheduledForRemoval();
@@ -179,7 +179,7 @@ public class LibraryContentRemovalService {
             unmarkClear(libraryId);
             // the library was marked for deletion while this clear ran: delete it now
             try {
-                if (batches.state(libraryId).map(RemovalState::isScheduledForRemoval).orElse(false) && batches.claim(libraryId)) {
+                if (batches.state(libraryId).map(LibraryRemovalState::isScheduledForRemoval).orElse(false) && batches.claim(libraryId)) {
                     run(libraryId, Set.of(), true);
                 }
             } catch (RuntimeException e) {

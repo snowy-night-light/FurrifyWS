@@ -25,6 +25,7 @@ import ws.furrify.core.entity.BaseEntityRepository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public interface BookChapterRepository extends BaseEntityRepository<BookChapter> {
@@ -50,4 +51,9 @@ public interface BookChapterRepository extends BaseEntityRepository<BookChapter>
 
     @Query("SELECT c.book.id FROM BookChapter c WHERE c.id = :chapterId")
     Optional<UUID> findBookIdByChapterId(@Param("chapterId") UUID chapterId);
+
+    /** The books' chapters (their versions first); Hibernate removes their source links first. */
+    @Modifying
+    @Query("DELETE FROM BookChapter c WHERE c.book.id IN :books")
+    int deleteByBooks(@Param("books") List<UUID> books);
 }
