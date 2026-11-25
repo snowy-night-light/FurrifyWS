@@ -30,7 +30,9 @@ import java.util.UUID;
 
 /**
  * Removes a deleted media's file from the attachment service, after commit and only when no other
- * media still uses it (importers share one file between media, deduplicated by hash).
+ * media still uses it (importers share one file between media, deduplicated by hash). Done on the shared
+ * executor, not on the committing thread: a transaction deleting hundreds of media (the orphan cleanup)
+ * would otherwise keep its connection through hundreds of calls to the attachment service.
  */
 @Slf4j
 @Component
@@ -54,7 +56,7 @@ class MediaEntityListener {
         UUID fileId = media.getFileReferenceId();
         UUID ownerId = media.getOwnerId();
         if (fileId == null) return;
-        asyncUtils.runAfterCommitNoTransaction(() -> {
+        asyncUtils.runAsyncAfterCommitNoTransaction(() -> {
             try {
                 if (mediaRepository.existsByFileReferenceId(fileId)) return;
                 boolean mocked = ownerId != null && SecurityContextUtils.getCurrentUserPrincipal().isEmpty();

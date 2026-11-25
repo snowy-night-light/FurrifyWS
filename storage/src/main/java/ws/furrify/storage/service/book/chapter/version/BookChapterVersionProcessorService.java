@@ -30,6 +30,7 @@ import ws.furrify.storage.shared.util.ContentHtmlSanitizerUtil;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.stream.Stream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -155,14 +156,14 @@ public class BookChapterVersionProcessorService {
 
     /** Author notes are optional: none stays none. */
     private static String sanitizeNotes(String html) {
-        return html == null ? null : ContentHtmlSanitizerUtil.sanitize(html);
+        return html == null ? null : sanitizeHtml(html);
     }
 
     private static String sanitizeHtml(String html) {
         return ContentHtmlSanitizerUtil.sanitize(html);
     }
 
-    private static <T> java.util.stream.Stream<T> inParallel(Collection<T> items) {
+    private static <T> Stream<T> inParallel(Collection<T> items) {
         return items.size() > 1 ? items.parallelStream() : items.stream();
     }
 }
